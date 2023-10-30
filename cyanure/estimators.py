@@ -7,6 +7,7 @@ import inspect
 import warnings
 import platform
 import torch
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 from collections import defaultdict
 
 import concurrent.futures
@@ -319,9 +320,9 @@ class ERM(BaseEstimator, ABC):
         problem_parameter = ProblemParameters(float(self.lambda_1), float(self.lambda_2), float(self.lambda_3), bool(self.fit_intercept), self.penalty, loss=loss)
 
         optim_info = torch.empty
-        erm = SimpleErm(torch.Tensor(initial_weight), torch.Tensor(w), problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
+        erm = SimpleErm(torch.Tensor(initial_weight).to(device), torch.Tensor(w).to(device), problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
 
-        self.optimization_info_ = erm.solve_problem(torch.Tensor(training_data_fortran), torch.Tensor(yf))
+        self.optimization_info_ = erm.solve_problem(torch.Tensor(training_data_fortran).to(device), torch.Tensor(yf).to(device))
 
         """
         cyanure_lib.erm_(
