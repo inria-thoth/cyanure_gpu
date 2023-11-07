@@ -3,17 +3,19 @@ import torch.nn
 
 import copy
 
-from cyanure.erm.param.model_param import ModelParameters
-from cyanure.erm.param.problem_param import ProblemParameters
-from cyanure.erm.erm import Estimator
-from cyanure.regularizers.regularizer import Regularizer
-from cyanure.solvers.solver import Solver
-from cyanure.losses.loss import Loss
-from cyanure.losses.square import SquareLoss
-from cyanure.regularizers.ridge import Ridge
-from cyanure.solvers.ista import ISTA_Solver
+from cyanure_pytorch.erm.param.model_param import ModelParameters
+from cyanure_pytorch.erm.param.problem_param import ProblemParameters
+from cyanure_pytorch.erm.erm import Estimator
+from cyanure_pytorch.regularizers.regularizer import Regularizer
+from cyanure_pytorch.solvers.solver import Solver
+from cyanure_pytorch.losses.loss import Loss
+from cyanure_pytorch.losses.square import SquareLoss
+from cyanure_pytorch.losses.logistic import LogisticLoss
+from cyanure_pytorch.regularizers.ridge import Ridge
+from cyanure_pytorch.solvers.ista import ISTA_Solver
+from cyanure_pytorch.solvers.accelerator import QNing, Catalyst
 
-from cyanure.logger import setup_custom_logger
+from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 
@@ -35,13 +37,14 @@ class SimpleErm(Estimator):
         loss = self.get_loss(features, labels)
         regul = self.get_regularization()
         solver = None
+        weight = None
 
         if (self.model_parameters.max_iter == 0):
             parameter_tmp = self.model_parameters
             parameter_tmp.verbose = False
-            solver = ISTA_Solver(loss,  regul, param_tmp)
+            solver = ISTA_Solver(loss,  regul, parameter_tmp)
             solver.eval(self.initial_weight)
-            weight.copy(self.initial_weight)
+            weight = torch.clone(self.initial_weight)
         else:
             if (self.problem_parameters.regul == "L2" and not self.problem_parameters.intercept):
                 if (self.model_parameters.solver == "SVRG"):
@@ -71,15 +74,18 @@ class SimpleErm(Estimator):
             if (self.dual_variable is not None and self.dual_variable.size(dim=0) != 0):
                 solver.set_dual_variable(self.dual_variable)
 
-            solver.solve(new_initial_weight, self.weight)
+            self.weight = solver.solve(new_initial_weight, self.weight)
 
             if (self.problem_parameters.intercept):
-                data.reverse_intercept(self.weight)
+                self.weight = data.reverse_intercept(self.weight)
 
         if (self.problem_parameters.regul == "L1"):
-            weight[abs(weight) < EPSILON] = 0
+            weight[abs(self.weight) < EPSILON] = 0
 
-        return solver.get_optim_info()
+        if (self.weight is None):
+            self.weight = self.initial_weight
+
+        return solver.get_optim_info(), self.weight
 
     def verify_input(self, X : torch.Tensor) -> None:
         if (self.problem_parameters.intercept):
@@ -139,9 +145,9 @@ class SimpleErm(Estimator):
         if solver_type == "ISTA":
             solver = ISTA_Solver(loss, regul, param)
         elif solver_type == "QNING_ISTA":
-            solver = QNing(ISTA_Solver(loss, regul, param))
+            solver = QNing(param, ISTA_Solver(loss, regul, param))
         elif solver_type == "CATALYST_ISTA":
-            solver = Catalyst(ISTA_Solver(loss, regul, param))
+            solver = Catalyst(param, ISTA_Solver(loss, regul, param))
         elif solver_type == "FISTA":
             solver = FISTA_Solver(loss, regul, param)
         elif solver_type == "SVRG":
@@ -153,17 +159,17 @@ class SimpleErm(Estimator):
             new_model_param.non_uniform_sampling = False
             solver = SVRG_Solver(loss, regul, new_model_param)
         elif solver_type == "CATALYST_SVRG":
-            solver = Catalyst(SVRG_Solver(loss, regul, param))
+            solver = Catalyst(param, SVRG_Solver(loss, regul, param))
         elif solver_type == "QNING_SVRG":
-            solver = QNing(SVRG_Solver(loss, regul, param))
+            solver = QNing(param, SVRG_Solver(loss, regul, param))
         elif solver_type == "CATALYST_MISO":
-            solver = Catalyst(MISO_Solver(loss, regul, param))
+            solver = Catalyst(param, MISO_Solver(loss, regul, param))
         elif solver_type == "QNING_MISO":
-            solver = QNing(MISO_Solver(loss, regul, param))
+            solver = QNing(param, MISO_Solver(loss, regul, param))
         elif solver_type == "ACC_SVRG":
             solver = Acc_SVRG_Solver(loss, regul, param)
         else:
-            raise NotImplementedError("This solver is not implementednot ")
+            raise NotImplementedError("This solver is not implemented !")
             solver = None
         return solver
 

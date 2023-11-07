@@ -31,11 +31,11 @@ class Loss:
         return
 
     @abc.abstractmethod
-    def add_feature(self, input : torch.Tensor, output : torch.Tensor, s : float)-> None:
+    def add_feature_tensor(self, input : torch.Tensor, s : float)-> torch.Tensor:
         return
 
     @abc.abstractmethod
-    def add_feature(self, output : torch.Tensor, i : int, s : float) -> None:
+    def add_feature(self, i : int, s : float) -> torch.Tensor:
         return
 
     @abc.abstractmethod
@@ -210,104 +210,102 @@ class Loss:
 
         return weight
 
-"""
+
 class ProximalPointLoss:
 
-      ProximalPointLoss(loss : Loss, const D& z, const T kappa) 
-         : loss_type(loss.data(), loss.y()), _loss(loss), _kappa(kappa)  { 
-            _z.copy(z);
-            this->_id=PPA;
-         };
+    def __init__(self, loss : Loss, z : torch.Tensor, kappa : float): 
+        self.anchor_point = z
+        self.id="PPA"
+        self.kappa = kappa
+        self.loss = loss
 
-      inline T eval(const D& input) const {
-         D tmp;
-         tmp.copy(input);
-         tmp.sub(_z);
-         return _loss.eval(input)+T(0.5)*_kappa*tmp.nrm2sq();
-      };
-      inline T eval(const D& input, const INTM i) const {
-         D tmp;
-         tmp.copy(input);
-         tmp.sub(_z);
-         return _loss.eval(input,i)+T(0.5)*_kappa*tmp.nrm2sq();
-      };
-      inline void grad(const D& input, D& output) const {
-         _loss.grad(input,output);
-         output.add(input,_kappa);
-         output.add(_z,-_kappa);
-      };
-      inline void add_grad(const D& input, const INTM i, D& output, const T eta = T(1.0)) const {
-         _loss.add_grad(input,i,output,eta);
-         output.add(input,_kappa*eta);
-         output.add(_z,-_kappa*eta);
-      };
-      inline void double_add_grad(const D& input1, const D& input2, const INTM i, D& output, const T eta1 = T(1.0), const T eta2 = -T(1.0), const T dummy = T(1.0)) const {
-         _loss.double_add_grad(input1,input2,i,output,eta1,eta2);
-         if (dummy) {
-            output.add(input1,dummy*_kappa*eta1);
-            output.add(input2,dummy*_kappa*eta2);
-            if (abs<T>(eta1+eta2) > EPSILON)
-               output.add(_z,-_kappa*dummy*(eta1+eta2));
-         }
-      }
-      virtual T eval_random_minibatch(const D& input, const INTM minibatch) const {
-         const T sum=_loss.eval_random_minibatch(input,minibatch);
-         D tmp;
-         tmp.copy(input);
-         tmp.sub(_z);
-         return sum+T(0.5)*_kappa*tmp.nrm2sq();
-      };
-      virtual void grad_random_minibatch(const D& input, D& grad, const INTM minibatch) const {
-         _loss.grad_random_minibatch(input,grad,minibatch);
-         grad.add(input,_kappa);
-         grad.add(_z,-_kappa);
-      };
-      inline void print() const {
-         logging(logINFO) << "Proximal point loss with";
-         _loss.print();
-      }
-      virtual bool provides_fenchel() const { return false; };
-      virtual T fenchel(const D& input) const { return 0; };
-      virtual T lipschitz() const { 
-         return _loss.lipschitz() + _kappa;
-      };
-      virtual void lipschitz(Vector<T>& Li) const {
-         _loss.lipschitz(Li);
-         Li.add(_kappa);
-      };
-      virtual void scal_grad(const D& input, const INTM i, typename D::element& output) const  { 
-         _loss.scal_grad(input,i,output);
-      };
-      virtual void  add_feature(const D& input, D& output, const T s) const { 
-         _loss.add_feature(input,output,s);
-      };
-      virtual void  add_feature(D& output, const INTM i, const typename D::element& s) const {
-         _loss.add_feature(output,i,s);
-      };
-      virtual void set_anchor_point(const D& z) { _z.copy(z); };
-      virtual void get_anchor_point(D& z) const { z.copy(_z); };
+    def eval_tensor(self, input : torch.Tensor) -> float:
+        tmp = torch.clone(input);
+        tmp = torch.sub(tmp, self.anchor_point)
+        return self.loss.eval_tensor(input)+ 0.5 * self.kappa * torch.pow(torch.linalg.vector_norm(tmp), 2)
 
-      def kappa(): 
-        return _kappa
+    def eval(self, input : torch.Tensor, i: int) -> float:
+        tmp = torch.clone(input);
+        tmp = torch.sub(tmp, self.anchor_point)
+        return self.loss.eval(input, i) + 0.5 * self.kappa * torch.pow(torch.linalg.vector_norm(tmp), 2)
 
-      def transpose() -> bool: 
-         return self.loss.transpose()
-   
+    def grad(self, input : torch.Tensor) -> torch.Tensor:
+        grad = self.loss.grad(input)
+        grad = grad + input * self.kappa
+        grad = grad + self.anchor_point * (-self.kappa)
+
+        return grad
+
+    def add_grad(self, input : torch.Tensor, i : int, eta : int = 1.0) -> torch.Tensor: 
+        grad = self.loss.add_grad(input, i, eta)
+        grad = grad + input * self.kappa * eta
+        grad = grad + self.anchor_point * (-self.kappa * eta)
+
+        return grad
+
+    def double_add_grad(self, input1 : torch.Tensor, input2 : torch.Tensor, i : int, eta1 : int = 1.0, eta2 : int = -1.0, dummy : int = 1.0) -> torch.Tensor:
+        output = self.loss.double_add_grad(input1, input2, i, eta1, eta2)
+        if (dummy):
+            output = output + input1 * dummy * self.kappa * eta1
+            output = output + input2 * dummy * self.kappa * eta2
+            if (abs(eta1+eta2) > EPSILON):
+                output = output + self.anchor_point * (-self.kappa * dummy * (eta1 + eta2))
+
+        return output
+    
+    def eval_random_minibatch(self, input : torch.Tensor, minibatch : int) -> float:
+        sum_value = self.loss.eval_random_minibatch(input, minibatch)
+        tmp = torch.clone(input);
+        tmp = torch.sub(tmp, self.anchor_point)
+        return sum_value + 0.5 * self.kappa * torch.pow(torch.linalg.vector_norm(tmp), 2)
+
+    def grad_random_minibatch(self, input : torch.Tensor, minibatch : int) -> torch.Tensor:
+        grad = self.loss.grad_random_minibatch(input, minibatch);
+        grad = grad + input * self.kappa
+        grad = grad + self.anchor_point * (-self.kappa)
+
+        return grad
+
+    def print(self) -> None:
+        logger.info("Proximal point loss with")
+        self.loss.print()
+    
+    def provides_fenchel(self) -> bool:
+        return False
+
+    def fenchel(self, input : torch.Tensor) -> float:
+        return 0
+
+    def lipschitz(self) -> float:
+        return self.loss.lipschitz() + self.kappa
+
+    def lipschitz_li(self, Li : torch.Tensor) -> torch.Tensor:
+        Li = self.loss.lipschitz_li(Li)
+        return Li + self.kappa
+
+    def scal_grad(self, input : torch.Tensor, i : int) -> float:
+        return self.loss.scal_grad(input,i)
+
+    def add_feature_tensor(self, input : torch.Tensor, s : float) -> torch.Tensor:
+        return self.loss.add_feature_tensor(input, s)
+
+    def add_feature(self, i : int, s : float) -> torch.Tensor:
+        return self.loss.add_feature(i, s)
+
+    def kappa(self) -> float: 
+        return self.kappa
+
+    def transpose(self) -> bool: 
+        return self.loss.transpose()
+
     @abc.abstractmethod
-    def get_grad_aux(input : torch.Tensor, grad1 : torch.Tensor) -> None:
+    def get_grad_aux(self, input : torch.Tensor, grad1 : torch.Tensor) -> None:
         return
 
     @abc.abstractmethod
-    def lipschitz_constant() -> int:
+    def lipschitz_constant(self) -> int:
          return
 
     @abc.abstractmethod
-    def get_dual_constraints(grad1 : torch.Tensor):
+    def get_dual_constraints(self, grad1 : torch.Tensor):
         return
-
-   
-   private:
-      const loss_type& _loss;
-      const T _kappa;
-      D _z;
-"""

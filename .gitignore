@@ -1,4 +1,4 @@
 *.pyc
 .vscode/settings.json
-cyanure.egg-info/*
+cyanure_pytorch.egg-info/*
 *.npz

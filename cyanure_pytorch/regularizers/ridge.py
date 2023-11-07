@@ -1,9 +1,9 @@
 import torch
 
-from cyanure.regularizers.regularizer import Regularizer
-from cyanure.erm.param.problem_param import ProblemParameters
+from cyanure_pytorch.regularizers.regularizer import Regularizer
+from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 
-from cyanure.logger import setup_custom_logger
+from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 

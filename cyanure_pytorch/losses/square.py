@@ -1,8 +1,8 @@
 import torch
 
-from cyanure.losses.loss import Loss
+from cyanure_pytorch.losses.loss import Loss
 
-from cyanure.logger import setup_custom_logger
+from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 

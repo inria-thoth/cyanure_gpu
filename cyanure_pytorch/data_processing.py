@@ -17,7 +17,7 @@ from sklearn.utils.validation import check_array, _assert_all_finite
 
 from collections.abc import Sequence
 
-from cyanure.logger import setup_custom_logger
+from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 

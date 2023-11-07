@@ -1,14 +1,14 @@
 import torch
 
-from cyanure.losses.loss import Loss
-from cyanure.regularizers.regularizer import Regularizer
-from cyanure.erm.param.model_param import ModelParameters
+from cyanure_pytorch.losses.loss import Loss
+from cyanure_pytorch.regularizers.regularizer import Regularizer
+from cyanure_pytorch.erm.param.model_param import ModelParameters
 
-from cyanure.solvers.solver import Solver
+from cyanure_pytorch.solvers.solver import Solver
 
-from cyanure.constants import EPSILON
+from cyanure_pytorch.constants import EPSILON
 
-from cyanure.logger import setup_custom_logger
+from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 
@@ -61,40 +61,24 @@ class ISTA_Solver(Solver):
             return self.L
         
 
-"""
-    template <typename loss_type>
-    class FISTA_Solver final : public ISTA_Solver<loss_type>
-    {
-    public:
-        USING_SOLVER
-        FISTA_Solver(const loss_type& loss, const Regularizer<D, PointerType>& regul, const ParamSolver<FeatureType>& param) : ISTA_Solver<loss_type>(loss, regul, param) {}
 
-    protected:
-        virtual void solver_init(const D& x0)
-        {
-            ISTA_Solver<loss_type>::solver_init(x0)
-            _t = FeatureType(1.0)
-            _y.copy(x0)
-        }
-        
-        virtual void solver_aux(D& x)
-        {
-            ISTA_Solver<loss_type>::solver_aux(_y)
-            D diff
-            diff.copy(x)
-            x.copy(_y)
-            diff.sub(x)
-            const FeatureType old_t = _t
-            _t = (1.0 + sqrt(1 + 4 * _t * _t)) / 2
-            _y.add(diff, (FeatureType(1.0) - old_t) / _t)
-        }
-        
-        virtual void print() const
-        {
-            logging(logINFO) << "FISTA Solver"
-        }
 
-        FeatureType _t
-        D _y
-    }
-"""
+class FISTA_Solver(ISTA_Solver):
+    def __init__(self, loss : Loss, regul : Regularizer, param: ModelParameters):
+        super().__init__(loss, regul, param)
+
+    def solver_init(self, initial_weight: torch.Tensor) -> None:
+        super().solver_init(initial_weight)
+        self.t = 1.0
+        self.labels = torch.clone(initial_weight)
+    
+    def solver_aux(self, weight : torch.Tensor) -> torch.Tensor:
+        diff = torch.clone(weight)
+        weight = super().solver_aux(self.labels)
+        diff = diff - weight
+        old_t = self.t
+        self.t = (1.0 + math.sqrt(1 + 4 * self.t * self.t)) / 2
+        self.labels = self.labels + diff * (FeatureType(1.0) - old_t) / self.t
+    
+    def print(self) -> None:
+        logger.info("FISTA Solver")

@@ -6,8 +6,8 @@ import math
 import inspect
 import warnings
 import platform
+from cyanure_pytorch.constants import DEVICE
 import torch
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 from collections import defaultdict
 
 import concurrent.futures
@@ -20,14 +20,14 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.extmath import safe_sparse_dot, softmax
 from sklearn.exceptions import ConvergenceWarning
 
-from cyanure.data_processing import check_input_fit, check_input_inference, windows_conversion
+from cyanure_pytorch.data_processing import check_input_fit, check_input_inference, windows_conversion
 
-from cyanure.logger import setup_custom_logger
+from cyanure_pytorch.logger import setup_custom_logger
 
-from cyanure.erm.param.model_param import ModelParameters
-from cyanure.erm.param.problem_param import ProblemParameters
+from cyanure_pytorch.erm.param.model_param import ModelParameters
+from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 
-from cyanure.erm.simple_erm import SimpleErm
+from cyanure_pytorch.erm.simple_erm import SimpleErm
 
 logger = setup_custom_logger("INFO")
 
@@ -320,9 +320,14 @@ class ERM(BaseEstimator, ABC):
         problem_parameter = ProblemParameters(float(self.lambda_1), float(self.lambda_2), float(self.lambda_3), bool(self.fit_intercept), self.penalty, loss=loss)
 
         optim_info = torch.empty
-        erm = SimpleErm(torch.Tensor(initial_weight).to(device), torch.Tensor(w).to(device), problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
+        erm = SimpleErm(torch.Tensor(initial_weight).to(DEVICE), torch.Tensor(w).to(DEVICE), problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
 
-        self.optimization_info_ = erm.solve_problem(torch.Tensor(training_data_fortran).to(device), torch.Tensor(yf).to(device))
+        self.optimization_info_, w = erm.solve_problem(torch.Tensor(training_data_fortran).to(DEVICE), torch.Tensor(yf).to(DEVICE))
+
+        if (DEVICE == "cuda"):
+            w = w.cpu().numpy()
+        else:
+            w = w.numpy()
 
         """
         cyanure_lib.erm_(

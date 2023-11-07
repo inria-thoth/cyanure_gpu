@@ -1,6 +1,6 @@
 import torch
-from cyanure.erm.param.model_param import ModelParameters
-from cyanure.erm.param.problem_param import ProblemParameters
+from cyanure_pytorch.erm.param.model_param import ModelParameters
+from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 
 class Estimator:
 

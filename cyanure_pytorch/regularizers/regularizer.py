@@ -1,7 +1,7 @@
 import abc
 import torch
 
-from cyanure.erm.param.problem_param import ProblemParameters
+from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 
 class Regularizer:
 

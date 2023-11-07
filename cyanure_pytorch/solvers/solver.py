@@ -4,9 +4,9 @@ import torch
 import numpy
 import time
 
-from cyanure.erm.param.model_param import ModelParameters
+from cyanure_pytorch.erm.param.model_param import ModelParameters
 
-from cyanure.logger import setup_custom_logger
+from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 
@@ -33,7 +33,7 @@ class Solver:
         self.elapsed_time = 0
         self.duality = self.loss.provides_fenchel() and self.regul.provides_fenchel()
 
-    def solve(self, initial_weight : torch.Tensor, weight : torch.Tensor) -> None:
+    def solve(self, initial_weight : torch.Tensor, weight : torch.Tensor) -> torch.Tensor:
 
         initial_time = time.time()
         weight = torch.clone(initial_weight)
@@ -57,6 +57,8 @@ class Solver:
             logger.info("This is the elapsed time: " + str(self.elapsed_time))
         if (self.best_primal != float("Inf")):
             weight = torch.clone(self.best_weight)
+
+        return weight
     
     def get_optim_info(self) -> None:
         count = 0
@@ -76,7 +78,7 @@ class Solver:
             return self.optim_info
 
     def eval(self, x : torch.Tensor) -> None:
-        test_stopping_criterion(x, 1)
+        self.test_stopping_criterion(x, 1)
         self.optim_info[5, 0] = 0
 
     @abc.abstractmethod
