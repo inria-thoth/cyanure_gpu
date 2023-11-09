@@ -1,7 +1,7 @@
 import abc
 
 import torch
-import numpy
+import math
 import time
 
 from cyanure_pytorch.erm.param.model_param import ModelParameters

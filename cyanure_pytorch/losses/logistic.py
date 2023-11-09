@@ -1,4 +1,5 @@
 import torch
+import math
 
 from cyanure_pytorch.losses.loss import Loss
 
@@ -21,10 +22,9 @@ class LogisticLoss(Loss):
 
     def eval_tensor(self, input : torch.Tensor) -> float:
         tmp = self.pred_tensor(input)
-        tmp = tmp * self.labels
-        tmp = -tmp
-        tmp = torch.log(1.0 + torch.exp(tmp))
-        return torch.sum(tmp) / tmp.size(dim=0) 
+        tmp = torch.mul(tmp, self.labels)
+        tmp = torch.log(1.0 + torch.exp(torch.neg(tmp)))
+        return torch.sum(tmp) / (tmp.size(dim=0)) 
 
     def print(self) -> None:
         logger.info("Logistic Loss is used")
@@ -46,9 +46,9 @@ class LogisticLoss(Loss):
 
     def get_grad_aux(self, input : torch.Tensor) -> torch.Tensor:
         grad1 = self.pred_tensor(input)
-        grad1 = grad1 * self.labels
+        grad1 = torch.mul(grad1, self.labels)
         grad1 = 1.0 / (torch.exp(grad1) + 1.0)
-        grad1 = -grad1 * self.labels
+        grad1 = torch.mul(-grad1, self.labels)
 
         return grad1
 
@@ -73,7 +73,7 @@ class LogisticLoss(Loss):
                     ztilde[ii] = grad1[ii] + 1.0
                 else:
                     ztilde[ii] = grad1[ii]
-            output = self.l1project(ztilde, count)
+            xtilde = self.l1project(ztilde, count)
             for ii in range(n):
                 grad1[ii] = xtilde[ii] - 1.0 if y[ii] > 0 else xtilde[ii]
         else:
@@ -83,7 +83,7 @@ class LogisticLoss(Loss):
                 else:
                     count += 1
                     ztilde[ii] = -grad1[ii] + 1.0
-            output = self.l1project(ztilde, count)
+            xtilde = self.l1project(ztilde, count)
             for ii in range(n):
                 grad1[ii] = -xtilde[ii] if y[ii] > 0 else -xtilde[ii] + 1.0
 
@@ -142,8 +142,8 @@ class LogisticLoss(Loss):
         if (simplex):
             output[output < 0] = 0
 
-        result[output>lambda_1] = output - lambda_1
-        result[output<(-lambda_1)] = output + lambda_1
-        result[-lambda_1<output<lambda_1] = 0
+        output[output>lambda_1] = output - lambda_1
+        output[output<(-lambda_1)] = output + lambda_1
+        output[-lambda_1<output<lambda_1] = 0
 
-        return result
+        return output

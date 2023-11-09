@@ -28,7 +28,7 @@ class Ridge(Regularizer):
 
     def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
         if (self.intercept and (abs(grad2[grad2.size(dim=0) - 1]) > 1e-6)):
-            output = inf
+            output = float("inf")
         else:
             output = self.eval_tensor(grad2) / (self.lambda_1 * self.lambda_1)
         return output

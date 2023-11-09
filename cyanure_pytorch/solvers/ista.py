@@ -1,4 +1,5 @@
 import torch
+import math
 
 from cyanure_pytorch.losses.loss import Loss
 from cyanure_pytorch.regularizers.regularizer import Regularizer
@@ -22,20 +23,21 @@ class ISTA_Solver(Solver):
             self.L = 0
             if (Li):
                 self.Li = torch.clone(Li)
-                self.L = torch.max(self.Li) / 100
+                self.L = torch.max(self.Li) / 100.0
 
         def solver_init(self, initial_weight: torch.Tensor) -> None:
             if (self.L == 0):
                 self.Li = self.loss.lipschitz_li(self.Li)
-                self.L = torch.max(self.Li) / 100
+                self.L = torch.max(self.Li) / 100.0
         
         def solver_aux(self, weight : torch.Tensor) -> torch.Tensor:
             iter = 1
             fx = self.loss.eval_tensor(weight)
             grad = self.loss.grad(weight)
             while (iter < self.max_iter_backtracking):
+                
                 tmp2 = torch.clone(weight)
-                tmp2 = (-1.0 / self.L) * grad + tmp2
+                tmp2 = torch.add(tmp2, grad, alpha=-1.0/self.L )
                 tmp = self.regul.prox(tmp2, 1.0 / self.L)
                 fprox = self.loss.eval_tensor(tmp)
                 tmp2 = torch.clone(tmp)
@@ -78,7 +80,7 @@ class FISTA_Solver(ISTA_Solver):
         diff = diff - weight
         old_t = self.t
         self.t = (1.0 + math.sqrt(1 + 4 * self.t * self.t)) / 2
-        self.labels = self.labels + diff * (FeatureType(1.0) - old_t) / self.t
+        self.labels = self.labels + diff * (1.0 - old_t) / self.t
     
     def print(self) -> None:
         logger.info("FISTA Solver")
