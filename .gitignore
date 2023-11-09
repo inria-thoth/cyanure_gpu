@@ -2,3 +2,4 @@
 .vscode/settings.json
 cyanure_pytorch.egg-info/*
 *.npz
+.vscode/*
