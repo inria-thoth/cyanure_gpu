@@ -1,5 +1,4 @@
 class ProblemParameters:
-    # TODO ADD TYPE
     lambda_1: float
     lambda_2: float
     lambda_3: float

@@ -1,6 +1,5 @@
 class ModelParameters:
 
-    # TODO ADD TYPE
     max_iter: int
     tol: float
     duality_gap_interval: int
