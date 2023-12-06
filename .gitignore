@@ -3,3 +3,5 @@
 cyanure_pytorch.egg-info/*
 *.npz
 .vscode/*
+*.npy
+*.json
