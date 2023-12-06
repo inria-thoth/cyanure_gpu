@@ -1,13 +1,12 @@
 import torch
-import math
 
-from cyanure_pytorch.losses.loss import Loss
+from cyanure_pytorch.losses.loss import LinearLossVec
 
 from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 
-class LogisticLoss(Loss):
+class LogisticLoss(LinearLossVec):
 
     def __init__(self, data : torch.Tensor, y : torch.Tensor, intercept : bool):
         super().__init__(data, y, intercept)
@@ -16,9 +15,9 @@ class LogisticLoss(Loss):
     def eval(self, input : torch.Tensor, i : int) -> float:
         res = self.labels[i] * self.pred(i,input)
         if res > 0:
-            return math.log(1.0 + math.exp(-res))
+            return torch.log(1.0 + torch.exp(-res))
         else:
-            return math.log(1.0 + math.exp(res))
+            return torch.log(1.0 + torch.exp(res))
 
     def eval_tensor(self, input : torch.Tensor) -> float:
         tmp = self.pred_tensor(input)
@@ -31,7 +30,6 @@ class LogisticLoss(Loss):
 
     def fenchel(self, input : torch.Tensor) -> float:
         
-        sum_value = 0
         n = input.size(dim=0)
         prod = torch.mul(self.labels, input)
         sum_vector = torch.special.xlogy(1.0+prod, 1.0+prod)+torch.special.xlogy(-prod, -prod)
@@ -40,7 +38,7 @@ class LogisticLoss(Loss):
     def scal_grad(self, input : torch.Tensor, i : int) -> float:
         label = self.labels[i]
         ss = self.pred(i,input)
-        s = -label/(1.0+math.exp(label*ss))
+        s = -label/(1.0+torch.exp(label*ss))
     
         return s
 
@@ -48,7 +46,8 @@ class LogisticLoss(Loss):
         grad1 = self.pred_tensor(input)
         grad1 = torch.mul(grad1, self.labels)
         grad1 = 1.0 / (torch.exp(grad1) + 1.0)
-        grad1 = torch.mul(-grad1, self.labels)
+        grad1 = torch.mul(grad1, self.labels)
+        grad1 = torch.neg(grad1)
 
         return grad1
 
