@@ -1,13 +1,13 @@
 import torch
 
-from cyanure_pytorch.losses.loss import Loss
+from cyanure_pytorch.losses.loss import LinearLossVec
 
 from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 
 
-class SquareLoss(Loss):
+class SquareLoss(LinearLossVec):
     
     def __init__(self, data : torch.Tensor, y : torch.Tensor, intercept : bool):
         super().__init__(data, y, intercept)
