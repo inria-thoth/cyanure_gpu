@@ -30,7 +30,7 @@ class Regularizer:
     def is_lazy(self) -> bool:
         return false 
 
-    def lazy_prox(self, input : torch.Tensor, output : torch.Tensor, indices: torch.Tensor, eta : float) -> None:
+    def lazy_prox(self, input : torch.Tensor, indices: torch.Tensor, eta : float) -> None:
         return None
 
     def provides_fenchel(self) -> bool: 
