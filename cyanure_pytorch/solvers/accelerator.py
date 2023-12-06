@@ -224,7 +224,6 @@ class QNing(Catalyst):
     def get_gradient(self, weight : torch.Tensor) -> torch.Tensor:
         self.loss_ppa.anchor_point = self.y
         weight = self.auxiliary_solver.solve(self.y, weight)
-        self.auxiliary_solver.ini = weight
         self.gk = torch.clone(self.y)
         self.gk = torch.add(self.gk * self.kappa, weight, alpha=-self.kappa)
         self.Fk = self.loss_ppa.eval_tensor(weight) + self.regul.eval_tensor(weight)
