@@ -1,25 +1,29 @@
+import copy
+
 import torch
 import torch.nn
 
-import copy
-
+from cyanure_pytorch.erm.erm import Estimator
 from cyanure_pytorch.erm.param.model_param import ModelParameters
 from cyanure_pytorch.erm.param.problem_param import ProblemParameters
-from cyanure_pytorch.erm.erm import Estimator
-from cyanure_pytorch.regularizers.regularizer import Regularizer
-from cyanure_pytorch.solvers.solver import Solver
+from cyanure_pytorch.logger import setup_custom_logger
+from cyanure_pytorch.losses.logistic import LogisticLoss
 from cyanure_pytorch.losses.loss import Loss
 from cyanure_pytorch.losses.square import SquareLoss
-from cyanure_pytorch.losses.logistic import LogisticLoss
+from cyanure_pytorch.regularizers.regularizer import Regularizer
 from cyanure_pytorch.regularizers.ridge import Ridge
+from cyanure_pytorch.solvers.accelerator import Catalyst, QNing
 from cyanure_pytorch.solvers.ista import ISTA_Solver
-from cyanure_pytorch.solvers.accelerator import QNing, Catalyst
+from cyanure_pytorch.solvers.solver import Solver
+from cyanure_pytorch.constants import EPSILON
 
-from cyanure_pytorch.logger import setup_custom_logger
+from typing import Tuple
 
 logger = setup_custom_logger("INFO")
 
 class SimpleErm(Estimator):
+
+    global EPSILON
 
     def __init__(self, initial_weight : torch.Tensor, weight : torch.Tensor, problem_parameters: ProblemParameters, model_parameters: ModelParameters, optim_info: torch.Tensor, dual_variable : torch.Tensor):
         super().__init__(problem_parameters, model_parameters, optim_info)
@@ -27,7 +31,7 @@ class SimpleErm(Estimator):
         self.weight = weight
         self.dual_variable = dual_variable
 
-    def solve_problem(self, features : torch.Tensor, labels : torch.Tensor) -> torch.Tensor:
+    def solve_problem(self, features : torch.Tensor, labels : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         
         if (self.model_parameters.verbose):
             pass
@@ -37,14 +41,13 @@ class SimpleErm(Estimator):
         loss = self.get_loss(features, labels)
         regul = self.get_regularization()
         solver = None
-        weight = None
 
         if (self.model_parameters.max_iter == 0):
             parameter_tmp = self.model_parameters
             parameter_tmp.verbose = False
             solver = ISTA_Solver(loss,  regul, parameter_tmp)
             solver.eval(self.initial_weight)
-            weight = torch.clone(self.initial_weight)
+            self.weight = torch.clone(self.initial_weight)
         else:
             if (self.problem_parameters.regul == "L2" and not self.problem_parameters.intercept):
                 if (self.model_parameters.solver == "SVRG"):
@@ -63,7 +66,7 @@ class SimpleErm(Estimator):
                 solver = self.get_solver(loss, regul, self.model_parameters)
 
             if (solver is None):
-                weight = torch.clone(self.initial_weight)
+                self.weight = torch.clone(self.initial_weight)
                 return None
 
             if (self.problem_parameters.intercept):
@@ -80,7 +83,7 @@ class SimpleErm(Estimator):
                 self.weight = data.reverse_intercept(self.weight)
 
         if (self.problem_parameters.regul == "L1"):
-            weight[abs(self.weight) < EPSILON] = 0
+            self.weight[abs(self.weight) < EPSILON] = 0
 
         if (self.weight is None):
             self.weight = self.initial_weight
@@ -169,8 +172,9 @@ class SimpleErm(Estimator):
         elif solver_type == "ACC_SVRG":
             solver = Acc_SVRG_Solver(loss, regul, param)
         else:
-            raise NotImplementedError("This solver is not implemented !")
             solver = None
+            raise NotImplementedError("This solver is not implemented !")
+            
         return solver
 
 
