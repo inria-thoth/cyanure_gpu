@@ -5,3 +5,4 @@ cyanure_pytorch.egg-info/*
 .vscode/*
 *.npy
 *.json
+build/*
