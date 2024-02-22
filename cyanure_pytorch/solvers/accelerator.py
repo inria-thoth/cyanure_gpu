@@ -24,7 +24,7 @@ class Catalyst(Solver):
         self.kappa = None
         self.alpha = None
         self.mu = None
-        self.auxiliary_solver = None;
+        self.auxiliary_solver = None
         self.loss_ppa = None
         self.freq_restart = param.max_iter + 2 if solver.regul.strong_convexity() > 0 else param.freq_restart
         self.accelerated_solver = True
@@ -144,8 +144,8 @@ class QNing(Catalyst):
             self.auxiliary_solver.save_state()
             for ii in range(max_iter):
                 self.y = torch.clone(oldyk)
-                self.y = torch.sub(self.y, g, alpha=self.etak)
-                self.y = torch.add(self.y, oldgk, alpha=((self.etak - 1.0) / self.kappa))
+                self.y.sub_(g, alpha=self.etak)
+                self.y.add_(oldgk, alpha=((self.etak - 1.0) / self.kappa))
                 weight = self.get_gradient(weight) # _gk = kappa(x-y)
                 if (self.etak == 0 or self.Fk <= (oldFk - (0.25 / self.kappa) * torch.pow(torch.linalg.vector_norm(oldgk), 2))):
                     break
@@ -193,14 +193,14 @@ class QNing(Catalyst):
             if (ii == self.m - 1):
                 gamma = torch.dot(cols, coly) / torch.pow(torch.linalg.vector_norm(coly), 2)
             alphas[ind] = self.rhos[ind] * torch.dot(cols, g)
-            g = torch.add(g, coly, alpha=-alphas[ind])
+            g.add_(coly, alpha=-alphas[ind])
         g = g * gamma
         for ii in range(max(self.m - self.l_memory, 0), self.m):
             ind = ii % self.l_memory
             cols = self.ss[:, ind]
             coly = self.ys[:, ind]
             beta = self.rhos[ind] * torch.dot(coly, g)
-            g = torch.add(g, cols, alpha=alphas[ind] - beta)
+            g.add_(cols, alpha=alphas[ind] - beta)
         return g
 
     def update_lbfgs_matrix(self, sk : torch.Tensor, yk : torch.Tensor) -> None:

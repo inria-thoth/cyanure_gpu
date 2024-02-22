@@ -1,4 +1,5 @@
 import torch
+import math
 
 from cyanure_pytorch.regularizers.regularizer import Regularizer
 from cyanure_pytorch.erm.param.problem_param import ProblemParameters
@@ -14,7 +15,8 @@ class Ridge(Regularizer):
 
     def prox(self, input : torch.Tensor, eta : float) -> torch.Tensor:
         output = torch.clone(input)
-        output = output * (1.0 / (1.0 + self.lambda_1 * eta))
+        scaling_factor = (1.0 / (1.0 + self.lambda_1 * eta))
+        output *= scaling_factor  
         if (self.intercept):
             n = input.size(dim=0)
             output[n - 1] = input[n - 1]
@@ -23,14 +25,14 @@ class Ridge(Regularizer):
 
     def eval_tensor(self, input : torch.Tensor) -> float:
         n = input.size(dim=0)
-        res = torch.pow(torch.linalg.vector_norm(input), 2)
+        res = torch.sum(torch.tensordot(input, input, dims=2))
         return (0.5 * self.lambda_1 * (res - input[n - 1] * input[n - 1]) if self.intercept else 0.5 * self.lambda_1 * res)
 
     def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
         if (self.intercept and (abs(grad2[grad2.size(dim=0) - 1]) > 1e-6)):
             output = float("inf")
         else:
-            output = self.eval_tensor(grad2) / (self.lambda_1 * self.lambda_1)
+            output = self.eval_tensor(grad2) / (math.pow(self.lambda_1, 2))
         return output
 
     def print(self) -> None:
@@ -39,8 +41,9 @@ class Ridge(Regularizer):
     def strong_convexity(self) -> float:
         return 0 if self.intercept else self.lambda_1
 
-    def lazy_prox(self, input : torch.Tensor, output : torch.Tensor, indices : torch.Tensor, eta : float) -> None:
+    def lazy_prox(self, input : torch.Tensor, indices : torch.Tensor, eta : float) -> None:
         scal = 1.0 / (1.0 + self.lambda_1 * eta)
+        output = torch.Tensor(input.size())
         p = input.size(dim=0)
         r = indices.size(dim=0)
         for jj in range(r):
@@ -48,6 +51,7 @@ class Ridge(Regularizer):
         if (self.intercept):
             output[p - 1] = input[p - 1]
 
+        return output
 
     def is_lazy(self) -> bool:
         return True

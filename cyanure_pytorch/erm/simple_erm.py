@@ -34,9 +34,8 @@ class SimpleErm(Estimator):
     def solve_problem(self, features : torch.Tensor, labels : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         
         if (self.model_parameters.verbose):
-            pass
-            #data.print()
-
+            logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
+            
         self.verify_input(features)
         loss = self.get_loss(features, labels)
         regul = self.get_regularization()

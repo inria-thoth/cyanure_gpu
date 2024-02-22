@@ -1,6 +1,7 @@
 import torch
 
 from cyanure_pytorch.erm.erm import Estimator
+from cyanure_pytorch.erm.simple_erm import SimpleErm
 from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 from cyanure_pytorch.erm.param.model_param import ModelParameters
 from cyanure_pytorch.logger import setup_custom_logger
@@ -13,6 +14,7 @@ from cyanure_pytorch.solvers.accelerator import Catalyst, QNing
 from cyanure_pytorch.solvers.ista import ISTA_Solver
 from cyanure_pytorch.solvers.solver import Solver
 from cyanure_pytorch.losses.multi_class_logistic import MultiClassLogisticLoss
+from cyanure_pytorch.losses.loss_matrix import LossMat
 from cyanure_pytorch.regularizers.regularizer_matrix import RegMat, RegVecToMat
 
 from cyanure_pytorch.constants import EPSILON, NUMBER_OPTIM_PROCESS_INFO, DEVICE
@@ -39,25 +41,39 @@ class MultiErm(Estimator):
     # W0 is p x nclasses if no intercept (or p+1 x nclasses with intercept)
     # prediction model is   W0^FeatureType X  gives  nclasses x n
     def solve_problem_vector(self, features : torch.Tensor, labels_vector : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        import time 
+        
         self.verify_input(features)
-
+        # print(f"Starting Memory Usage Vector: {torch.cuda.memory_allocated() / 1e6} MB")
         nclass = torch.max(labels_vector) + 1
-        loss_string = self.problem_parameters.loss
+        loss_string = self.problem_parameters.loss.upper()
+
         if (super().is_regression_loss(loss_string) or not super().is_loss_for_matrices(loss_string)):
             n = labels_vector.size(dim=0)
-            labels = torch.full((int(nclass.item()), n), fill_value=-1.0).to(DEVICE)
+            
+            import numpy as np
+            initial_time = time.time()
+            labels_np = np.full((int(nclass.item()), n), fill_value=-1.0)
 
-            for index in range(n):
-                labels[int(labels_vector[index]), index] = 1.0
-            erm_tmp = MultiErm(torch.Tensor(self.initial_weight), torch.Tensor(self.weight), self.problem_parameters, self.model_parameters, self.optim_info, dual_variable=self.dual_variable)
+            # Assuming labels_vector is a PyTorch tensor
+            labels_vector_np = labels_vector.cpu().numpy()
+
+            # Set the corresponding elements to 1.0
+            labels_np[labels_vector_np.astype("int32"), np.arange(n)] = 1.0
+
+            # Convert NumPy array to PyTorch tensor
+            labels = torch.tensor(labels_np.astype("float32"), device=DEVICE)
+            print(f"Initialize ERM : {time.time() - initial_time}")
+            
+            erm_tmp = MultiErm(self.initial_weight, self.weight, self.problem_parameters, self.model_parameters, self.optim_info, dual_variable=self.dual_variable)
             return erm_tmp.solve_problem_matrix(features, labels)
 
         if (self.model_parameters.verbose):
-            # data.print();
+            logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
             pass
 
-        loss = MultiClassLogisticLoss(features, labels_vector, self.problem_parameters);
-        if (loss_string != 'MULTI_LOGISTIC'):
+        loss = MultiClassLogisticLoss(features, labels_vector, self.problem_parameters.intercept)
+        if (loss_string != 'MULTICLASS-LOGISTIC'):
             logger.error("Multilog loss is the only multi class implemented loss!")
             logger.info("Multilog loss is used!")
         
@@ -74,13 +90,13 @@ class MultiErm(Estimator):
     # prediction model is   W0^FeatureType X  gives  nclasses x n
     def solve_problem_matrix(self, features : torch.Tensor, labels : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         self.verify_input(features)
+        # print(f"Starting Memory Usage Matrix: {torch.cuda.memory_allocated() / 1e6} MB")
+        loss_string = self.problem_parameters.loss.upper()
+        regul_string = self.problem_parameters.regul.upper()
 
-        loss_string = self.problem_parameters.loss
-        regul_string = self.problem_parameters.regul
-        if (super().is_regul_for_matrices(regul_string) or not super().is_loss_for_matrices(loss_string)):
-
+        if (super().is_regul_for_matrices(regul_string) or super().is_loss_for_matrices(loss_string)):
             if (self.model_parameters.verbose):
-                # data.print();
+                logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
                 pass
 
             loss = self.get_loss_matrix(features, labels)
@@ -90,20 +106,21 @@ class MultiErm(Estimator):
             transpose = loss.transpose()
 
             regul = self.get_regul_mat(n_class, transpose)
+            # print(f"Starting Memory Usage Before Solve: {torch.cuda.memory_allocated() / 1e6} MB")
             return self.solve_mat(loss, regul)
         else:
             self.weight = self.initial_weight
             n_class = self.initial_weight.size(dim=1)
-            duality_gap_interval = max(self.model.duality_gap_interval, 1)
-            self.optim_info = torch.zeros([n_class, NUMBER_OPTIM_PROCESS_INFO, max(self.model.max_iter / duality_gap_interval, 1)])
+            duality_gap_interval = max(self.model_parameters.duality_gap_interval, 1)
+            self.optim_info = torch.zeros([n_class, NUMBER_OPTIM_PROCESS_INFO, int(max(self.model_parameters.max_iter / duality_gap_interval, 1))])
             parameter_tmp = self.model_parameters
             parameter_tmp.verbose = False
             if (self.model_parameters.verbose):
-                # data.print();
+                logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
                 pass
             initial_time = time.time()
             for ii in range (n_class):
-                optim_info_col = torch.zeros([1, NUMBER_OPTIM_PROCESS_INFO, max(self.model.max_iter / duality_gap_interval, 1)])
+                optim_info_col = torch.zeros([1, NUMBER_OPTIM_PROCESS_INFO, int(max(self.model_parameters.max_iter / duality_gap_interval, 1))])
                 initial_weight_col = self.initial_weight[:, ii]
                 weight_col = self.weight[:, ii]
                 labels_col = labels[ii, :]
@@ -168,8 +185,9 @@ class MultiErm(Estimator):
 
     def solve_mat(self, loss : Loss, regul : Regularizer) -> Tuple[torch.Tensor, torch.Tensor]:
 
+        import time 
+        initial_time = time.time()
         solver = None
-
         if (self.model_parameters.max_iter == 0):
             parameter_tmp = self.model_parameters
             parameter_tmp.verbose = False
@@ -179,31 +197,34 @@ class MultiErm(Estimator):
                 solver.eval(self.initial_weight_transposed)
             else:
                 solver.eval(self.initial_weight)
-            weight = torch.clone(self.initial_weight)        
+            self.weight = torch.clone(self.initial_weight)        
         else:
             solver = self.get_solver(loss, regul, self.model_parameters)
             
             if (solver is None):
-                weight = torch.clone(self.initial_weight)
-                return None
-
+                self.weight = torch.clone(self.initial_weight)
+                return solver.get_optim_info(), self.weight
+            # print(f"Starting Memory Usage Before Inner Solve: {torch.cuda.memory_allocated() / 1e6} MB")
             new_initial_weight = None
             if (self.problem_parameters.intercept):
-                loss.set_intercept(W0, new_W0);
+                loss.set_intercept(self.initial_weight, new_initial_weight);
             else:
                 new_initial_weight = self.initial_weight
             if (self.dual_variable is not None and self.dual_variable.size(dim=0) != 0):
                 solver.set_dual_variable(self.dual_variable)
+            # print(f"Intermediate Memory Usage Before Inner Solve: {torch.cuda.memory_allocated() / 1e6} MB")
             if (loss.transpose()):
                 weight_transposed = None
                 initial_weight_transposed = torch.transpose(new_initial_weight, 0, 1)
+                print(f"Solve Mat: {time.time() - initial_time}")
                 weight_transposed = solver.solve(initial_weight_transposed, weight_transposed)
                 self.weight = torch.transpose(weight_transposed, 0, 1)
             else:
+                print(f"Solve Mat: {time.time() - initial_time}")
                 self.weight = solver.solve(new_initial_weight, self.weight)
 
             if (self.problem_parameters.intercept):
-                loss.reverse_intercept(W);
+                loss.reverse_intercept(self.weight);
 
         if (self.problem_parameters.regul == "L1"):
             self.weight[abs(self.weight) < EPSILON] = 0

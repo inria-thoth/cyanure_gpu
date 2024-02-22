@@ -28,7 +28,7 @@ class Regularizer:
         return
 
     def is_lazy(self) -> bool:
-        return false 
+        return False 
 
     def lazy_prox(self, input : torch.Tensor, indices: torch.Tensor, eta : float) -> None:
         return None

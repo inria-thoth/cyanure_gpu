@@ -97,14 +97,17 @@ class Solver:
         if (not self.regul.provides_fenchel() or not self.loss.provides_fenchel()):
             logger.error("Error: no duality gap available")
             return -float("Inf")
-            
-        grad2 = None
-        grad1, grad2 = self.loss.get_dual_variable(weight, grad2)
-        dual = - self.regul.fenchel(grad1, grad2)
-        return dual - self.loss.fenchel(grad1)
+  
+        grad1, grad2 = self.loss.get_dual_variable(weight)
+        dual = self.regul.fenchel(grad1, grad2)
+        loss_fenchel = self.loss.fenchel(grad1)
+        res = dual + loss_fenchel
+        return - res
 
     def test_stopping_criterion(self, weight: torch.Tensor, iteration: int) -> bool:
-        primal = self.loss.eval_tensor(weight) + self.regul.eval_tensor(weight)
+        eval_loss = self.loss.eval_tensor(weight)
+        eval_regul = self.regul.eval_tensor(weight)
+        primal = eval_loss + eval_regul
         self.best_primal = min(self.best_primal, primal)
         ii = max(int(iteration / self.duality_gap_interval) - 1, 0)
         sec = self.elapsed_time
@@ -113,9 +116,9 @@ class Solver:
             self.best_weight = torch.clone(weight)
         if (self.verbose):
             if (primal == self.best_primal):
-                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + ", time: " + str(sec))
+                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + ", time: " + "{:.5f}".format(sec))
             else:
-                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + ", best primal: " + str(self.best_primal) + ", time: " + str(sec))
+                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + ", best primal: " + str(self.best_primal) + ", time: " + "{:.5f}".format(sec))
         optim[0] = iteration
         optim[1] = primal
         optim[5] = sec
@@ -138,12 +141,14 @@ class Solver:
             elif(duality_gap <= 0 ):
                 logger.warning("Your problem is prone to numerical instability. It would be safer to use double.")
                 stop = True
+            self.optim_info[:, ii] = optim
             return stop
         else:
             self.previous_weight -= weight
-            diff = math.sqrt(torch.square(self.previous_weight) / max(EPSILON, torch.square(self.weight)))
+            diff = torch.sqrt(torch.square(self.previous_weight) / max(EPSILON, torch.square(self.weight)))
             self.previous_weight = torch.clone(weight)
             optim[4] = diff
+            self.optim_info[:, ii] = optim
             return diff < self.tol
 
     @abc.abstractmethod

@@ -17,7 +17,7 @@ class Estimator:
         self.optim_info = optim_info
 
     def is_loss_for_matrices(self, loss: str) -> bool:
-        return loss == "SQUARE" or loss == "MULTI_LOGISTIC"
+        return loss == "SQUARE" or loss == "MULTICLASS-LOGISTIC"
     
 
     def is_regression_loss(self, loss: str) -> bool:

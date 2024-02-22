@@ -37,13 +37,12 @@ class ISTA_Solver(Solver):
             while (iter < self.max_iter_backtracking):
                 
                 tmp2 = torch.clone(weight)
-                tmp2 = torch.add(tmp2, grad, alpha=-1.0/self.L )
+                tmp2.sub_(grad, alpha=1.0/self.L)
                 tmp = self.regul.prox(tmp2, 1.0 / self.L)
                 fprox = self.loss.eval_tensor(tmp)
                 tmp2 = torch.clone(tmp)
-                tmp2 = torch.sub(tmp2, weight)
-
-                if (fprox <= fx + torch.dot(grad, tmp2) + 0.5 * self.L * torch.pow(torch.linalg.vector_norm(tmp2), 2) + EPSILON):
+                tmp2.sub_(weight)
+                if (fprox <= fx + torch.dot(torch.flatten(grad), torch.flatten(tmp2)) + 0.5 * self.L * torch.pow(torch.linalg.vector_norm(tmp2), 2) + EPSILON):
                     weight = torch.clone(tmp)
                     break
                 self.L *= 1.5
@@ -79,7 +78,7 @@ class FISTA_Solver(ISTA_Solver):
         weight = super().solver_aux(self.labels)
         diff = diff - weight
         old_t = self.t
-        self.t = (1.0 + math.sqrt(1 + 4 * self.t * self.t)) / 2
+        self.t = (1.0 + torch.sqrt(1 + 4 * self.t * self.t)) / 2
         self.labels = self.labels + diff * (1.0 - old_t) / self.t
     
     def print(self) -> None:

@@ -8,6 +8,10 @@ import warnings
 import platform
 from cyanure_pytorch.constants import DEVICE
 import torch
+torch.manual_seed(0)
+torch.set_default_dtype(torch.float32)
+torch.set_printoptions(precision=20)
+from torch.profiler import profile, record_function, ProfilerActivity
 from collections import defaultdict
 
 import concurrent.futures
@@ -28,9 +32,11 @@ from cyanure_pytorch.erm.param.model_param import ModelParameters
 from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 
 from cyanure_pytorch.erm.simple_erm import SimpleErm
+from cyanure_pytorch.erm.multi_erm import MultiErm
 
-logger = setup_custom_logger("INFO")
+torch.cuda.memory._record_memory_history()
 
+logger = setup_custom_logger("DEBUG")
 
 class ERM(BaseEstimator, ABC):
     """
@@ -320,10 +326,27 @@ class ERM(BaseEstimator, ABC):
         problem_parameter = ProblemParameters(float(self.lambda_1), float(self.lambda_2), float(self.lambda_3), bool(self.fit_intercept), self.penalty, loss=loss)
 
         optim_info = torch.empty
-        erm = SimpleErm(torch.Tensor(initial_weight).to(DEVICE), torch.Tensor(w).to(DEVICE), problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
+        with torch.no_grad():
+            if self._binary_problem:
+                erm = SimpleErm(torch.Tensor(initial_weight).to(DEVICE), torch.Tensor(w).to(DEVICE), problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
+                self.optimization_info_, w = erm.solve_problem(torch.Tensor(training_data_fortran).to(DEVICE), torch.Tensor(yf).to(DEVICE))
+            else:
+                import time 
+                initial_time = time.time()
+                # with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
+                erm = MultiErm(torch.Tensor(initial_weight).to(DEVICE), torch.Tensor(w).to(DEVICE), problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
+                if len(yf.shape) == 1:
+                    training_data_gpu = torch.Tensor(training_data_fortran).to(DEVICE)
+                    labels_gpu = torch.Tensor(yf).to(DEVICE)
+                    print(f"Tensor on GPU: {time.time() - initial_time}")
+                    self.optimization_info_, w = erm.solve_problem_vector(training_data_gpu, labels_gpu)
+                else:
+                    self.optimization_info_, w = erm.solve_problem_matrix(torch.Tensor(training_data_fortran).to(DEVICE), torch.Tensor(yf).to(DEVICE))
+        
 
-        self.optimization_info_, w = erm.solve_problem(torch.Tensor(training_data_fortran).to(DEVICE), torch.Tensor(yf).to(DEVICE))
+        #print(prof.key_averages())
 
+        #prof.export_chrome_trace("trace_gpu_multi.json")
         if (DEVICE == "cuda"):
             w = w.cpu().numpy()
         else:
@@ -358,7 +381,6 @@ class ERM(BaseEstimator, ABC):
             self.coef_ = w
 
         self.n_features_in_ = self.coef_.shape[0]
-
         return self
 
     @abstractmethod

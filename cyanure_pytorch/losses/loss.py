@@ -40,11 +40,11 @@ class Loss:
         return
 
     @abc.abstractmethod
-    def add_feature_tensor(self, input : torch.Tensor, s : float)-> torch.Tensor:
+    def add_feature_tensor(self, input : torch.Tensor, input2 : torch.Tensor, s : float)-> torch.Tensor:
         return
 
     @abc.abstractmethod
-    def add_feature(self, i : int, s : float) -> torch.Tensor:
+    def add_feature(self, i : int, s : float, input2 : torch.Tensor) -> torch.Tensor:
         return
 
     @abc.abstractmethod
@@ -55,12 +55,10 @@ class Loss:
     def print(self) -> None:
         return 
 
+    @abc.abstractmethod
     # virtual functions that may be reimplemented, if needed
-    def double_add_grad(self, input1 : torch.Tensor, input2 : torch.Tensor, i : int, output : torch.Tensor, eta1 : float = 1.0, eta2 : float = -1.0, dummy : float = 1.0) -> torch.Tensor:
-        output = self.add_grad(input1,i,output,eta1)
-        output = self.add_grad(input2,i,output,eta2)
-
-        return output
+    def double_add_grad(self, input1 : torch.Tensor, input2 : torch.Tensor, i : int, eta1 : float = 1.0, eta2 : float = -1.0, dummy : float = 1.0) -> torch.Tensor:
+        return
 
     def provides_fenchel(self) -> bool:
         return True
@@ -74,9 +72,9 @@ class Loss:
                 self.norms_tensor[i] = torch.pow(torch.linalg.vector_norm(self.input_data[:, i]), 2)
 
             if (self.intercept):
-                norms = norms + math.pow(self.scale_intercept)
+                self.norms_tensor = norms + math.pow(self.scale_intercept, 2)
         
-        return torch.clone(self.norms_tensor)
+        return self.norms_tensor
 
     def norms(self, ind : int) -> float:
         return self.norms[:, ind]
@@ -95,7 +93,12 @@ class Loss:
 
     def grad(self,input : torch.Tensor) -> torch.Tensor:
         tmp = self.get_grad_aux(input)
-        return self.add_dual_pred_tensor(tmp,1.0/tmp.size(dim=0));
+        gradient_size = tmp.size()
+        if (len(gradient_size) > 1):
+            n = gradient_size[1]
+        else:
+            n = gradient_size[0]
+        return self.add_dual_pred_tensor(tmp, None, 1.0/n)
     
     def eval_random_minibatch(self, input: torch.Tensor, minibatch : int) -> float:
         sum = 0
@@ -108,7 +111,7 @@ class Loss:
         n = self.n()
         for ii in range(minibatch):
             coef = 0.0 if ii == 0 else 1.0
-            self.add_grad(input, random.randint(0, sys.maxsize) % n, grad, coef)       
+            grad = self.add_grad(input, random.randint(0, sys.maxsize) % n, coef)       
         return grad * (1.0/minibatch)
     
     def kappa(self) -> float:
@@ -120,10 +123,15 @@ class Loss:
     def get_anchor_point(self, z : torch.Tensor) -> None:
         pass
 
-    def get_dual_variable(self, input : torch.Tensor, grad2 : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_dual_variable(self, input : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         grad1 = self.get_grad_aux(input)
         grad1 = self.get_dual_constraints(grad1)
-        return grad1, self.add_dual_pred_tensor(grad1,1.0/grad1.size(dim=0))
+        gradient_size = grad1.size()
+        if (len(gradient_size) > 1):
+            n = gradient_size[1]
+        else:
+            n = gradient_size[0]
+        return grad1, self.add_dual_pred_tensor(grad1, None, 1.0/n)
     
     # non-virtual function classes
     def n(self) -> int:
@@ -135,7 +143,7 @@ class Loss:
             indices = col
             
     def set_intercept(self, initial_weight : torch.Tensor, weight: torch.Tensor) -> None:
-        self.scale_intercept = math.sqrt(0.1 * torch.pow(torch.linalg.vector_norm(self.input_data), 2) / self.input_data.size(dim=1));
+        self.scale_intercept = torch.sqrt(0.1 * torch.pow(torch.linalg.vector_norm(self.input_data), 2) / self.input_data.size(dim=1));
         weight = torch.clone(initial_weight)
         weight[weight.size(dim=1) - 1] /= self.scale_intercept
 
@@ -166,61 +174,99 @@ class Loss:
     def get_dual_constraints(self, grad1 : torch.Tensor) -> torch.Tensor:
         return 
 
-    def add_dual_pred_tensor(self, input : torch.Tensor, a : float = 1.0, b : float = 1.0) -> torch.Tensor:
-        weight = None
+    @abc.abstractmethod
+    def add_dual_pred_tensor(self, input : torch.Tensor, input2 : torch.Tensor, a : float, b : float) -> torch.Tensor:
+        return 
+    
+    @abc.abstractmethod
+    def add_dual_pred(self, ind : int, a : float, b : float) -> torch.Tensor:
+        return 
+
+    @abc.abstractmethod
+    def pred_tensor(self, input : torch.Tensor, input2 : torch.Tensor) -> torch.Tensor:
+        return 
+
+    @abc.abstractmethod
+    def pred(self, ind : int, input: torch.Tensor, input2 : torch.Tensor) -> float:
+        return 
+
+    
+
+class LinearLossVec(Loss):
+
+    def __init__(self, data : torch.Tensor, y : torch.Tensor, intercept : bool):
+        super().__init__(data, y, intercept)
+
+    def add_grad(self, input : torch.Tensor, i : int, a : float = 1.0) -> torch.Tensor:
+        s = self.scal_grad(input,i);
+        return self.add_dual_pred(i, a*s)
+
+    def double_add_grad(self, input1 : torch.Tensor, input2 : torch.Tensor, i : int, eta1 : float = 1.0, eta2 : float = -1.0, dummy : float = 1.0) -> torch.Tensor:
+        res1 = self.scal_grad(input1, i)
+        res2 = self.scal_grad(input2, i)
+        if (res1 or res2): 
+            return self.add_dual_pred(i, eta1 * res1 + eta2 * res2)
+
+    def add_feature(self, i : int, s : float, input2 : torch.Tensor) -> torch.Tensor:
+        return self.add_dual_pred(i, s, input2);
+
+    def add_feature_tensor(self, input : torch.Tensor, input2 : torch.Tensor, s : float) -> torch.Tensor:
+        return self.add_dual_pred_tensor(input, input2, s, 1.0)
+    
+    @abc.abstractmethod
+    def scal_grad(self, input : torch.Tensor, i : int)-> float:
+        return
+
+    def add_dual_pred_tensor(self, input : torch.Tensor, input2 : torch.Tensor = None, a : float = 1.0, b : float = 1.0) -> torch.Tensor:
         if (self.intercept):
             m = self.input_data.size(dim=0)
-            output = torch.Tensor((1, m + 1))
-            weight = self.get_w(input, weight)
+            output = torch.Tensor((m + 1))
+            weight = self.get_w(input)
             weight = a * torch.matmul(self.input_data, input) + weight * b
-            output[:, m] = self.scale_intercept * a * input.sum()
+            output[m] = self.scale_intercept * a * input.sum()
         else:
-            output = a * torch.matmul(self.input_data, input)
-
+            if input2 is None:
+                output = a * torch.matmul(self.input_data, input)
+            else:
+                output = a * torch.matmul(self.input_data, input) + b * input2
         return output
 
-    def add_dual_pred(self, ind : int, output : torch.Tensor, a : float = 1.0, b : float = 1.0) -> torch.Tensor:
+    def add_dual_pred(self, ind : int, a : float = 1.0, b : float = 1.0, input2 : torch.Tensor = None) -> torch.Tensor:
         col = self.input_data[ind, :]
+        if input2 is None:
+            input2 = torch.zeros((m))
         if (self.intercept):
             m = self.input_data.size(dim=0)
-            output.resize_((1, m + 1))
-            weight = self.get_w(input, weight)
+            output = torch.Tensor((m + 1))
+            weight = self.get_w(input)
             col = a * weight +  b * col 
-            output[:, m] = a * self.scale_intercept + b * output[:, m]
+            output[m] = a * self.scale_intercept + b * output[m]
         else:
-            output.resize_((1, m))
-            output = a * weight +  b * output 
+            output = a * col +  b * input2
 
         return output
         
-    def pred_tensor(self, input : torch.Tensor) -> torch.Tensor:
-        weight = None
+    def pred_tensor(self, input : torch.Tensor, input2 : torch.Tensor = None) -> torch.Tensor:
         if (self.intercept): 
-            weight = self.get_w(input, weight)
+            weight = self.get_w(input)
             output = torch.matmul(torch.transpose(self.input_data, 0, 1), weight)
             return output  + (input[input.size(dim=1) - 1] * self.scale_intercept)
         else:
             return torch.matmul(torch.transpose(self.input_data, 0, 1), input)
 
-    def pred(self, ind : int, input: torch.Tensor) -> float:
-        col = None
-        weight = None
+    def pred(self, ind : int, input: torch.Tensor, input2 : torch.Tensor = None) -> float:
         col = self.input_data[ind, :]
         if (self.intercept):
-            self.get_w(input, weight)
+            weight = self.get_w(input)
             return torch.dot(col, weight) + input[:, input.n() - 1] * self.scale_intercept
         else:
             return torch.dot(col, input)
 
-    def get_w(self, input : torch.Tensor, weight : torch.Tensor) -> torch.Tensor:
+    def get_w(self, input : torch.Tensor) -> torch.Tensor:
         n = input.n()
-        if (len(weight.size()) == 1):
-            weight = input[:n-1]
-        else:
-            weight = input[:, :n-1]
+        return input[:n-1]
 
-        return weight
-
+      
 
 class ProximalPointLoss:
 
@@ -231,13 +277,13 @@ class ProximalPointLoss:
         self.loss = loss
 
     def eval_tensor(self, input : torch.Tensor) -> float:
-        tmp = torch.clone(input);
-        tmp = torch.sub(tmp, self.anchor_point)
+        tmp = torch.clone(input)
+        tmp.sub_(self.anchor_point)
         return self.loss.eval_tensor(input)+ 0.5 * self.kappa * torch.pow(torch.linalg.vector_norm(tmp), 2)
 
     def eval(self, input : torch.Tensor, i: int) -> float:
-        tmp = torch.clone(input);
-        tmp = torch.sub(tmp, self.anchor_point)
+        tmp = torch.clone(input)
+        tmp.sub_(self.anchor_point)
         return self.loss.eval(input, i) + 0.5 * self.kappa * torch.pow(torch.linalg.vector_norm(tmp), 2)
 
     def grad(self, input : torch.Tensor) -> torch.Tensor:
@@ -266,8 +312,8 @@ class ProximalPointLoss:
     
     def eval_random_minibatch(self, input : torch.Tensor, minibatch : int) -> float:
         sum_value = self.loss.eval_random_minibatch(input, minibatch)
-        tmp = torch.clone(input);
-        tmp = torch.sub(tmp, self.anchor_point)
+        tmp = torch.clone(input)
+        tmp.sub_(self.anchor_point)
         return sum_value + 0.5 * self.kappa * torch.pow(torch.linalg.vector_norm(tmp), 2)
 
     def grad_random_minibatch(self, input : torch.Tensor, minibatch : int) -> torch.Tensor:
