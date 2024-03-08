@@ -25,7 +25,7 @@ class Ridge(Regularizer):
 
     def eval_tensor(self, input : torch.Tensor) -> float:
         n = input.size(dim=0)
-        res = torch.sum(torch.tensordot(input, input, dims=2))
+        res = torch.sum(torch.tensordot(input, input, dims=len(input.shape)))
         return (0.5 * self.lambda_1 * (res - input[n - 1] * input[n - 1]) if self.intercept else 0.5 * self.lambda_1 * res)
 
     def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
