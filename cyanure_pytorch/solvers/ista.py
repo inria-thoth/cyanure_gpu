@@ -7,7 +7,7 @@ from cyanure_pytorch.erm.param.model_param import ModelParameters
 
 from cyanure_pytorch.solvers.solver import Solver
 
-from cyanure_pytorch.constants import EPSILON
+from cyanure_pytorch.constants import EPSILON, DEVICE
 
 from cyanure_pytorch.logger import setup_custom_logger
 
@@ -70,16 +70,16 @@ class FISTA_Solver(ISTA_Solver):
 
     def solver_init(self, initial_weight: torch.Tensor) -> None:
         super().solver_init(initial_weight)
-        self.t = 1.0
-        self.labels = torch.clone(initial_weight)
+        self.t = torch.Tensor([1.0]).to(DEVICE)
+        self.y = torch.clone(initial_weight)
     
     def solver_aux(self, weight : torch.Tensor) -> torch.Tensor:
         diff = torch.clone(weight)
-        weight = super().solver_aux(self.labels)
+        weight = super().solver_aux(self.y)
         diff = diff - weight
         old_t = self.t
         self.t = (1.0 + torch.sqrt(1 + 4 * self.t * self.t)) / 2
-        self.labels = self.labels + diff * (1.0 - old_t) / self.t
+        self.y = self.y + diff * (1.0 - old_t) / self.t
     
     def print(self) -> None:
         logger.info("FISTA Solver")
