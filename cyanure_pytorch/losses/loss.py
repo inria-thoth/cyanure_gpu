@@ -72,14 +72,18 @@ class Loss:
                 self.norms_tensor[i] = torch.pow(torch.linalg.vector_norm(self.input_data[:, i]), 2)
 
             if (self.intercept):
-                self.norms_tensor = norms + math.pow(self.scale_intercept, 2)
-        
+                if norms is not None:
+                    self.norms_tensor = norms + math.pow(self.scale_intercept, 2)
+                else:
+                    self.norms_tensor = math.pow(self.scale_intercept, 2)
+
         return self.norms_tensor
 
     def norms(self, ind : int) -> float:
         return self.norms[:, ind]
 
     def lipschitz(self) -> float:
+        norms = None
         norms = self.norms_data(norms)
         return self.lipschitz_constant()*torch.max(norms)
 
@@ -135,7 +139,7 @@ class Loss:
     
     # non-virtual function classes
     def n(self) -> int:
-        return self.labels.size(dim=1)
+        return self.labels.size(0)
 
     def get_coordinates(self, ind : int, indices : torch.Tensor) -> None: 
         if (self.input_data.is_sparse):
@@ -278,7 +282,7 @@ class ProximalPointLoss:
 
     def eval_tensor(self, input : torch.Tensor) -> float:
         tmp = torch.clone(input)
-        tmp.sub_(self.anchor_point)
+        tmp = tmp - (self.anchor_point)
         return self.loss.eval_tensor(input)+ 0.5 * self.kappa * torch.pow(torch.linalg.vector_norm(tmp), 2)
 
     def eval(self, input : torch.Tensor, i: int) -> float:
