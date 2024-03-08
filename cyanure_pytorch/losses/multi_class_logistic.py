@@ -26,7 +26,7 @@ class MultiClassLogisticLoss(LinearLossMat):
         mm_vector, _ = torch.max(tmp, dim=0)
         tmp.sub_(mm_vector.unsqueeze(0).expand(tmp.shape[0], -1))
         tmp.exp_()
-        torch.cuda.memory._dump_snapshot("profile.pickle")
+        
         # Calculate log_sums and sum_value
         log_sums = torch.log(torch.sum(torch.abs(tmp), dim=0))
         sum_value = torch.sum(mm_vector) + torch.sum(log_sums)
@@ -99,7 +99,6 @@ class MultiClassLogisticLoss(LinearLossMat):
         grad1 /= sum_matrix
         
         # Zero out and set the values at labels positions
-        print(len(self.labels))  
         grad1 = grad1 * (1 - torch.nn.functional.one_hot(self.labels.to(torch.int64), int(self.n_classes.item())).T) 
         grad1 -= torch.nn.functional.one_hot(self.labels.to(torch.int64), int(self.n_classes.item())).T * torch.sum(torch.abs(grad1), dim=0, keepdim=True)
         
