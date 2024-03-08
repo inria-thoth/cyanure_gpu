@@ -10,8 +10,10 @@ from cyanure_pytorch.losses.loss import Loss
 from cyanure_pytorch.losses.square_multiclass import SquareLossMat
 from cyanure_pytorch.regularizers.regularizer import Regularizer
 from cyanure_pytorch.regularizers.ridge import Ridge
+from cyanure_pytorch.regularizers.lasso import Lasso
+from cyanure_pytorch.regularizers.none import NoRegul
 from cyanure_pytorch.solvers.accelerator import Catalyst, QNing
-from cyanure_pytorch.solvers.ista import ISTA_Solver
+from cyanure_pytorch.solvers.ista import ISTA_Solver, FISTA_Solver
 from cyanure_pytorch.solvers.solver import Solver
 from cyanure_pytorch.losses.multi_class_logistic import MultiClassLogisticLoss
 from cyanure_pytorch.losses.loss_matrix import LossMat
@@ -93,7 +95,6 @@ class MultiErm(Estimator):
         # print(f"Starting Memory Usage Matrix: {torch.cuda.memory_allocated() / 1e6} MB")
         loss_string = self.problem_parameters.loss.upper()
         regul_string = self.problem_parameters.regul.upper()
-
         if (super().is_regul_for_matrices(regul_string) or super().is_loss_for_matrices(loss_string)):
             if (self.model_parameters.verbose):
                 logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
@@ -134,7 +135,7 @@ class MultiErm(Estimator):
                 self.weight[:, ii] = weight_col
                 self.optim_info[ii] = optim_info_col
                 if (self.model_parameters.verbose):
-                    noptim = optim_info_col.size(dim=2) - 1;
+                    noptim = optim_info_col.size(dim=2) - 1
                     logger.info("Solver " + ii + " has terminated after " + optim_info_col(0, 0, noptim) + " epochs in " + optim_info_col(0, 5, noptim) + " seconds")
                     if (optim_info_col[0, 4, noptim] == 0):
                         logger.info("   Primal objective: " + optim_info_col(0, 1, noptim) + ", relative duality gap: " + optim_info_col(0, 3, noptim))
@@ -194,7 +195,7 @@ class MultiErm(Estimator):
             solver = ISTA_Solver(loss, regul, parameter_tmp)
             if (loss.transpose()):
                 initial_weight_transposed = torch.transpose(self.initial_weight, 0, 1)
-                solver.eval(self.initial_weight_transposed)
+                solver.eval(initial_weight_transposed)
             else:
                 solver.eval(self.initial_weight)
             self.weight = torch.clone(self.initial_weight)        
@@ -216,11 +217,9 @@ class MultiErm(Estimator):
             if (loss.transpose()):
                 weight_transposed = None
                 initial_weight_transposed = torch.transpose(new_initial_weight, 0, 1)
-                print(f"Solve Mat: {time.time() - initial_time}")
                 weight_transposed = solver.solve(initial_weight_transposed, weight_transposed)
                 self.weight = torch.transpose(weight_transposed, 0, 1)
             else:
-                print(f"Solve Mat: {time.time() - initial_time}")
                 self.weight = solver.solve(new_initial_weight, self.weight)
 
             if (self.problem_parameters.intercept):
@@ -279,29 +278,33 @@ class MultiErm(Estimator):
     def get_regul_mat(self, num_class : int, transpose : bool) -> Regularizer:
         regul = None
 
-        self.problem_parameters.regul = self.problem_parameters.regul.upper()
-        regularizer_string = self.problem_parameters.regul
-        if (regularizer_string == "L2"):
-            regul = RegVecToMat(Ridge(self.problem_parameters), self.problem_parameters) if transpose else RegMat(Ridge(self.problem_parameters), self.problem_parameters, num_class, transpose)
-        elif (regularizer_string == "L1"):
-            regul = RegVecToMat(Lasso(self.problem_parameters), self.problem_parameters) if transpose else RegMat(Lasso(self.problem_parameters), self.problem_parameters, num_class, transpose)
-        elif (regularizer_string == "ELASTICNET"):
-            regul = RegVecToMat(ElasticNet(self.problem_parameters), self.problem_parameters) if transpose else RegMat(ElasticNet(self.problem_parameters), self.problem_parameters, num_class, transpose)
-        elif (regularizer_string == "L1BALL"):
-            regul = RegMat(L1Ball(self.problem_parameters), self.problem_parameters, num_class, transpose)
-        elif (regularizer_string == "L2BALL"):
-            regul = RegMat(L2Ball(self.problem_parameters), self.problem_parameters, num_class, transpose)
-        elif (regularizer_string == "L1L2"):
-            regul = MixedL1L2(self.problem_parameters, num_class, transpose)
-        elif (regularizer_string == "L1L2_L1"):
-            regul = MixedL1L2_L1(self.problem_parameters, num_class, transpose)
-        elif (regularizer_string == "L1LINF"):
-            regul = MixedL1Linf(self.problem_parameters, num_class, transpose)
-        elif (regularizer_string == "FUSEDLASSO"):
-            regul = RegMat(FusedLasso(self.problem_parameters), self.problem_parameters, num_class, transpose)
-        elif (regularizer_string is None):
-            pass
+        if self.problem_parameters.regul is not None:
+            self.problem_parameters.regul = self.problem_parameters.regul.upper()
+            regularizer_string = self.problem_parameters.regul
+            if (regularizer_string == "L2"):
+                regul = RegVecToMat(Ridge(self.problem_parameters), self.problem_parameters) if transpose else RegMat(Ridge(self.problem_parameters), self.problem_parameters, num_class, transpose)
+            elif (regularizer_string == "L1"):
+                regul = RegVecToMat(Lasso(self.problem_parameters), self.problem_parameters) if transpose else RegMat(Lasso(self.problem_parameters), self.problem_parameters, num_class, transpose)
+            elif (regularizer_string == "ELASTICNET"):
+                regul = RegVecToMat(ElasticNet(self.problem_parameters), self.problem_parameters) if transpose else RegMat(ElasticNet(self.problem_parameters), self.problem_parameters, num_class, transpose)
+            elif (regularizer_string == "L1BALL"):
+                regul = RegMat(L1Ball(self.problem_parameters), self.problem_parameters, num_class, transpose)
+            elif (regularizer_string == "L2BALL"):
+                regul = RegMat(L2Ball(self.problem_parameters), self.problem_parameters, num_class, transpose)
+            elif (regularizer_string == "L1L2"):
+                regul = MixedL1L2(self.problem_parameters, num_class, transpose)
+            elif (regularizer_string == "L1L2_L1"):
+                regul = MixedL1L2_L1(self.problem_parameters, num_class, transpose)
+            elif (regularizer_string == "L1LINF"):
+                regul = MixedL1Linf(self.problem_parameters, num_class, transpose)
+            elif (regularizer_string == "FUSEDLASSO"):
+                regul = RegMat(FusedLasso(self.problem_parameters), self.problem_parameters, num_class, transpose)
+            elif (regularizer_string is None):
+                pass
+            else:
+                logger.error("Not implemented, no regularization is chosen")
+                regul = NoRegul(self.problem_parameters)
         else:
-            logger.error("Not implemented, no regularization is chosen")
+            regul = NoRegul(self.problem_parameters)
 
         return regul

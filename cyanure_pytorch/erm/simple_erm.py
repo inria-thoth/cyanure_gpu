@@ -13,7 +13,7 @@ from cyanure_pytorch.losses.square import SquareLoss
 from cyanure_pytorch.regularizers.regularizer import Regularizer
 from cyanure_pytorch.regularizers.ridge import Ridge
 from cyanure_pytorch.solvers.accelerator import Catalyst, QNing
-from cyanure_pytorch.solvers.ista import ISTA_Solver
+from cyanure_pytorch.solvers.ista import ISTA_Solver, FISTA_Solver
 from cyanure_pytorch.solvers.solver import Solver
 from cyanure_pytorch.constants import EPSILON
 
