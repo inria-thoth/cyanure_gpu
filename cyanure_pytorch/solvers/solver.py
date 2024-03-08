@@ -5,6 +5,7 @@ import math
 import time
 
 from cyanure_pytorch.erm.param.model_param import ModelParameters
+from cyanure_pytorch.constants import EPSILON
 
 from cyanure_pytorch.logger import setup_custom_logger
 
@@ -23,7 +24,7 @@ class Solver:
         self.max_iter_backtracking = param.max_iter_backtracking
         self.best_dual = -float("Inf")
         self.best_primal = float("Inf")
-        self.optim_info = torch.empty((self.NUMBER_OPTIM_PROCESS_INFO, max(int(param.max_iter / self.duality_gap_interval), 1)))
+        self.optim_info = torch.zeros((self.NUMBER_OPTIM_PROCESS_INFO, max(int(param.max_iter / self.duality_gap_interval), 1)))
         self.L = 0
         self.Li = None
         self.minibatch = param.minibatch
@@ -51,7 +52,7 @@ class Solver:
             if ((it % self.duality_gap_interval) == 0):
                 if (self.test_stopping_criterion(weight, it)):
                     break
-            weight = self.solver_aux(weight)
+            weight = self.solver_aux(weight)            
             self.elapsed_time = time.time() - initial_time
         if (self.verbose):
             logger.info("This is the elapsed time: " + str(self.elapsed_time))
@@ -65,13 +66,12 @@ class Solver:
         for index in range(self.optim_info.size(dim=1)):
             if (self.optim_info[0, index] != 0):
                 count+=1
+
         if (count > 0):
             optim = torch.Tensor(1, self.NUMBER_OPTIM_PROCESS_INFO, count)
-
         for index in range(count):
             for inner_index in range (self.NUMBER_OPTIM_PROCESS_INFO):
                 optim[0, inner_index, index] = self.optim_info[inner_index, index]
-
         if (count > 0):
             return optim
         else:
@@ -145,7 +145,7 @@ class Solver:
             return stop
         else:
             self.previous_weight -= weight
-            diff = torch.sqrt(torch.square(self.previous_weight) / max(EPSILON, torch.square(self.weight)))
+            diff = torch.sqrt(torch.sum(torch.pow(self.previous_weight, 2)) / max(EPSILON, torch.sum(torch.pow(weight, 2))))
             self.previous_weight = torch.clone(weight)
             optim[4] = diff
             self.optim_info[:, ii] = optim
