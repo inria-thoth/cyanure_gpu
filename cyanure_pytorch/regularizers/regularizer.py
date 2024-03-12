@@ -20,7 +20,7 @@ class Regularizer:
         return
 
     @abc.abstractmethod
-    def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
+    def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> tuple[float, torch.Tensor, torch.Tensor]:
         return
 
     @abc.abstractmethod

@@ -20,7 +20,7 @@ class NoRegul(Regularizer):
         return 0
 
     def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
-        return 0
+        return 0, grad1, grad2
 
     def provides_fenchel(self) -> bool:
         return False

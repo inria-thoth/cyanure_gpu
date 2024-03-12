@@ -99,7 +99,7 @@ class Solver:
             return -float("Inf")
   
         grad1, grad2 = self.loss.get_dual_variable(weight)
-        dual = self.regul.fenchel(grad1, grad2)
+        dual, grad1, grad2 = self.regul.fenchel(grad1, grad2)
         loss_fenchel = self.loss.fenchel(grad1)
         res = dual + loss_fenchel
         return - res

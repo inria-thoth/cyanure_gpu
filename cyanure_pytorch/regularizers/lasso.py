@@ -34,7 +34,7 @@ class Lasso(Regularizer):
         n = input.size(dim=0)
         if (mm > self.lambda_1):
             grad1 *= self.lambda_1 / mm
-        return float("inf") if self.intercept and (torch.abs(grad2[n - 1]) > 1e-6) else 0
+        return float("inf") if self.intercept and (torch.abs(grad2[n - 1]) > 1e-6) else 0, grad1, grad2
 
     def print(self) -> None:
         logger.info(self.getName())

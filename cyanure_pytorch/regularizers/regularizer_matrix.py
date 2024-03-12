@@ -19,92 +19,52 @@ class RegMat(Regularizer):
 
     def prox(self, input : torch.Tensor, eta : float) -> torch.Tensor:
         output = torch.clone(input)
-
-        def worker(i, transpose, regularizer):
-            if transpose:
-                colx = input[i, :]
-            else:
-                colx = input[:, i]
-            coly = regularizer.prox(colx, eta)
-            if transpose:
-                output[i, :] = coly
-            else:
-                output[:, i] = coly
-
-        processes = []
         for i in range(self.num_cols):
-            #p = mp.Process(target=worker, args=(i, self.transpose, self.regularizer_list[i]))
-            #processes.append(p)
-            #p.start()
-            if transpose:
+            if self.transpose:
                 colx = input[i, :]
             else:
                 colx = input[:, i]
-            coly = regularizer.prox(colx, eta)
-            if transpose:
+            coly = self.regularizer_list[i].prox(colx, eta)
+            if self.transpose:
                 output[i, :] = coly
             else:
                 output[:, i] = coly
-
-
-        #for p in processes:
-        #    p.join()
 
         return output
 
     def eval(self, input_tensor):
         sum_value = torch.tensor(0.0)  # Initialize as a PyTorch tensor
 
-        def worker(i, transpose, regularizer):
-            if transpose:
+        for i in range(self.num_cols): 
+            if self.transpose:
                 col = input_tensor[i, :]
             else:
                 col = input_tensor[:, i]
-            value = regularizer[i].eval(col)
-            with mp.Lock():
-                sum_value.add_(value)
-
-        processes = []
-        for i in range(self.num_cols): 
-            p = mp.Process(target=worker, args=(i, self.transpose, self.regularizer_list[i]))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
+            value = self.regularizer_list[i].eval(col)
+            sum_value += value
 
         return sum_value
 
     def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
         sum_value = torch.tensor(0.0)  # Initialize as a PyTorch tensor
 
-        def worker(i, transpose, regularizer_list):
-            if transpose:
+        for i in range(self.num_cols):  # Assuming self.num_cols is defined somewhere
+            if self.transpose:
                 col1 = grad1[i, :]
                 col2 = grad2[i, :]
             else:
                 col1 = grad1[:, i]
                 col2 = grad2[:, i]
-            value = regularizer_list[i].fenchel(col1, col2)
-            with mp.Lock():
-                sum_value.add_(value)
-            if transpose:
+            value = self.regularizer_list[i].fenchel(col1, col2)
+            sum_value += value
+            if self.transpose:
                 grad1[i, :] = col1
                 grad2[i, :] = col2
             else:
                 grad1[:, i] = col1
                 grad2[:, i] = col2
 
-        processes = []
-        for i in range(self.num_cols):  # Assuming self.num_cols is defined somewhere
-            p = mp.Process(target=worker, args=(i, self.transpose, self.regularizer_list))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
-
-        return sum_value
+        return sum_value, grad1, grad2
 
     def provides_fenchel(self) -> bool:
         ok = True
@@ -123,25 +83,16 @@ class RegMat(Regularizer):
     def lazy_prox(self, input_tensor, indices, eta):
         output = torch.clone(input_tensor)
 
-        def worker(i, transpose, regularizer_list):
-            if transpose:
+        for i in range(self.num_cols):
+            if self.transpose:
                 colx = input_tensor[i, :]
             else:
                 colx = input_tensor[:, i]
-            coly = regularizer_list[i].lazy_prox(colx, indices, eta)
-            if transpose:
+            coly = self.regularizer_list[i].lazy_prox(colx, indices, eta)
+            if self.transpose:
                 output[i, :] = coly
             else:
                 output[:, i] = coly
-
-        processes = []
-        for i in range(self.num_cols):
-            p = mp.Process(target=worker, args=(i, self.transpose, self.regularizer_list))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
 
         return output
 
@@ -171,8 +122,8 @@ class RegVecToMat(Regularizer):
         if self.intercept:
             bias_nrm_squ = torch.pow(torch.linalg.vector_norm(bias), 2)
             if bias_nrm_squ > 1e-7:
-                return float("inf")
-        return  self.regularizer.fenchel(grad1_flattened, weight) 
+                return float("inf"), grad1, grad2
+        return  self.regularizer.fenchel(grad1_flattened, weight), grad1, grad2
 
     def print(self) -> None:
         self.regularizer.print()
@@ -184,8 +135,8 @@ class RegVecToMat(Regularizer):
         return self.regularizer.lambda_1()
 
     def lazy_prox(self, input : torch.Tensor, indices : torch.Tensor, eta : float) -> None:
-        weight, _ = get_wb(input);
-        return self.regularizer.lazy_prox(weight, indices, eta);
+        weight, _ = self.get_wb(input)
+        return self.regularizer.lazy_prox(weight, indices, eta)
     
     def is_lazy(self) -> bool:
         return self.regularizer.is_lazy()

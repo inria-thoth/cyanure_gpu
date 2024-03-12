@@ -30,10 +30,10 @@ class Ridge(Regularizer):
 
     def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
         if (self.intercept and (abs(grad2[grad2.size(dim=0) - 1]) > 1e-6)):
-            output = float("inf")
+            value = float("inf")
         else:
-            output = self.eval_tensor(grad2) / (math.pow(self.lambda_1, 2))
-        return output
+            value = self.eval_tensor(grad2) / (math.pow(self.lambda_1, 2))
+        return value, grad1, grad2
 
     def print(self) -> None:
         logger.info(self.getName())
