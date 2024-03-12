@@ -14,6 +14,7 @@ from scipy.sparse import lil_matrix
 from sklearn.exceptions import DataConversionWarning
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.validation import check_array, _assert_all_finite
+from sklearn.preprocessing import normalize as skNormalize
 
 from collections.abc import Sequence
 
@@ -21,37 +22,44 @@ from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 
-"""
-def preprocess(X, centering=False, normalize=True, columns=False):
-"""
-"""
-    Preprocess features training data.
 
-    Perform in-place centering or normalization, either of columns or rows
-    of the input matrix X.
+def preprocess(X, centering=False, normalize=True, columns=True):
+    """
+        Preprocess features training data.
 
-    Parameters
-    ----------
-        X (numpy array or scipy sparse CSR matrix):
-            Input matrix
+        Perform in-place centering or normalization, either of columns or rows
+        of the input matrix X.
 
-        centering (boolean) : default=False
-            Perform a centering operation
+        Parameters
+        ----------
+            X (numpy array or scipy sparse CSR matrix):
+                Input matrix
 
-        normalize (boolean): default=True
-            l2-normalization
-input_nameTrue).
-"""
-"""
-    if scipy.sparse.issparse(X):
-        training_data_fortran = X.T
-        if platform.system() == "Windows":
-            training_data_fortran.indptr = training_data_fortran.indptr.astype(np.float64).astype(np.intc)
-            training_data_fortran.indices = training_data_fortran.indices.astype(np.float64).astype(np.intc)
+            centering (boolean) : default=False
+                Perform a centering operation
+
+            normalize (boolean): default=True
+                l2-normalization
+                
+    """
+
+    training_data_fortran = np.asfortranarray(X.T)
+
+    if columns:
+        if centering:
+            column_means = np.mean(training_data_fortran, axis=0, keepdims=True)
+            training_data_fortran = training_data_fortran - column_means
+        if normalize:
+            training_data_fortran = skNormalize(training_data_fortran, axis=0, norm="l2")
     else:
-        training_data_fortran = np.asfortranarray(X.T)
-    return cyanure_lib.preprocess_(training_data_fortran, centering, normalize, not columns)
-"""
+        if centering:
+            row_means = np.mean(training_data_fortran, axis=1, keepdims=True)
+            training_data_fortran = training_data_fortran - row_means
+        if normalize:
+            training_data_fortran = skNormalize(training_data_fortran, axis=1, norm="l2")
+    
+    return training_data_fortran
+
 
 
 def sklearn_catch_warnings(y, check_y_kwargs):
@@ -438,9 +446,9 @@ def check_input_type(X, labels, estimator):
 
     else:
         if scipy.sparse.issparse(X) and X.getformat() != "csr":
-            raise TypeError("The library only supports CSR sparse data.")
+            raise TypeError("The library does not supports sparse data.")
         if scipy.sparse.issparse(labels) and labels.getformat() != "csr":
-            raise TypeError("The library only supports CSR sparse data.")
+            raise TypeError("The library does not supports sparse data.")
 
         X, labels = windows_conversion(X, labels)
 
