@@ -331,18 +331,15 @@ class ERM(BaseEstimator, ABC):
                 erm = SimpleErm(torch.Tensor(initial_weight).to(DEVICE), torch.Tensor(w).to(DEVICE), problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
                 self.optimization_info_, w = erm.solve_problem(torch.Tensor(training_data_fortran).to(DEVICE), torch.Tensor(yf).to(DEVICE))
             else:
-                import time 
-                initial_time = time.time()
-                # with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
+                #with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
                 erm = MultiErm(torch.Tensor(initial_weight).to(DEVICE), torch.Tensor(w).to(DEVICE), problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
                 if len(yf.shape) == 1:
                     training_data_gpu = torch.Tensor(training_data_fortran).to(DEVICE)
                     labels_gpu = torch.Tensor(yf).to(DEVICE)
-                    print(f"Tensor on GPU: {time.time() - initial_time}")
                     self.optimization_info_, w = erm.solve_problem_vector(training_data_gpu, labels_gpu)
                 else:
                     self.optimization_info_, w = erm.solve_problem_matrix(torch.Tensor(training_data_fortran).to(DEVICE), torch.Tensor(yf).to(DEVICE))
-        
+            
 
         #print(prof.key_averages())
 
@@ -351,13 +348,6 @@ class ERM(BaseEstimator, ABC):
             w = w.cpu().numpy()
         else:
             w = w.numpy()
-
-        """
-        cyanure_lib.erm_(
-            univariate=bool(self._binary_problem),
-            , seed=int(self.random_state)
-        )
-        """
 
         if ((self.multi_class == "multinomial" or
            (self.multi_class == "auto" and not self._binary_problem)) and
