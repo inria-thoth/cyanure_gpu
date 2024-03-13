@@ -124,59 +124,30 @@ class LossMat(LinearLossMat):
     def eval_tensor(self, input_tensor : torch.Tensor) -> float:
         sum_value = torch.tensor(0.0)  # Initialize as a PyTorch tensor
 
-        def worker(ii, loss_list, input_tensor):
-            col = input_tensor[:, ii]
-            value = loss_list[ii].eval(col)
-            with mp.Lock():
-                sum_value.add_(value)
-
-        processes = []
         for ii in range(self.num_class):  # Assuming _N is defined somewhere
-            p = mp.Process(target=worker, args=(ii, self.loss_list, input_tensor))
-            processes.append(p)
-            p.start()
+            col = input_tensor[:, ii]
+            value = self.loss_list[ii].eval(col)
 
-        for p in processes:
-            p.join()
-
+            sum_value += value
+            
         return sum_value
 
     def eval(self, input_tensor : torch.Tensor, i : int) -> float:
         sum_value = torch.tensor(0.0)  # Initialize as a PyTorch tensor
 
-        def worker(ii, loss_list, input_tensor, i):
+        for ii in range(self.num_class):
             col = input_tensor[:, ii]
-            value = loss_list[ii].eval(col, i)
-            with mp.Lock():
-                sum_value.add_(value)
+            value = self.loss_list[ii].eval(col, i)
 
-        processes = []
-        for ii in range(self.num_class):  # Assuming _N is defined somewhere
-            p = mp.Process(target=worker, args=(ii, self.loss_list, input_tensor, i))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
+            sum_value += value
 
         return sum_value
 
     def add_grad(self, input_tensor : torch.Tensor, i : int, eta : float = 1.0) -> torch.Tensor:
         output = torch.zeros_like(input_tensor)
 
-        def worker(ii, loss_list, input_tensor, output, i, eta):
-            col_result = loss_list[ii].add_grad(input_tensor[:, ii], i, eta)
-            with mp.Lock():
-                output[:, ii] = col_result
-
-        processes = []
-        for ii in range(self.num_class):  # Assuming self.num_class is defined somewhere
-            p = mp.Process(target=worker, args=(ii, self.loss_list, input_tensor, output, i, eta))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
+        for ii in range(self.num_class): 
+           output[:, ii] = self.loss_list[ii].add_grad(input_tensor[:, ii], i, eta)
 
         return output
 
@@ -184,38 +155,16 @@ class LossMat(LinearLossMat):
         # Input tensor is a vector
         output = torch.Tensor(input1.size())
 
-        def worker(ii, loss_list, input_tensor, output, i):
-            col_result = loss_list[ii].double_add_grad(col_input1, col_input2, i, eta1, eta2, dummy)
-            with mp.Lock():
-                output[:, ii] = col_result
-
-        processes = []
         for ii in range(self.num_class):  # Assuming self.num_class is defined somewhere
-            p = mp.Process(target=worker, args=(ii, self.loss_list, input_tensor, output, i, eta1, eta2, dummy))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
+            output[:, ii] = self.loss_list[ii].double_add_grad(input1[:, ii], input2[:, ii], i, eta1, eta2, dummy)
 
         return output
 
     def grad(self, input_tensor : torch.Tensor) -> torch.Tensor:
         output = torch.zeros_like(input_tensor)
 
-        def worker(ii, loss_list, input_tensor, output):
-            col_result = loss_list[ii].grad(input_tensor[:, ii])
-            with mp.Lock():
-                output[:, ii] = col_result
-
-        processes = []
         for ii in range(self.num_class):  # Assuming self.num_class is defined somewhere
-            p = mp.Process(target=worker, args=(ii, self.loss_list, input_tensor, output))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
+            output[:, ii] = self.loss_list[ii].grad(input_tensor[:, ii])
 
         return output
 
@@ -231,40 +180,19 @@ class LossMat(LinearLossMat):
         grad1 = torch.Tensor((self.n, input.size(dim=1)))
         grad2 = torch.Tensor(input.size())
 
-        def worker(ii, loss_list, input_tensor, grad1, grad2):
-            grad1_col, grad2_col = loss_list[ii].get_dual_variable(input_tensor[:, ii])
-            with mp.Lock():
-                grad1[:, ii] = grad1_col
-                grad2[:, ii] = grad2_col
-
-        processes = []
         for ii in range(self.num_class):  # Assuming self.num_class is defined somewhere
-            p = mp.Process(target=worker, args=(ii, self.loss_list, input_tensor, grad1, grad2))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
-
+            grad1[:, ii], grad2[:, ii] = self.loss_list[ii].get_dual_variable(input[:, ii])
+            
         return grad1, grad2
 
     def fenchel(self, input_tensor : torch.Tensor) -> float:
         sum_value = torch.tensor(0.0)  # Initialize as a PyTorch tensor
 
-        def worker(ii, loss_list, input_tensor):
+        for ii in range(self.num_class):
             col = input_tensor[:, ii]
-            value = loss_list[ii].fenchel(col)
-            with mp.Lock():
-                sum_value.add_(value)
+            value = self.loss_list[ii].fenchel(col)
 
-        processes = []
-        for ii in range(self.num_class):  # Assuming _N is defined somewhere
-            p = mp.Process(target=worker, args=(ii, self.loss_list, input_tensor))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
+            sum_value.add_(value)
 
         return sum_value
 
@@ -279,19 +207,8 @@ class LossMat(LinearLossMat):
     def add_feature_tensor(self, input : torch.Tensor, input2 : torch.Tensor, s : float) -> torch.Tensor:
         output = torch.Tensor(input.size())
 
-        def worker(ii, loss_list, input, input2, output, s):
-            col_result = loss_list[ii].add_feature_tensor(input[ii, :], input2[:, ii], s)
-            with mp.Lock():
-                output[:, ii] = col_result
-
-        processes = []
         for ii in range(self.num_class):  # Assuming self.num_class is defined somewhere
-            p = mp.Process(target=worker, args=(ii, self.loss_list, input, input2, output, s))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
+            output[:, ii] = self.loss_list[ii].add_feature_tensor(input[ii, :], input2[:, ii], s)
 
         return output
     
@@ -299,38 +216,16 @@ class LossMat(LinearLossMat):
         # Input tensor is a vector
         output = torch.Tensor((self.loss_list[0].input_data.size(dim=0) , self.num_class))
 
-        def worker(ii, loss_list, s, input2, output, i):
-            col_result = loss_list[ii].add_feature(i, s[ii], input2[:, ii])
-            with mp.Lock():
-                output[:, ii] = col_result
-
-        processes = []
         for ii in range(self.num_class):  # Assuming self.num_class is defined somewhere
-            p = mp.Process(target=worker, args=(ii, self.loss_list, s, input2, output, i))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
+            output[:, ii] = self.loss_list[ii].add_feature(i, s[ii], input2[:, ii])
 
         return output
 
     def scal_grad(self, input_tensor : torch.Tensor, i : int) -> torch.Tensor:
         output = torch.Tensor(self.num_class)
 
-        def worker(ii, loss_list, input_tensor, output, i):
-            col_result = loss_list[ii].scal_grad(input_tensor[:, ii], i)
-            with mp.Lock():
-                output[ii] = col_result
-
-        processes = []
         for ii in range(self.num_class):  # Assuming self.num_class is defined somewhere
-            p = mp.Process(target=worker, args=(ii, self.loss_list, input_tensor, output, i))
-            processes.append(p)
-            p.start()
-
-        for p in processes:
-            p.join()
+            output[ii] = self.loss_list[ii].scal_grad(input_tensor[:, ii], i)
 
         return output
 
@@ -342,7 +237,7 @@ class LossMat(LinearLossMat):
 
     def lipschitz_constant(self) -> float:
         logger.error("Not used")
-        return 0;
+        return 0
 
     def get_dual_constraints(self, grad1 : torch.Tensor)-> None:
         logger.error("Not used")
