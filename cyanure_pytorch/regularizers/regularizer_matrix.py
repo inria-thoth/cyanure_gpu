@@ -117,13 +117,12 @@ class RegVecToMat(Regularizer):
         return self.regularizer.eval_tensor(weight)
 
     def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
-        grad1_flattened = torch.flatten(grad1)
         weight, bias = self.get_wb(grad2)
         if self.intercept:
             bias_nrm_squ = torch.pow(torch.linalg.vector_norm(bias), 2)
             if bias_nrm_squ > 1e-7:
                 return float("inf"), grad1, grad2
-        return  self.regularizer.fenchel(grad1_flattened, weight), grad1, grad2
+        return  self.regularizer.fenchel(grad1, weight)
 
     def print(self) -> None:
         self.regularizer.print()
