@@ -69,7 +69,7 @@ class SimpleErm(Estimator):
                 return None
 
             if (self.problem_parameters.intercept):
-                data.set_intercept(self.initial_weight, new_initial_weight)
+                new_initial_weight = loss.set_intercept(self.initial_weight)
             else:
                 new_initial_weight = torch.clone(self.initial_weight)
             
@@ -79,7 +79,7 @@ class SimpleErm(Estimator):
             self.weight = solver.solve(new_initial_weight, self.weight)
 
             if (self.problem_parameters.intercept):
-                self.weight = data.reverse_intercept(self.weight)
+                self.weight = loss.reverse_intercept(self.weight)
 
         if (self.problem_parameters.regul == "L1"):
             self.weight[abs(self.weight) < EPSILON] = 0

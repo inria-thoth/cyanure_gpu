@@ -146,10 +146,12 @@ class Loss:
             col = self.input_data.refCol[: , ind]
             indices = col
             
-    def set_intercept(self, initial_weight : torch.Tensor, weight: torch.Tensor) -> None:
-        self.scale_intercept = torch.sqrt(0.1 * torch.pow(torch.linalg.vector_norm(self.input_data), 2) / self.input_data.size(dim=1));
+    def set_intercept(self, initial_weight : torch.Tensor) -> torch.Tensor:
+        self.scale_intercept = torch.sqrt(0.1 * torch.pow(torch.linalg.vector_norm(self.input_data), 2) / self.input_data.size(dim=1))
         weight = torch.clone(initial_weight)
         weight[weight.size(dim=1) - 1] /= self.scale_intercept
+
+        return weight
 
     def reverse_intercept(self, weight: torch.Tensor) -> None:
         if (self.scale_intercept != 1.0):
