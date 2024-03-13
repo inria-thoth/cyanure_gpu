@@ -239,10 +239,10 @@ class LinearLossVec(Loss):
 
     def add_dual_pred(self, ind : int, a : float = 1.0, b : float = 1.0, input2 : torch.Tensor = None) -> torch.Tensor:
         col = self.input_data[ind, :]
+        m = self.input_data.size(dim=0)
         if input2 is None:
             input2 = torch.zeros((m))
         if (self.intercept):
-            m = self.input_data.size(dim=0)
             output = torch.Tensor((m + 1))
             weight = self.get_w(input)
             col = a * weight +  b * col 
