@@ -21,8 +21,7 @@ def setup_custom_logger(level):
 
         handler = logging.StreamHandler()
         handler.setFormatter(formatter)
-        handler.setLevel(LEVEL_CORRESPONDANCE[level])
         LOGGER = logging.getLogger("Cyanure_gpu")
+        LOGGER.setLevel(LEVEL_CORRESPONDANCE[level])
         LOGGER.addHandler(handler)
-        LOGGER.propagate = False
     return LOGGER
