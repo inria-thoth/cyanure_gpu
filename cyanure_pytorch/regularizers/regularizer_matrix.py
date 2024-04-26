@@ -119,7 +119,7 @@ class RegVecToMat(Regularizer):
     def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
         weight, bias = self.get_wb(grad2)
         if self.intercept:
-            bias_nrm_squ = torch.pow(torch.linalg.vector_norm(bias), 2)
+            bias_nrm_squ = torch.linalg.norm(bias)**2
             if bias_nrm_squ > 1e-7:
                 return float("inf"), grad1, grad2
         return  self.regularizer.fenchel(grad1, weight)
