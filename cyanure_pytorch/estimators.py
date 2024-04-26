@@ -34,9 +34,7 @@ from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 from cyanure_pytorch.erm.simple_erm import SimpleErm
 from cyanure_pytorch.erm.multi_erm import MultiErm
 
-torch.cuda.memory._record_memory_history()
-
-logger = setup_custom_logger("DEBUG")
+logger = setup_custom_logger("INFO")
 
 class ERM(BaseEstimator, ABC):
     """
@@ -60,9 +58,6 @@ class ERM(BaseEstimator, ABC):
                 initial_weight[0:-1, ] = np.squeeze(self.coef_)
             else:
                 initial_weight = np.squeeze(self.coef_)
-
-
-        initial_weight = np.asfortranarray(initial_weight, X.dtype)
 
         if self.warm_start and self.solver in ('auto', 'miso', 'catalyst-miso', 'qning-miso'):
             n = X.shape[0]
@@ -103,6 +98,8 @@ class ERM(BaseEstimator, ABC):
                 [p, nclasses], dtype=X.dtype, order='F')
 
         initial_weight = self._warm_start(X, initial_weight, nclasses)
+
+        initial_weight = np.asfortranarray(initial_weight, X.dtype)
 
         return initial_weight, yf, nclasses
 
@@ -295,6 +292,21 @@ class ERM(BaseEstimator, ABC):
             self (ERM):
                 Returns the instance
         """
+        labels = np.squeeze(labels)
+        initial_weight, yf, nclasses = self._initialize_weight(X, labels)
+
+        initial_weight_torch = torch.tensor(initial_weight).to(DEVICE)
+        
+        training_data_fortran = X.T if scipy.sparse.issparse(
+            X) else np.asfortranarray(X.T)
+        w = initial_weight.copy()
+        weight_torch = torch.tensor(w).to(DEVICE)
+
+        training_data_fortran, yf = windows_conversion(training_data_fortran, yf)
+
+        labels_gpu = torch.tensor(yf).to(DEVICE)
+        training_data_gpu = torch.tensor(training_data_fortran).to(DEVICE)
+
         loss = None
         self.le_ = le_parameter
 
@@ -304,47 +316,40 @@ class ERM(BaseEstimator, ABC):
                 if len(np.unique(labels)) != 2:
                     self._binary_problem = False
 
-            loss = "multiclass-logistic"
+            self.loss = "multiclass-logistic"
             logger.info(
                 "Loss has been set to multiclass-logistic because "
                 "the multiclass parameter is set to multinomial!")
 
         if loss is None:
-            loss = self.loss
-
-        labels = np.squeeze(labels)
-        initial_weight, yf, nclasses = self._initialize_weight(X, labels)
-
-        training_data_fortran = X.T if scipy.sparse.issparse(
-            X) else np.asfortranarray(X.T)
-        w = np.copy(initial_weight)
-
-        training_data_fortran, yf = windows_conversion(training_data_fortran, yf)
+            loss = self.loss        
 
         model_parameter = ModelParameters(int(self.max_iter), float(self.tol), int(self.duality_gap_interval), 500, 1, int(self.n_threads), int(self.limited_memory_qning), int(self.fista_restart), bool(self.verbose), False, self.solver)
 
         problem_parameter = ProblemParameters(float(self.lambda_1), float(self.lambda_2), float(self.lambda_3), bool(self.fit_intercept), self.penalty, loss=loss)
 
         optim_info = torch.empty
-        with torch.no_grad():
+        
+        with torch.no_grad():            
             if self._binary_problem:
-                erm = SimpleErm(torch.Tensor(initial_weight).to(DEVICE), torch.Tensor(w).to(DEVICE), problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
-                self.optimization_info_, w = erm.solve_problem(torch.Tensor(training_data_fortran).to(DEVICE), torch.Tensor(yf).to(DEVICE))
+                erm = SimpleErm(initial_weight_torch, weight_torch, problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
+                self.optimization_info_, w = erm.solve_problem(training_data_gpu, labels_gpu)
             else:
-                #with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
-                erm = MultiErm(torch.Tensor(initial_weight).to(DEVICE), torch.Tensor(w).to(DEVICE), problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
-                if len(yf.shape) == 1:
-                    training_data_gpu = torch.Tensor(training_data_fortran).to(DEVICE)
-                    labels_gpu = torch.Tensor(yf).to(DEVICE)
-                    self.optimization_info_, w = erm.solve_problem_vector(training_data_gpu, labels_gpu)
-                else:
-                    self.optimization_info_, w = erm.solve_problem_matrix(torch.Tensor(training_data_fortran).to(DEVICE), torch.Tensor(yf).to(DEVICE))
-            
+                #TODO Remove when done
+                with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True, with_stack=True, experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
+                    erm = MultiErm(initial_weight_torch, weight_torch, problem_parameter, model_parameter, optim_info, dual_variable=self.dual) 
+                    if len(yf.shape) == 1:
+                        self.optimization_info_, w = erm.solve_problem_vector(training_data_gpu, labels_gpu)
+                    else:
+                        self.optimization_info_, w = erm.solve_problem_matrix(training_data_gpu, labels_gpu)
+                    
 
         #print(prof.key_averages())
+        prof.export_chrome_trace("trace_gpu_multi.json")
+        # prof.export_stacks("profiler_stacks_gpu.txt", "self_cuda_time_total")
+        prof.export_stacks("profiler_stacks_cpu.txt", "self_cpu_time_total")
 
-        #prof.export_chrome_trace("trace_gpu_multi.json")
-        if (DEVICE == "cuda"):
+        if ("cuda" in DEVICE.type):
             w = w.cpu().numpy()
         else:
             w = w.numpy()
