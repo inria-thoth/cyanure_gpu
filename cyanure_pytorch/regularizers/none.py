@@ -12,6 +12,7 @@ class NoRegul(Regularizer):
     def __init__(self, model : ProblemParameters) :
         super().__init__(model)     
 
+        self.id = "None"
 
     def prox(self, input : torch.Tensor, eta : float) -> torch.Tensor:    
         return input
