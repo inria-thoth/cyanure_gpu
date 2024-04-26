@@ -22,8 +22,8 @@ class Solver:
         self.tol = param.tol
         self.max_iter = param.max_iter
         self.max_iter_backtracking = param.max_iter_backtracking
-        self.best_dual = -float("Inf")
-        self.best_primal = float("Inf")
+        self.best_dual = torch.tensor(-float("inf"))
+        self.best_primal = torch.tensor(float("inf"))
         self.optim_info = torch.zeros((self.NUMBER_OPTIM_PROCESS_INFO, max(int(param.max_iter / self.duality_gap_interval), 1)))
         self.L = 0
         self.Li = None
@@ -38,28 +38,28 @@ class Solver:
 
         initial_time = time.time()
         weight = torch.clone(initial_weight)
-
+                      
         if (not self.duality and self.max_iter > 1):
-            self.previous_weight = torch.Tensor(initial_weight)
+            self.previous_weight = torch.clone(initial_weight)
 
         self.solver_init(initial_weight)
         if (self.verbose):
             logger.info("*********************************")
             self.loss.print()
             self.regul.print()
-
+        fprox=0
         for it in range(1, self.max_iter + 1):
             if ((it % self.duality_gap_interval) == 0):
                 if (self.test_stopping_criterion(weight, it)):
                     break
-            weight = self.solver_aux(weight)            
+            weight, fprox = self.solver_aux(weight, it)            
             self.elapsed_time = time.time() - initial_time
         if (self.verbose):
             logger.info("This is the elapsed time: " + str(self.elapsed_time))
         if (self.best_primal != float("Inf")):
             weight = torch.clone(self.best_weight)
 
-        return weight
+        return weight, fprox
     
     def get_optim_info(self) -> None:
         count = 0
@@ -92,7 +92,7 @@ class Solver:
     @abc.abstractmethod
     def restore_state(self):
         return
-
+    
     def get_dual(self, weight: torch.Tensor) -> float:
         if (not self.regul.provides_fenchel() or not self.loss.provides_fenchel()):
             logger.error("Error: no duality gap available")
@@ -108,24 +108,23 @@ class Solver:
         eval_loss = self.loss.eval_tensor(weight)
         eval_regul = self.regul.eval_tensor(weight)
         primal = eval_loss + eval_regul
-        self.best_primal = min(self.best_primal, primal)
+        self.best_primal = torch.min(self.best_primal, primal)
         ii = max(int(iteration / self.duality_gap_interval) - 1, 0)
-        sec = self.elapsed_time
         optim = self.optim_info[:, ii]
         if (self.best_primal == primal):
             self.best_weight = torch.clone(weight)
         if (self.verbose):
             if (primal == self.best_primal):
-                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + ", time: " + "{:.5f}".format(sec))
+                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + ", time: " + "{:.5f}".format(self.elapsed_time))
             else:
-                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + ", best primal: " + str(self.best_primal) + ", time: " + "{:.5f}".format(sec))
+                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + ", best primal: " + str(self.best_primal) + ", time: " + "{:.5f}".format(self.elapsed_time))
         optim[0] = iteration
         optim[1] = primal
-        optim[5] = sec
+        optim[5] = self.elapsed_time
         if (self.duality):
             dual = self.get_dual(weight)
-            self.best_dual = max(self.best_dual, dual)
-            duality_gap = (self.best_primal - self.best_dual) / abs(self.best_primal)
+            self.best_dual = torch.max(self.best_dual, dual)
+            duality_gap = (self.best_primal - self.best_dual) / torch.abs(self.best_primal)
             stop = False            
             if ((iteration / self.duality_gap_interval) >= 4):
                 if (self.optim_info[3, int(iteration / self.duality_gap_interval) - 4] == duality_gap):
@@ -156,7 +155,7 @@ class Solver:
         return
 
     @abc.abstractmethod
-    def solver_aux(self, x : torch.Tensor):
+    def solver_aux(self, x : torch.Tensor, it : int):
         return
 
     @abc.abstractmethod

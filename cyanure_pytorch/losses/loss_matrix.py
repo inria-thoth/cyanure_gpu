@@ -60,7 +60,10 @@ class LinearLossMat(Loss):
             output = torch.matmul(weight, col) + input2
             output = output + self.scale_intercept * bias
         else:
-            output = torch.matmul(input, col) + input2
+            if input2 is not None:
+                output = torch.matmul(input, col) + input2
+            else:
+                output = torch.matmul(input, col) 
 
         return output
 
@@ -91,8 +94,11 @@ class LinearLossMat(Loss):
             bias = bias + a*self.scale_intercept * input
             output = torch.cat((weight, bias), dim=1)
         else:
-            output = input2 + a * self.scale_intercept * input
-
+            if input2 is not None:
+                output = input2 + a * self.scale_intercept * input
+            else:
+                output = a * self.scale_intercept * input
+                
         return output
 
     def get_wb(self, input : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:

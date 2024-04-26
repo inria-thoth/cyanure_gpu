@@ -13,12 +13,12 @@ class SquareLossMat(LinearLossMat):
     def eval_tensor(self, input : torch.Tensor) -> float:
         tmp = self.pred_tensor(input, None)
         tmp.sub_(self.labels) 
-        return 0.5 * torch.pow(torch.linalg.vector_norm(tmp), 2) / tmp.size(dim=1)
+        return 0.5 * torch.linalg.norm(tmp)**2 / tmp.size(dim=1)
       
     def eval(self, input : torch.Tensor, i : int) -> float:
         tmp = self.pred(i,input, None)
         tmp.sub_(self.labels[:, i]) 
-        return 0.5 * torch.pow(torch.linalg.vector_norm(tmp), 2)
+        return 0.5 * torch.linalg.norm(tmp)**2
 
     def print(self) -> None:
         logger.info("Square Loss is used")
@@ -54,7 +54,7 @@ class SquareLossMat(LinearLossMat):
             # Add the result to the sum
             result_sum += dot_product_chunk
         
-        return 0.5 * torch.pow(torch.linalg.vector_norm(input), 2) / num_class + torch.sum(result_sum) / num_class
+        return 0.5 * torch.linalg.norm(input)**2 / num_class + torch.sum(result_sum) / num_class
 
     def get_grad_aux(self, input : torch.Tensor) -> torch.Tensor:
         grad1 = self.pred_tensor(input, None)
@@ -62,7 +62,7 @@ class SquareLossMat(LinearLossMat):
         return grad1
 
     def scal_grad(self, input : torch.Tensor, i : int) -> torch.Tensor:
-        output = self.pred(i,input)
+        output = self.pred(i,input, None)
         ycol = self.labels[:, i]
         return output.sub_(ycol)
 

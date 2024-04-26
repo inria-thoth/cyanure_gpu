@@ -11,27 +11,60 @@ class MultiClassLogisticLoss(LinearLossMat):
 
     def __init__(self, data : torch.Tensor, y : torch.Tensor, intercept : bool):
         super().__init__(data, y, intercept)
-        self.n_classes = torch.max(y) + 1
+        self.n_classes = int(torch.max(y) + 1)
         self.id = 'MULTI_LOGISTIC'
+        self.number_data = self.labels.shape[0]
+        self.one_hot = torch.nn.functional.one_hot(self.labels.to(torch.int64), self.n_classes).T.to(torch.int32)
+        self.boolean_mask = torch.zeros(self.n_classes, self.number_data, dtype=torch.bool).to(DEVICE)
+        index_mask = torch.arange(self.n_classes).unsqueeze(1).expand(self.n_classes, self.number_data).to(DEVICE)
+        label_mask = torch.unsqueeze(self.labels, 0).expand(self.n_classes, self.number_data)
+        self.boolean_mask = torch.eq(index_mask, label_mask)
+        self.loss_labels = self.labels.type(torch.LongTensor).to(DEVICE)   
     
+    def pre_compute(self, input : torch.Tensor) -> float:
 
-    def eval_tensor(self, input : torch.Tensor) -> float:
         tmp = self.pred_tensor(input, None)
-        n = tmp.size(1)
+        diff = torch.masked_select(tmp, self.boolean_mask).unsqueeze(0).expand(self.n_classes, self.number_data)
 
-        labels_line_vector = self.labels.t().to(torch.int64)
-        tmp -= tmp[labels_line_vector, torch.arange(len(labels_line_vector))].unsqueeze(0).expand(tmp.shape[0], -1)
-
-        # Calculate the maximum value along the column dimension and create mm_matrix
-        mm_vector, _ = torch.max(tmp, dim=0)
-        tmp.sub_(mm_vector.unsqueeze(0).expand(tmp.shape[0], -1))
-        tmp.exp_()
+        tmp.sub_(diff)
+        # Find max and perform subsequent operations
         
-        # Calculate log_sums and sum_value
-        log_sums = torch.log(torch.sum(torch.abs(tmp), dim=0))
+        mm = tmp.max(dim=0, keepdim=True).values
+        tmp.sub_(mm)
+                   
+        tmp = tmp.exp()
+        
+        sum_matrix = torch.abs(tmp).sum(dim=0, keepdim=True)
+
+        return tmp, sum_matrix, mm
+    
+    def eval_tensor(self, input : torch.Tensor, matmul_result : torch.Tensor = None, precompute : torch.Tensor = None) -> float:
+        if precompute is None:
+            if matmul_result is not None:
+                tmp = matmul_result
+            else:
+                tmp = torch.matmul(input, self.input_data)
+        
+            diff = torch.masked_select(tmp, self.boolean_mask).unsqueeze(0).expand(self.n_classes, self.number_data)
+
+            tmp = tmp - diff
+            # Find max and perform subsequent operations
+            
+            mm_vector = tmp.max(dim=0, keepdim=True).values
+            tmp.sub_(mm_vector)
+                    
+            tmp = tmp.exp()
+            
+            sum_matrix = torch.abs(tmp).sum(dim=0, keepdim=True)
+        else:
+            tmp = precompute[0]
+            sum_matrix = precompute[1]  
+            mm_vector = precompute[2]  
+
+        log_sums = torch.log(sum_matrix)
         sum_value = torch.sum(mm_vector) + torch.sum(log_sums)
 
-        return sum_value / n
+        return sum_value / self.number_data
 
     def eval(self, input : torch.Tensor, i : int) -> float:
         tmp = self.pred(i, input)
@@ -45,34 +78,36 @@ class MultiClassLogisticLoss(LinearLossMat):
         logger.info("Multiclass logistic Loss is used")
 
     def xlogx(self, x):
-        x = x * torch.log(x)
-        return x
-    
+        
+        # Handling condition where x is greater than or equal to 1e-20
+        res = x * torch.log(x)
+
+        neg_mask = x < -1e-20
+        # Handling condition where x is less than -1e-20
+        res.masked_fill_(neg_mask, float('inf'))
+
+        small_mask = x < 1e-20
+        # Handling condition where x is less than 1e-20
+        res.masked_fill_(small_mask, 0)   
+        
+        return res
+   
     def fenchel(self, input : torch.Tensor) -> float:
         n = input.size(1)
 
         # Use advanced indexing to select the relevant elements
-        # Add the condition for sum += xlogx(input[i * _nclasses + j] + 1.0)      
-        input += torch.nn.functional.one_hot(self.labels.to(torch.int64), int(self.n_classes.item())).T
-        selected_xlogx = self.xlogx(input)
+        # Add the condition for sum += xlogx(input[i * _nclasses + j] + 1.0)
+        input += self.one_hot
         
+        selected_xlogx = self.xlogx(input)
         # Sum along the second dimension (class dimension)
         sum_val = torch.sum(selected_xlogx)
         
         return sum_val / n
-    
-    def kahan_sum(self, input_tensor):
-        s = 0
-        c = 0
-        for value in input_tensor.view(-1):
-            y = value - c
-            t = s + y
-            c = (t - s) - y
-            s = t
-        return s
 
     def get_grad_aux2(self, col : torch.Tensor, ind : int) -> torch.Tensor:
-        col -= col[ind]
+        value = col[ind].clone()
+        col -= value
         mm = torch.max(col)
         col -= mm
         col = torch.exp(col)
@@ -82,31 +117,87 @@ class MultiClassLogisticLoss(LinearLossMat):
         col[ind] = -(torch.sum(torch.abs(col)))
         return col
 
-    def get_grad_aux(self, input : torch.Tensor) -> torch.Tensor:
-        grad1 = self.pred_tensor(input, None)
-        labels = self.labels
+    def get_grad_aux(self, input : torch.Tensor, matmul_result : torch.Tensor = None, precompute : torch.Tensor = None) -> torch.Tensor:
+        if precompute is None:
+            if matmul_result is not None:
+                grad1 = matmul_result
+            else:
+                grad1 = torch.matmul(input, self.input_data)
+        
+            diff = torch.masked_select(grad1, self.boolean_mask).unsqueeze(0).expand(self.n_classes, self.number_data)
+
+            grad1 = grad1 - diff
+            # Find max and perform subsequent operations
+            
+            mm = grad1.max(dim=0, keepdim=True).values
+            grad1.sub_(mm)
+                    
+            grad1 = grad1.exp()
+            
+            sum_matrix = torch.abs(grad1).sum(dim=0, keepdim=True)
+        else:
+            grad1 = precompute[0]
+            sum_matrix = precompute[1]        
+        
+        grad1 /= sum_matrix
+        
+        # Compute the mask for elements to be zeroed out
+        mask = 1 - self.one_hot
+        
+        # Apply the mask to grad1
+        grad1 = torch.mul(grad1, mask)
+        
+        # Compute the sum of absolute values along the first dimension
+        abs_sum = torch.sum(torch.abs(grad1), dim=0, keepdim=True)
+        
+        # Compute the adjustment tensor
+        adjustment = torch.mul(self.one_hot, abs_sum)
+        
+        # Subtract the adjustment tensor from grad1
+        grad1.sub_(adjustment)
+
+        return grad1
+    
+    def get_grad_aux_to_compile(self, matmul_result : torch.Tensor) -> torch.Tensor:
+        grad1 = matmul_result
 
         # Subtract one-hot encoded vector from each element in grad1
-        diff = grad1[labels.to(torch.int64), torch.arange(grad1.shape[1])]
+        diff = grad1[self.labels.to(torch.int64), torch.arange(grad1.shape[1])]
         grad1 = grad1.clone()
         grad1 -= diff
         
+        grad1.sub_(diff)
         # Find max and perform subsequent operations
+        
         mm = grad1.max(dim=0, keepdim=True).values
-        grad1 -= mm        
+        grad1.sub_(mm)
+                   
         grad1 = grad1.exp()
+        
         sum_matrix = torch.abs(grad1).sum(dim=0, keepdim=True)
+        
         grad1 /= sum_matrix
         
-        # Zero out and set the values at labels positions
-        grad1 = grad1 * (1 - torch.nn.functional.one_hot(self.labels.to(torch.int64), int(self.n_classes.item())).T) 
-        grad1 -= torch.nn.functional.one_hot(self.labels.to(torch.int64), int(self.n_classes.item())).T * torch.sum(torch.abs(grad1), dim=0, keepdim=True)
+        # Compute the mask for elements to be zeroed out
+        mask = 1 - self.one_hot
+        
+        # Apply the mask to grad1
+        grad1 *= mask
+        
+        # Compute the sum of absolute values along the first dimension
+        abs_sum = torch.sum(torch.abs(grad1), dim=0, keepdim=True)
+        
+        # Compute the adjustment tensor
+        adjustment = self.one_hot * abs_sum
+        
+        # Subtract the adjustment tensor from grad1
+        grad1.sub_(adjustment)
         
         return grad1
     
-    def scal_grad(self, input : torch.Tensor, i : int, col : torch.Tensor) -> torch.Tensor:
-        col = self.pred(i, input)
-        return self.get_grad_aux2(col, self.labels[i])
+    def scal_grad(self, input : torch.Tensor, i : int) -> torch.Tensor:
+        col = self.pred(i, input, None)
+        return self.get_grad_aux2(col, int(self.labels[i]))
 
     def lipschitz_constant(self) -> float:
         return 0.25

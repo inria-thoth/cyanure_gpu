@@ -58,12 +58,12 @@ class Catalyst(Solver):
                 logger.info("Switching to regular solver, problem is well conditioned")
             self.solver.solver_init(initial_weight);
 
-    def solver_aux(self, weight : torch.Tensor) -> torch.Tensor:
+    def solver_aux(self, weight : torch.Tensor, it : int = -1) -> torch.Tensor:
         if (self.accelerated_solver):
             q = self.mu / (self.mu + self.kappa)
             xold = torch.clone(weight)
-            weight = self.auxiliary_solver.solve(self.y, weight)
-            alphaold = self.alpha;
+            weight, _ = self.auxiliary_solver.solve(self.y, weight)
+            alphaold = self.alpha
             self.alpha = solve_binomial(1.0, self.alpha * self.alpha - q, -self.alpha * self.alpha)
             beta = alphaold * (1.0 - alphaold) / (alphaold * alphaold + self.alpha)
             self.count += 1
@@ -75,9 +75,9 @@ class Catalyst(Solver):
             # z = anchor_point
             self.loss_ppa.anchor_point = self.y
         else:
-            weight = self.solver.solver_aux(weight)
+            weight, _ = self.solver.solver_aux(weight, it)
 
-        return weight
+        return weight, None
     
     def print(self) -> None:
         logger.info("Catalyst Accelerator")
@@ -103,32 +103,32 @@ class QNing(Catalyst):
         self.line_search_steps = 0
 
     def solve(self, initial_weight : torch.Tensor, weight : torch.Tensor) -> torch.Tensor:
-        weight = super().solve(initial_weight, weight)
+        weight, fprox = super().solve(initial_weight, weight)
         if (self.verbose):
             logger.info("Total additional line search steps: " + str(self.line_search_steps))
             logger.info("Total skipping l-bfgs steps: " + str(self.skipping_steps))
 
-        return weight
+        return weight, fprox
 
     def solver_init(self, initial_weight : torch.Tensor) -> None:
+        if (len(initial_weight.size()) == 2):
+                dim_0_size = initial_weight.size(dim=0) * initial_weight.size(dim=1)
+        else:
+            dim_0_size = initial_weight.size(dim=0)
+        self.ys = torch.empty(dim_0_size, self.l_memory).to(device=DEVICE, non_blocking=True)
+        self.ss = torch.empty(dim_0_size, self.l_memory).to(device=DEVICE, non_blocking=True)
+        self.rhos = torch.empty(self.l_memory, device=DEVICE)
         super().solver_init(initial_weight)
         if (self.accelerated_solver):
-            self.h0 = 1.0 / self.kappa
-            self.m = 0
             if (self.verbose):
                 logger.info("Memory parameter: " + str(self.l_memory))
-            if (len(initial_weight.size()) == 2):
-                dim_0_size = initial_weight.size(dim=0) * initial_weight.size(dim=1)
-            else:
-                dim_0_size = initial_weight.size(dim=0)
-            self.ys = torch.Tensor(dim_0_size, self.l_memory).to(DEVICE)
-            self.ss = torch.Tensor(dim_0_size, self.l_memory).to(DEVICE)
-            self.rhos = torch.Tensor(self.l_memory).to(DEVICE)
+            self.h0 = 1.0 / self.kappa
+            self.m = 0
             self.etak = 1.0
             self.skipping_steps = 0
             self.line_search_steps = 0
 
-    def solver_aux(self, weight : torch.Tensor) -> torch.Tensor:
+    def solver_aux(self, weight : torch.Tensor, it : int = -1) -> torch.Tensor:
         if (self.accelerated_solver):
             if (self.gk is None):
                 weight = self.get_gradient(weight)
@@ -147,7 +147,7 @@ class QNing(Catalyst):
                 self.y.sub_(g, alpha=self.etak)
                 self.y.add_(oldgk, alpha=((self.etak - 1.0) / self.kappa))
                 weight = self.get_gradient(weight) # _gk = kappa(x-y)
-                if (self.etak == 0 or self.Fk <= (oldFk - (0.25 / self.kappa) * torch.pow(torch.linalg.vector_norm(oldgk), 2))):
+                if (self.etak == 0 or self.Fk <= (oldFk - (0.25 / self.kappa) * torch.linalg.norm(oldgk)**2)):
                     break
                 if (self.Fk > 1.05 * oldFk):
                     self.auxiliary_solver.restore_state()
@@ -166,9 +166,9 @@ class QNing(Catalyst):
                 self.update_lbfgs_matrix(oldyk, oldgk)
             self.etak = max(min(1.0, self.etak * 1.2), 0.1)
         else:
-            weight = self.solver.solver_aux(weight)
+            weight, _ = self.solver.solver_aux(weight, it)
 
-        return weight
+        return weight, None
     
     def print(self) -> None:
         logger.info("QNing Accelerator")
@@ -191,7 +191,7 @@ class QNing(Catalyst):
             cols = self.ss[:, ind]
             coly = self.ys[:, ind]
             if (ii == self.m - 1):
-                gamma = torch.dot(cols, coly) / torch.pow(torch.linalg.vector_norm(coly), 2)
+                gamma = torch.dot(cols, coly) / torch.linalg.norm(coly)**2
             alphas[ind] = self.rhos[ind] * torch.dot(cols, g)
             g.add_(coly, alpha=-alphas[ind])
         g = g * gamma
@@ -223,10 +223,10 @@ class QNing(Catalyst):
     
     def get_gradient(self, weight : torch.Tensor) -> torch.Tensor:
         self.loss_ppa.anchor_point = self.y
-        weight = self.auxiliary_solver.solve(self.y, weight)
+        weight, fprox = self.auxiliary_solver.solve(self.y, weight)
         self.gk = torch.clone(self.y)
         self.gk = torch.add(self.gk * self.kappa, weight, alpha=-self.kappa)
-        self.Fk = self.loss_ppa.eval_tensor(weight) + self.regul.eval_tensor(weight)
+        self.Fk = self.loss_ppa.eval_tensor(weight, None, None, fprox) + self.regul.eval_tensor(weight)
 
         return weight
 

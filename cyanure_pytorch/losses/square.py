@@ -16,7 +16,7 @@ class SquareLoss(LinearLossVec):
     def eval_tensor(self, input : torch.Tensor) -> float:
         tmp = self.pred_tensor(input)
         tmp = torch.sub(tmp, self.labels)
-        return 0.5*torch.pow(torch.linalg.vector_norm(tmp), 2)/tmp.size(dim=0)
+        return 0.5*torch.linalg.norm(tmp)**2/tmp.size(dim=0)
 
     def eval(self, input : torch.Tensor, i: int) -> float:
         res = self.labels[i] - self.pred(i,input)
@@ -26,10 +26,10 @@ class SquareLoss(LinearLossVec):
         logger.info("Square Loss is used")
         
     def fenchel(self, input : torch.Tensor) -> float:
-        return 0.5*torch.pow(torch.linalg.vector_norm(input), 2)/input.size(dim=0)+torch.dot(input, self.labels)/input.size(dim=0)
+        return 0.5*torch.linalg.norm(input)**2/input.size(dim=0)+torch.dot(input, self.labels)/input.size(dim=0)
         
     def scal_grad(self, input : torch.Tensor, i : int) -> float:
-        return self.pred(i,input) - self.labels[i]
+        return self.pred(i,input, None) - self.labels[i]
         
     def get_grad_aux(self, input : torch.Tensor) -> torch.Tensor:
         grad1 = self.pred_tensor(input)

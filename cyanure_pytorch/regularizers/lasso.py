@@ -13,6 +13,8 @@ class Lasso(Regularizer):
     def __init__(self, model : ProblemParameters) :
         super().__init__(model)     
 
+        self.id = "L1"
+
     def fastSoftThrs(self, x : float) -> float:
         return x + 0.5*(torch.abs(x - self.lambda_1) - torch.abs(x + self.lambda_1))
     
@@ -25,13 +27,17 @@ class Lasso(Regularizer):
         return output
 
     def eval_tensor(self, input : torch.Tensor) -> float:
-        n = input.size(dim=1)
+        n = input.size(dim=0)
         res = torch.sum(torch.abs(input))
         return (self.lambda_1 * (res - torch.abs(input[n - 1])) if self.intercept else self.lambda_1 * res)
 
     def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
-        mm = grad2[torch.argmax(torch.abs(grad2))]
-        n = input.size(dim=0)
+        indices = (torch.abs(grad2)==torch.max(torch.abs(grad2))).nonzero()[0]
+        if len(indices) > 1:
+            mm = grad2[indices[0], indices[1]]
+        else:
+            mm = grad2[indices]
+        n = grad2.size(dim=0)
         if (mm > self.lambda_1):
             grad1 *= self.lambda_1 / mm
         return float("inf") if self.intercept and (torch.abs(grad2[n - 1]) > 1e-6) else 0, grad1, grad2
@@ -41,12 +47,18 @@ class Lasso(Regularizer):
 
     def lazy_prox(self, input : torch.Tensor, indices : torch.Tensor, eta : float) -> None:
         p = input.size(dim=0)
-        r = indices.size(dim=0)
-        thrs = self.lambda_1 * eta
+        #TODO output probablement faux
+        #TODO plante surement en 1D
         output = torch.Tensor(input.size())
+        # Calculate the soft thresholding operation for all elements of the input tensor
+        soft_thresholded = input + 0.5 * (torch.abs(input - self.lambda_1) - torch.abs(input + self.lambda_1))
 
-        for jj in range(r):
-            output[indices[jj]] = self.fastSoftThrs(input[indices[jj]], thrs)
+        # Create a mask to select elements along the first dimension based on indices
+        mask = torch.zeros_like(output)
+        mask[indices, torch.arange(output.size(1))] = 1
+
+        # Apply the mask to select elements along the first dimension and update them with soft thresholded values
+        output.masked_scatter_(mask.bool(), soft_thresholded)
         if (self.intercept):
             output[p - 1] = input[p - 1]    
 

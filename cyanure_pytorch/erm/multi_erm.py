@@ -14,6 +14,7 @@ from cyanure_pytorch.regularizers.lasso import Lasso
 from cyanure_pytorch.regularizers.none import NoRegul
 from cyanure_pytorch.solvers.accelerator import Catalyst, QNing
 from cyanure_pytorch.solvers.ista import ISTA_Solver, FISTA_Solver
+from cyanure_pytorch.solvers.miso import MISO_Solver
 from cyanure_pytorch.solvers.solver import Solver
 from cyanure_pytorch.losses.multi_class_logistic import MultiClassLogisticLoss
 from cyanure_pytorch.losses.loss_matrix import LossMat
@@ -22,10 +23,10 @@ from cyanure_pytorch.regularizers.regularizer_matrix import RegMat, RegVecToMat
 from cyanure_pytorch.constants import EPSILON, NUMBER_OPTIM_PROCESS_INFO, DEVICE
 
 from typing import Tuple
+import numpy as np
 
 logger = setup_custom_logger("INFO")
 
-from typing import Tuple
 import time
 
 class MultiErm(Estimator):
@@ -43,7 +44,6 @@ class MultiErm(Estimator):
     # W0 is p x nclasses if no intercept (or p+1 x nclasses with intercept)
     # prediction model is   W0^FeatureType X  gives  nclasses x n
     def solve_problem_vector(self, features : torch.Tensor, labels_vector : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        import time 
         
         self.verify_input(features)
         # print(f"Starting Memory Usage Vector: {torch.cuda.memory_allocated() / 1e6} MB")
@@ -52,10 +52,8 @@ class MultiErm(Estimator):
 
         if (super().is_regression_loss(loss_string) or not super().is_loss_for_matrices(loss_string)):
             n = labels_vector.size(dim=0)
-            
-            import numpy as np
-            initial_time = time.time()
-            labels_np = np.full((int(nclass.item()), n), fill_value=-1.0)
+        
+            labels_np = np.full((int(nclass), n), fill_value=-1.0)
 
             # Assuming labels_vector is a PyTorch tensor
             labels_vector_np = labels_vector.cpu().numpy()
@@ -65,7 +63,6 @@ class MultiErm(Estimator):
 
             # Convert NumPy array to PyTorch tensor
             labels = torch.tensor(labels_np.astype("float32"), device=DEVICE)
-            print(f"Initialize ERM : {time.time() - initial_time}")
             
             erm_tmp = MultiErm(self.initial_weight, self.weight, self.problem_parameters, self.model_parameters, self.optim_info, dual_variable=self.dual_variable)
             return erm_tmp.solve_problem_matrix(features, labels)
@@ -75,6 +72,7 @@ class MultiErm(Estimator):
             pass
 
         loss = MultiClassLogisticLoss(features, labels_vector, self.problem_parameters.intercept)
+        
         if (loss_string != 'MULTICLASS-LOGISTIC'):
             logger.error("Multilog loss is the only multi class implemented loss!")
             logger.info("Multilog loss is used!")
@@ -186,13 +184,11 @@ class MultiErm(Estimator):
 
     def solve_mat(self, loss : Loss, regul : Regularizer) -> Tuple[torch.Tensor, torch.Tensor]:
 
-        import time 
-        initial_time = time.time()
         solver = None
         if (self.model_parameters.max_iter == 0):
             parameter_tmp = self.model_parameters
             parameter_tmp.verbose = False
-            solver = ISTA_Solver(loss, regul, parameter_tmp)
+            solver = ISTA_Solver(loss, regul, parameter_tmp, False)
             if (loss.transpose()):
                 initial_weight_transposed = torch.transpose(self.initial_weight, 0, 1)
                 solver.eval(initial_weight_transposed)
@@ -205,25 +201,25 @@ class MultiErm(Estimator):
             if (solver is None):
                 self.weight = torch.clone(self.initial_weight)
                 return solver.get_optim_info(), self.weight
-            # print(f"Starting Memory Usage Before Inner Solve: {torch.cuda.memory_allocated() / 1e6} MB")
+            
             new_initial_weight = None
             if (self.problem_parameters.intercept):
-                loss.set_intercept(self.initial_weight, new_initial_weight);
+                loss.set_intercept(self.initial_weight, new_initial_weight)
             else:
                 new_initial_weight = self.initial_weight
             if (self.dual_variable is not None and self.dual_variable.size(dim=0) != 0):
                 solver.set_dual_variable(self.dual_variable)
-            # print(f"Intermediate Memory Usage Before Inner Solve: {torch.cuda.memory_allocated() / 1e6} MB")
+                
             if (loss.transpose()):
                 weight_transposed = None
                 initial_weight_transposed = torch.transpose(new_initial_weight, 0, 1)
-                weight_transposed = solver.solve(initial_weight_transposed, weight_transposed)
+                weight_transposed, fprox = solver.solve(initial_weight_transposed, weight_transposed)
                 self.weight = torch.transpose(weight_transposed, 0, 1)
             else:
-                self.weight = solver.solve(new_initial_weight, self.weight)
+                self.weight, fprox = solver.solve(new_initial_weight, self.weight)
 
             if (self.problem_parameters.intercept):
-                loss.reverse_intercept(self.weight);
+                loss.reverse_intercept(self.weight)
 
         if (self.problem_parameters.regul == "L1"):
             self.weight[abs(self.weight) < EPSILON] = 0
@@ -232,6 +228,13 @@ class MultiErm(Estimator):
 
     def get_solver(self, loss : Loss, regul : Regularizer, param : ModelParameters) -> Solver:
         solver_type = param.solver.upper()
+
+        if "BARZILAI" in solver_type:
+            linesearch = True
+        else:
+            linesearch = False
+
+        solver_type = solver_type.replace('_BARZILAI', '')
 
         if (solver_type == "AUTO"):
             L = loss.lipschitz()
@@ -244,11 +247,11 @@ class MultiErm(Estimator):
             else:
                 solver_type = "CATALYST_MISO"
         if solver_type == "ISTA":
-            solver = ISTA_Solver(loss, regul, param)
+            solver = ISTA_Solver(loss, regul, param, linesearch)
         elif solver_type == "QNING_ISTA":
-            solver = QNing(param, ISTA_Solver(loss, regul, param))
+            solver = QNing(param, ISTA_Solver(loss, regul, param, linesearch))
         elif solver_type == "CATALYST_ISTA":
-            solver = Catalyst(param, ISTA_Solver(loss, regul, param))
+            solver = Catalyst(param, ISTA_Solver(loss, regul, param, linesearch))
         elif solver_type == "FISTA":
             solver = FISTA_Solver(loss, regul, param)
         elif solver_type == "SVRG":

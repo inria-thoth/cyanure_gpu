@@ -13,10 +13,12 @@ class Ridge(Regularizer):
     def __init__(self, model : ProblemParameters) :
         super().__init__(model)
 
+        self.id = "L2"
+
     def prox(self, input : torch.Tensor, eta : float) -> torch.Tensor:
         output = torch.clone(input)
         scaling_factor = (1.0 / (1.0 + self.lambda_1 * eta))
-        output *= scaling_factor  
+        output.mul_(scaling_factor)
         if (self.intercept):
             n = input.size(dim=0)
             output[n - 1] = input[n - 1]
@@ -26,13 +28,13 @@ class Ridge(Regularizer):
     def eval_tensor(self, input : torch.Tensor) -> float:
         n = input.size(dim=0)
         res = torch.sum(torch.tensordot(input, input, dims=len(input.shape)))
-        return (0.5 * self.lambda_1 * (res - input[n - 1] * input[n - 1]) if self.intercept else 0.5 * self.lambda_1 * res)
+        return (0.5 * self.lambda_1 * (res - torch.pow(input[n - 1], 2)) if self.intercept else 0.5 * self.lambda_1 * res)
 
     def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
         if (self.intercept and (abs(grad2[grad2.size(dim=0) - 1]) > 1e-6)):
             value = float("inf")
         else:
-            value = self.eval_tensor(grad2) / (math.pow(self.lambda_1, 2))
+            value = self.eval_tensor(grad2) / (torch.pow(self.lambda_1, 2))
         return value, grad1, grad2
 
     def print(self) -> None:

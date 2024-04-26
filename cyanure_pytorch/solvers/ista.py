@@ -17,7 +17,7 @@ class ISTA_Solver(Solver):
 
         global EPSILON
     
-        def __init__(self, loss : Loss, regul : Regularizer, param: ModelParameters, Li : torch.Tensor = None):
+        def __init__(self, loss : Loss, regul : Regularizer, param: ModelParameters, linesearch : bool, Li : torch.Tensor = None):
             super().__init__(loss, regul, param)
 
             self.L = 0
@@ -25,25 +25,47 @@ class ISTA_Solver(Solver):
                 self.Li = torch.clone(Li)
                 self.L = torch.max(self.Li) / 100.0
 
+            self.linesearch = linesearch
+            if linesearch:
+                self.sbb = None
+                self.xbb = None
+
         def solver_init(self, initial_weight: torch.Tensor) -> None:
             if (self.L == 0):
                 self.Li = self.loss.lipschitz_li(self.Li)
                 self.L = torch.max(self.Li) / 100.0
         
-        def solver_aux(self, weight : torch.Tensor) -> torch.Tensor:
+        def solver_aux(self, weight : torch.Tensor, it : int) -> torch.Tensor:
             iter = 1
-            fx = self.loss.eval_tensor(weight)
-            grad = self.loss.grad(weight)
+            if hasattr(self.loss, 'loss'):
+                precompute = self.loss.loss.pre_compute(weight)
+            else:
+                precompute = self.loss.pre_compute(weight)
+            fx = self.loss.eval_tensor(weight, None, precompute)
+            grad = self.loss.grad(weight, None, precompute)
+
+            alpha_max = 10e30/self.L
+            alpha_min = 10e-30/self.L
+
+            if (self.linesearch and it > 1):
+                self.sbb.sub_(grad)
+                self.xbb.sub_(weight)
+                alpha = torch.dot(self.sbb.view(-1), self.sbb.view(-1)) / torch.norm(self.sbb)**2
+                alpha = torch.min(torch.max(alpha, alpha_min), alpha_max)            
+                self.L = 1 / alpha
+            
+        
             while (iter < self.max_iter_backtracking):
-                
-                tmp2 = torch.clone(weight)
-                tmp2.sub_(grad, alpha=1.0/self.L)
+                tmp2 = weight.clone()
+                scaled_grad = grad / self.L
+                tmp2.sub_(scaled_grad)
                 tmp = self.regul.prox(tmp2, 1.0 / self.L)
-                fprox = self.loss.eval_tensor(tmp)
-                tmp2 = torch.clone(tmp)
+                tmp2 = tmp.clone()
                 tmp2.sub_(weight)
-                if (fprox <= fx + torch.dot(torch.flatten(grad), torch.flatten(tmp2)) + 0.5 * self.L * torch.pow(torch.linalg.vector_norm(tmp2), 2) + EPSILON):
-                    weight = torch.clone(tmp)
+                fprox = self.loss.eval_tensor(tmp)
+                dot_product = torch.tensordot(grad, tmp2, dims=len(grad.shape))
+                norm_squared = torch.pow(torch.norm(tmp2), 2)
+                if ((self.linesearch and it > 1) or fprox <= fx + dot_product + 0.5 * self.L * norm_squared + EPSILON):
                     break
                 self.L *= 1.5
                 if (self.verbose):
@@ -51,8 +73,14 @@ class ISTA_Solver(Solver):
                 iter += 1
                 if (iter == self.max_iter_backtracking):
                     logger.warning("Warning: maximum number of backtracking iterations has been reached")
+
+            if (self.linesearch):
+               self.sbb = grad.clone()
+               self.xbb = weight.clone()
+
+            weight = torch.clone(tmp)
             
-            return weight
+            return weight, fprox
         
         def print(self) -> None:
             logger.info("ISTA Solver")
@@ -73,13 +101,15 @@ class FISTA_Solver(ISTA_Solver):
         self.t = torch.Tensor([1.0]).to(DEVICE)
         self.y = torch.clone(initial_weight)
     
-    def solver_aux(self, weight : torch.Tensor) -> torch.Tensor:
+    def solver_aux(self, weight : torch.Tensor, it : int = -1) -> torch.Tensor:
         diff = torch.clone(weight)
-        weight = super().solver_aux(self.y)
+        weight, _ = super().solver_aux(self.y, it)
         diff = diff - weight
         old_t = self.t
         self.t = (1.0 + torch.sqrt(1 + 4 * self.t * self.t)) / 2
         self.y = self.y + diff * (1.0 - old_t) / self.t
+
+        return weight, _
     
     def print(self) -> None:
         logger.info("FISTA Solver")

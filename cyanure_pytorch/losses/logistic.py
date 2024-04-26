@@ -18,10 +18,24 @@ class LogisticLoss(LinearLossVec):
             return torch.log(1.0 + torch.exp(-res))
         else:
             return torch.log(1.0 + torch.exp(res))
+        
+    def pre_compute(self, input : torch.Tensor) -> float:
 
-    def eval_tensor(self, input : torch.Tensor) -> float:
-        tmp = self.pred_tensor(input)
+        tmp = self.pred_tensor(input, None)
+
         tmp = torch.mul(tmp, self.labels)
+
+        return tmp
+
+    def eval_tensor(self, input : torch.Tensor, matmul_result : torch.Tensor = None, precompute : torch.Tensor = None) -> float:
+        if precompute is None:
+            if matmul_result is None:
+                tmp = self.pred_tensor(input, None)
+            else: 
+                tmp = matmul_result.clone()
+            tmp = torch.mul(tmp, self.labels)
+        else:
+            tmp = precompute
         tmp = torch.log(1.0 + torch.exp(torch.neg(tmp)))
         return torch.sum(tmp) / (tmp.size(dim=0)) 
 
@@ -42,9 +56,15 @@ class LogisticLoss(LinearLossVec):
     
         return s
 
-    def get_grad_aux(self, input : torch.Tensor) -> torch.Tensor:
-        grad1 = self.pred_tensor(input)
-        grad1 = torch.mul(grad1, self.labels)
+    def get_grad_aux(self, input : torch.Tensor, matmul_result : torch.Tensor = None, precompute : torch.Tensor = None) -> torch.Tensor:
+        if precompute is None:
+            if matmul_result is not None:
+                grad1 = matmul_result
+            else:
+                grad1 = torch.matmul(input, self.input_data)
+            grad1 = torch.mul(grad1, self.labels)
+        else: 
+            grad1 = precompute
         grad1 = 1.0 / (torch.exp(grad1) + 1.0)
         grad1 = torch.mul(grad1, self.labels)
         grad1 = torch.neg(grad1)

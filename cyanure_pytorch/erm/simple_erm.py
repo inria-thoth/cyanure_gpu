@@ -12,8 +12,10 @@ from cyanure_pytorch.losses.loss import Loss
 from cyanure_pytorch.losses.square import SquareLoss
 from cyanure_pytorch.regularizers.regularizer import Regularizer
 from cyanure_pytorch.regularizers.ridge import Ridge
+from cyanure_pytorch.regularizers.lasso import Lasso
 from cyanure_pytorch.solvers.accelerator import Catalyst, QNing
 from cyanure_pytorch.solvers.ista import ISTA_Solver, FISTA_Solver
+from cyanure_pytorch.solvers.miso import MISO_Solver
 from cyanure_pytorch.solvers.solver import Solver
 from cyanure_pytorch.constants import EPSILON
 
@@ -44,7 +46,7 @@ class SimpleErm(Estimator):
         if (self.model_parameters.max_iter == 0):
             parameter_tmp = self.model_parameters
             parameter_tmp.verbose = False
-            solver = ISTA_Solver(loss,  regul, parameter_tmp)
+            solver = ISTA_Solver(loss,  regul, parameter_tmp, False)
             solver.eval(self.initial_weight)
             self.weight = torch.clone(self.initial_weight)
         else:
@@ -75,8 +77,8 @@ class SimpleErm(Estimator):
             
             if (self.dual_variable is not None and self.dual_variable.size(dim=0) != 0):
                 solver.set_dual_variable(self.dual_variable)
-
-            self.weight = solver.solve(new_initial_weight, self.weight)
+            
+            self.weight, fprox = solver.solve(new_initial_weight, self.weight)
 
             if (self.problem_parameters.intercept):
                 self.weight = loss.reverse_intercept(self.weight)
@@ -134,6 +136,13 @@ class SimpleErm(Estimator):
     def get_solver(self, loss : Loss, regul : Regularizer, param : ModelParameters) -> Solver:
         solver_type = param.solver.upper()
 
+        if "BARZILAI" in solver_type:
+            linesearch = True
+        else:
+            linesearch = False
+
+        solver_type = solver_type.replace('_BARZILAI', '')
+
         if (solver_type == "AUTO"):
             L = loss.lipschitz()
             n = loss.n()
@@ -145,11 +154,11 @@ class SimpleErm(Estimator):
             else:
                 solver_type = "CATALYST_MISO"
         if solver_type == "ISTA":
-            solver = ISTA_Solver(loss, regul, param)
+            solver = ISTA_Solver(loss, regul, param, linesearch)
         elif solver_type == "QNING_ISTA":
-            solver = QNing(param, ISTA_Solver(loss, regul, param))
+            solver = QNing(param, ISTA_Solver(loss, regul, param, linesearch))
         elif solver_type == "CATALYST_ISTA":
-            solver = Catalyst(param, ISTA_Solver(loss, regul, param))
+            solver = Catalyst(param, ISTA_Solver(loss, regul, param, linesearch))
         elif solver_type == "FISTA":
             solver = FISTA_Solver(loss, regul, param)
         elif solver_type == "SVRG":
