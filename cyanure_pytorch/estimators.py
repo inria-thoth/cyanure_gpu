@@ -336,18 +336,18 @@ class ERM(BaseEstimator, ABC):
                 self.optimization_info_, w = erm.solve_problem(training_data_gpu, labels_gpu)
             else:
                 #TODO Remove when done
-                with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True, with_stack=True, experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
-                    erm = MultiErm(initial_weight_torch, weight_torch, problem_parameter, model_parameter, optim_info, dual_variable=self.dual) 
-                    if len(yf.shape) == 1:
-                        self.optimization_info_, w = erm.solve_problem_vector(training_data_gpu, labels_gpu)
-                    else:
-                        self.optimization_info_, w = erm.solve_problem_matrix(training_data_gpu, labels_gpu)
-                    
+                #with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True, with_stack=True, experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
+                erm = MultiErm(initial_weight_torch, weight_torch, problem_parameter, model_parameter, optim_info, dual_variable=self.dual) 
+                if len(yf.shape) == 1:
+                    self.optimization_info_, w = erm.solve_problem_vector(training_data_gpu, labels_gpu)
+                else:
+                    self.optimization_info_, w = erm.solve_problem_matrix(training_data_gpu, labels_gpu)
+                
 
         #print(prof.key_averages())
-        prof.export_chrome_trace("trace_gpu_multi.json")
+        #prof.export_chrome_trace("trace_gpu_multi.json")
         # prof.export_stacks("profiler_stacks_gpu.txt", "self_cuda_time_total")
-        prof.export_stacks("profiler_stacks_cpu.txt", "self_cpu_time_total")
+        #prof.export_stacks("profiler_stacks_cpu.txt", "self_cpu_time_total")
 
         if ("cuda" in DEVICE.type):
             w = w.cpu().numpy()
