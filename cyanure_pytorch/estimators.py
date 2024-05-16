@@ -300,7 +300,8 @@ class ERM(BaseEstimator, ABC):
         initial_weight, yf, nclasses = self._initialize_weight(X, labels)
 
         # TODO Remove when done
-        # with profile(activities=[ProfilerActivity.CUDA], profile_memory=True, experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
+        # with profile(activities=[ProfilerActivity.CUDA], profile_memory=True, 
+        #               experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
 
         initial_weight_torch = torch.tensor(initial_weight).to(DEVICE)
 
@@ -325,7 +326,7 @@ class ERM(BaseEstimator, ABC):
 
             self.loss = "multiclass-logistic"
             logger.info("Loss has been set to multiclass-logistic because "
-                        "the multiclass parameter is set to multinomial!")
+                         "the multiclass parameter is set to multinomial!")
 
         if loss is None:
             loss = self.loss
@@ -351,7 +352,7 @@ class ERM(BaseEstimator, ABC):
                     self.optimization_info_, w = erm.solve_problem_vector(training_data_gpu, labels_gpu)
                 else:
                     self.optimization_info_, w = erm.solve_problem_matrix(training_data_gpu, labels_gpu)
-                
+
         # print(prof.key_averages().table(sort_by="cuda_memory_usage", row_limit=10))
         # prof.export_memory_timeline(f"memory_profiler.html", device="cuda:0")
         # prof.export_chrome_trace("trace_gpu_multi.json")
