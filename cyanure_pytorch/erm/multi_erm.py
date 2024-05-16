@@ -54,7 +54,7 @@ class MultiErm(Estimator):
 
         if (super().is_regression_loss(loss_string) or not super().is_loss_for_matrices(loss_string)):
             n = labels_vector.size(dim=0)
-    
+
             labels_np = np.full((int(nclass), n), fill_value=-1.0)
 
             # Assuming labels_vector is a PyTorch tensor
@@ -266,7 +266,7 @@ class MultiErm(Estimator):
         else:
             solver = None
             raise NotImplementedError("This solver is not implemented !")
-    
+
         return solver
 
     def get_regul_mat(self, num_class: int, transpose: bool) -> Regularizer:

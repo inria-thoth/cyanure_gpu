@@ -37,7 +37,7 @@ class SimpleErm(Estimator):
 
         if (self.model_parameters.verbose):
             logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
-      
+ 
         self.verify_input(features)
         loss = self.get_loss(features, labels)
         regul = self.get_regularization()
@@ -152,7 +152,7 @@ class SimpleErm(Estimator):
         else:
             solver = None
             raise NotImplementedError("This solver is not implemented !")
-    
+
         return solver
 
     def get_loss(self, data: torch.Tensor, y: torch.Tensor):

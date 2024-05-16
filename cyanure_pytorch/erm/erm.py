@@ -26,6 +26,3 @@ class Estimator:
     def is_regul_for_matrices(self, reg: str) -> bool:
 
         return reg == "L1L2" or reg == "L1LINF"
-
-
-    
