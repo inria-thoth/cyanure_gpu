@@ -114,7 +114,7 @@ class Loss:
         n = self.n()
         for ii in range(minibatch):
             coef = 0.0 if ii == 0 else 1.0
-            grad = self.add_grad(input, random.randint(0, sys.maxsize) % n, coef)   
+            grad = self.add_grad(input, random.randint(0, sys.maxsize) % n, coef)
         return grad * (1.0/minibatch)
 
     def kappa(self) -> float:
@@ -146,7 +146,7 @@ class Loss:
     def get_coordinates(self, ind: int) -> torch.Tensor:
         # TODO Wrong
         if (self.input_data.is_sparse):
-            col = self.input_data[: , ind]
+            col = self.input_data[:, ind]
             indices = col
 
         return indices
@@ -251,7 +251,7 @@ class LinearLossVec(Loss):
         if (self.intercept):
             output = torch.Tensor((m + 1))
             weight = self.get_w(input)
-            col = a * weight +  b * col
+            col = a * weight + b * col
             output[m] = a * self.scale_intercept + b * output[m]
         else:
             output = a * col + b * input2
@@ -286,8 +286,8 @@ class ProximalPointLoss:
         self.id = "PPA"
         self.kappa = kappa
         self.loss = loss
-           
-    def eval_tensor(self, input: torch.Tensor, matmul_result:torch.Tensor = None, 
+
+    def eval_tensor(self, input: torch.Tensor, matmul_result: torch.Tensor = None,
                     precompute: torch.Tensor = None, fprox: torch.Tensor = None) -> float:
         tmp = torch.clone(input)
         tmp = tmp - self.anchor_point
@@ -342,7 +342,7 @@ class ProximalPointLoss:
     def print(self) -> None:
         logger.info("Proximal point loss with")
         self.loss.print()
-   
+
     def provides_fenchel(self) -> bool:
         return False
 
@@ -357,7 +357,7 @@ class ProximalPointLoss:
         return Li + self.kappa
 
     def scal_grad(self, input: torch.Tensor, i: int) -> float:
-        return self.loss.scal_grad(input,i, None)
+        return self.loss.scal_grad(input, i, None)
 
     def add_feature_tensor(self, input: torch.Tensor, s: float) -> torch.Tensor:
         return self.loss.add_feature_tensor(input, s)

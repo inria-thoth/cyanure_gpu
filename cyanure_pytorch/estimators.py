@@ -6,12 +6,12 @@ import math
 import inspect
 import warnings
 import platform
-from cyanure_pytorch.constants import DEVICE
-import torch
-torch.manual_seed(0)
-torch.set_default_dtype(torch.float32)
-torch.set_printoptions(precision=20)
-from torch.profiler import profile, record_function, ProfilerActivity
+
+from sklearn.base import BaseEstimator
+from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.extmath import safe_sparse_dot, softmax
+from sklearn.exceptions import ConvergenceWarning
+
 from collections import defaultdict
 
 import concurrent.futures
@@ -19,10 +19,10 @@ import concurrent.futures
 import numpy as np
 import scipy.sparse
 
-from sklearn.base import BaseEstimator
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.extmath import safe_sparse_dot, softmax
-from sklearn.exceptions import ConvergenceWarning
+import torch
+torch.manual_seed(0)
+torch.set_default_dtype(torch.float32)
+torch.set_printoptions(precision=20)
 
 from cyanure_pytorch.data_processing import check_input_fit, check_input_inference, windows_conversion
 
@@ -34,7 +34,10 @@ from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 from cyanure_pytorch.erm.simple_erm import SimpleErm
 from cyanure_pytorch.erm.multi_erm import MultiErm
 
+from cyanure_pytorch.constants import DEVICE
+
 logger = setup_custom_logger("INFO")
+
 
 class ERM(BaseEstimator, ABC):
     """
@@ -295,6 +298,10 @@ class ERM(BaseEstimator, ABC):
         labels = np.squeeze(labels)
         initial_weight, yf, nclasses = self._initialize_weight(X, labels)
 
+
+        #TODO Remove when done
+        #with profile(activities=[ProfilerActivity.CUDA], profile_memory=True, experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
+
         initial_weight_torch = torch.tensor(initial_weight).to(DEVICE)
         
         training_data_fortran = X.T if scipy.sparse.issparse(
@@ -311,7 +318,7 @@ class ERM(BaseEstimator, ABC):
         self.le_ = le_parameter
 
         if (self.multi_class == "multinomial" or
-           (self.multi_class == "auto" and not self._binary_problem)) and self.loss == "logistic":
+        (self.multi_class == "auto" and not self._binary_problem)) and self.loss == "logistic":
             if self.multi_class == "multinomial":
                 if len(np.unique(labels)) != 2:
                     self._binary_problem = False
@@ -335,16 +342,20 @@ class ERM(BaseEstimator, ABC):
                 erm = SimpleErm(initial_weight_torch, weight_torch, problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
                 self.optimization_info_, w = erm.solve_problem(training_data_gpu, labels_gpu)
             else:
-                #TODO Remove when done
-                #with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True, with_stack=True, experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
                 erm = MultiErm(initial_weight_torch, weight_torch, problem_parameter, model_parameter, optim_info, dual_variable=self.dual) 
                 if len(yf.shape) == 1:
                     self.optimization_info_, w = erm.solve_problem_vector(training_data_gpu, labels_gpu)
                 else:
                     self.optimization_info_, w = erm.solve_problem_matrix(training_data_gpu, labels_gpu)
+
+        try:
+            torch.cuda.memory._dump_snapshot(f"memory_snapshot.pickle")
+        except Exception as e:
+            logger.error(f"Failed to capture memory snapshot {e}")
                 
 
-        #print(prof.key_averages())
+        #print(prof.key_averages().table(sort_by="cuda_memory_usage", row_limit=10))
+        #prof.export_memory_timeline(f"memory_profiler.html", device="cuda:0")
         #prof.export_chrome_trace("trace_gpu_multi.json")
         # prof.export_stacks("profiler_stacks_gpu.txt", "self_cuda_time_total")
         #prof.export_stacks("profiler_stacks_cpu.txt", "self_cpu_time_total")
