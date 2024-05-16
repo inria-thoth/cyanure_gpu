@@ -173,10 +173,6 @@ class MultiErm(Estimator):
             loss = SquareLossMat(data, y, self.problem_parameters.intercept)
         elif (self.problem_parameters.loss == "LOGISTIC"):
             loss = LossMat(LogisticLoss(data, y, self.problem_parameters.intercept))
-        elif (self.problem_parameters.loss == "SQHINGE"):
-            loss = LossMat(SquaredHingeLoss(data, y, self.problem_parameters.intercept))
-        elif (self.problem_parameters.loss == "SAFE_LOGISTIC"):
-            loss = LossMat(SafeLogisticLoss(data, y, self.problem_parameters.intercept))
         else:
             logger.error("Not implemented, square loss is chosen by default")
             loss = SquareLossMat(data, y, self.problem_parameters.intercept)
@@ -254,24 +250,12 @@ class MultiErm(Estimator):
             solver = Catalyst(param, ISTA_Solver(loss, regul, param, linesearch))
         elif solver_type == "FISTA":
             solver = FISTA_Solver(loss, regul, param)
-        elif solver_type == "SVRG":
-            solver = SVRG_Solver(loss, regul, param)
         elif solver_type == "MISO":
             solver = MISO_Solver(loss, regul, param) if regul.strong_convexity() > 0 else Catalyst(MISO_Solver(loss, regul, param))
-        elif solver_type == "SVRG_UNIFORM":
-            new_model_param = param
-            new_model_param.non_uniform_sampling = False
-            solver = SVRG_Solver(loss, regul, new_model_param)
-        elif solver_type == "CATALYST_SVRG":
-            solver = Catalyst(param, SVRG_Solver(loss, regul, param))
-        elif solver_type == "QNING_SVRG":
-            solver = QNing(param, SVRG_Solver(loss, regul, param))
         elif solver_type == "CATALYST_MISO":
             solver = Catalyst(param, MISO_Solver(loss, regul, param))
         elif solver_type == "QNING_MISO":
             solver = QNing(param, MISO_Solver(loss, regul, param))
-        elif solver_type == "ACC_SVRG":
-            solver = Acc_SVRG_Solver(loss, regul, param)
         else:
             solver = None
             raise NotImplementedError("This solver is not implemented !")
@@ -288,20 +272,6 @@ class MultiErm(Estimator):
                 regul = RegVecToMat(Ridge(self.problem_parameters), self.problem_parameters) if transpose else RegMat(Ridge(self.problem_parameters), self.problem_parameters, num_class, transpose)
             elif (regularizer_string == "L1"):
                 regul = RegVecToMat(Lasso(self.problem_parameters), self.problem_parameters) if transpose else RegMat(Lasso(self.problem_parameters), self.problem_parameters, num_class, transpose)
-            elif (regularizer_string == "ELASTICNET"):
-                regul = RegVecToMat(ElasticNet(self.problem_parameters), self.problem_parameters) if transpose else RegMat(ElasticNet(self.problem_parameters), self.problem_parameters, num_class, transpose)
-            elif (regularizer_string == "L1BALL"):
-                regul = RegMat(L1Ball(self.problem_parameters), self.problem_parameters, num_class, transpose)
-            elif (regularizer_string == "L2BALL"):
-                regul = RegMat(L2Ball(self.problem_parameters), self.problem_parameters, num_class, transpose)
-            elif (regularizer_string == "L1L2"):
-                regul = MixedL1L2(self.problem_parameters, num_class, transpose)
-            elif (regularizer_string == "L1L2_L1"):
-                regul = MixedL1L2_L1(self.problem_parameters, num_class, transpose)
-            elif (regularizer_string == "L1LINF"):
-                regul = MixedL1Linf(self.problem_parameters, num_class, transpose)
-            elif (regularizer_string == "FUSEDLASSO"):
-                regul = RegMat(FusedLasso(self.problem_parameters), self.problem_parameters, num_class, transpose)
             elif (regularizer_string is None):
                 pass
             else:

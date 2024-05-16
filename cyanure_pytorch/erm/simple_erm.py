@@ -50,17 +50,6 @@ class SimpleErm(Estimator):
             solver.eval(self.initial_weight)
             self.weight = torch.clone(self.initial_weight)
         else:
-            if (self.problem_parameters.regul == "L2" and not self.problem_parameters.intercept):
-                if (self.model_parameters.solver == "SVRG"):
-                    solver = SVRG_Solver_FastRidge(loss, regul, self.model_parameters, False)
-                elif (self.model_parameters.solver == "ACC_SVRG"):
-                    solver = SVRG_Solver_FastRidge(loss, regul, self.model_parameters, True)
-                elif (self.model_parameters.solver == "CATALYST_SVRG"):
-                    inner_solver = SVRG_Solver_FastRidge(loss, regul, self.model_parameters, False)
-                    solver = Catalyst(inner_solver)
-                elif (self.model_parameters.solver == "QNING_SVRG"):
-                    inner_solver = SVRG_Solver_FastRidge(loss, regul, self.model_parameters, False)
-                    solver = QNing(inner_solver)
 
             if (solver is None):
                 regul.strong_convexity()
@@ -117,14 +106,6 @@ class SimpleErm(Estimator):
             regul = Ridge(self.problem_parameters)
         elif self.problem_parameters.regul == "L1":
             regul = Lasso(self.problem_parameters)
-        elif self.problem_parameters.regul == "L1BALL":
-            regul = L1Ball(self.problem_parameters)
-        elif self.problem_parameters.regul == "L2BALL":
-            regul = L2Ball(self.problem_parameters)
-        elif self.problem_parameters.regul == "FUSEDLASSO":
-            regul = FusedLasso(self.problem_parameters)
-        elif self.problem_parameters.regul == "ELASTICNET":
-            regul = ElasticNet(self.problem_parameters)
         elif self.problem_parameters.regul is None:
             pass
         else:
@@ -161,24 +142,12 @@ class SimpleErm(Estimator):
             solver = Catalyst(param, ISTA_Solver(loss, regul, param, linesearch))
         elif solver_type == "FISTA":
             solver = FISTA_Solver(loss, regul, param)
-        elif solver_type == "SVRG":
-            solver = SVRG_Solver(loss, regul, param)
         elif solver_type == "MISO":
             solver = MISO_Solver(loss, regul, param) if regul.strong_convexity() > 0 else Catalyst(MISO_Solver(loss, regul, param))
-        elif solver_type == "SVRG_UNIFORM":
-            new_model_param = param
-            new_model_param.non_uniform_sampling = False
-            solver = SVRG_Solver(loss, regul, new_model_param)
-        elif solver_type == "CATALYST_SVRG":
-            solver = Catalyst(param, SVRG_Solver(loss, regul, param))
-        elif solver_type == "QNING_SVRG":
-            solver = QNing(param, SVRG_Solver(loss, regul, param))
         elif solver_type == "CATALYST_MISO":
             solver = Catalyst(param, MISO_Solver(loss, regul, param))
         elif solver_type == "QNING_MISO":
             solver = QNing(param, MISO_Solver(loss, regul, param))
-        elif solver_type == "ACC_SVRG":
-            solver = Acc_SVRG_Solver(loss, regul, param)
         else:
             solver = None
             raise NotImplementedError("This solver is not implemented !")
@@ -194,10 +163,6 @@ class SimpleErm(Estimator):
             loss = SquareLoss(data, y, self.problem_parameters.intercept)
         elif (self.problem_parameters.loss == "LOGISTIC"):
             loss = LogisticLoss(data, y, self.problem_parameters.intercept)
-        elif (self.problem_parameters.loss == "SQHINGE"):
-            loss = SquaredHingeLoss(data, y, self.problem_parameters.intercept)
-        elif (self.problem_parameters.loss == "SAFE_LOGISTIC"):
-            loss = SafeLogisticLoss(data, y, self.problem_parameters.intercept)
         else:
             logger.error("Not implemented, square loss is chosen by default")
             loss = SquareLoss(data, y, self.problem_parameters.intercept)
