@@ -10,15 +10,15 @@ logger = setup_custom_logger("INFO")
 
 class LinearLossMat(Loss):
 
-    def __init__(self, data : torch.Tensor, y : torch.Tensor, intercept : bool):
+    def __init__(self, data: torch.Tensor, y: torch.Tensor, intercept: bool):
         super().__init__(data, y, intercept)
         self.ones = torch.ones(self.input_data.size(dim=1))
 
-    def add_grad(self, input : torch.Tensor, i : int, a : float = 1.0) -> torch.Tensor:
+    def add_grad(self, input: torch.Tensor, i: int, a: float = 1.0) -> torch.Tensor:
         sgrad = self.scal_grad(input,i)
         return self.add_dual_pred(i, sgrad, a)
 
-    def double_add_grad(self, input1 : torch.Tensor, input2 : torch.Tensor, i : int, eta1 : float = 1.0, eta2 : float = -1.0, dummy : float = 1.0) -> torch.Tensor:
+    def double_add_grad(self, input1: torch.Tensor, input2: torch.Tensor, i: int, eta1: float = 1.0, eta2: float = -1.0, dummy: float = 1.0) -> torch.Tensor:
         sgrad1 = self.scal_grad(input1,i)
         sgrad2 = self.scal_grad(input2,i)
         sgrad1 = sgrad2 * eta2 + sgrad1 * eta1
@@ -27,16 +27,16 @@ class LinearLossMat(Loss):
     def transpose(self) -> bool: 
         return True
 
-    def add_feature_tensor(self, input : torch.Tensor, input2 : torch.Tensor, s : float) -> torch.Tensor:
+    def add_feature_tensor(self, input: torch.Tensor, input2: torch.Tensor, s: float) -> torch.Tensor:
         return self.add_dual_pred_tensor(input, input2, s, 1.0)
     
-    def add_feature(self, i : int, s : torch.Tensor, input2 : torch.Tensor) -> torch.Tensor:
+    def add_feature(self, i: int, s: torch.Tensor, input2: torch.Tensor) -> torch.Tensor:
         return self.add_dual_pred(i, s, input2, 1.0, 1.0)
   
     # _X  is  p x n
     # input is nclass x p
     # output is nclass x n
-    def pred_tensor(self, input : torch.Tensor, input2 : torch.Tensor) -> torch.Tensor:
+    def pred_tensor(self, input: torch.Tensor, input2: torch.Tensor) -> torch.Tensor:
         if (self.intercept):
             weight, bias = self.get_wb(input)
             if input2 is not None:
@@ -53,7 +53,7 @@ class LinearLossMat(Loss):
         return output
             
 
-    def pred(self, ind : int, input : torch.Tensor, input2 : torch.Tensor) -> torch.Tensor:
+    def pred(self, ind: int, input: torch.Tensor, input2: torch.Tensor) -> torch.Tensor:
         col = self.input_data[:, ind]
         if (self.intercept):
             weight, bias = self.get_wb(input)
@@ -67,7 +67,7 @@ class LinearLossMat(Loss):
 
         return output
 
-    def add_dual_pred_tensor(self, input : torch.Tensor, input2 : torch.Tensor, a1 : float = 1.0, a2 : float = 1.0) -> torch.Tensor:
+    def add_dual_pred_tensor(self, input: torch.Tensor, input2: torch.Tensor, a1: float = 1.0, a2: float = 1.0) -> torch.Tensor:
         if (self.intercept):
             output = torch.Tensor(input.size(dim=0), self.input_data.size(dim=0) + 1)
             weight, bias = self.get_wb(output)
@@ -82,7 +82,7 @@ class LinearLossMat(Loss):
                 output = a1 * torch.matmul(input, self.input_data.t())
         return output
 
-    def add_dual_pred(self, ind : int , input : torch.Tensor, input2 : torch.Tensor, a : float = 1.0, b : float = 1.0) -> torch.Tensor:
+    def add_dual_pred(self, ind: int , input: torch.Tensor, input2: torch.Tensor, a: float = 1.0, b: float = 1.0) -> torch.Tensor:
         col = self.input_data[:, ind]
         if (b != 1.0):
             input2 *= b
@@ -101,7 +101,7 @@ class LinearLossMat(Loss):
                 
         return output
 
-    def get_wb(self, input : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_wb(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         p = input.size(dim=1)
         weight = input[:, : p-1]
         bias = input[:, p-1]
@@ -109,13 +109,13 @@ class LinearLossMat(Loss):
         return weight, bias
 
     @abc.abstractmethod
-    def scal_grad(self, input : torch.Tensor, i : int)-> torch.Tensor:
+    def scal_grad(self, input: torch.Tensor, i: int)-> torch.Tensor:
         return
 
 
 class LossMat(LinearLossMat):
 
-    def __init__(self, loss : Loss):
+    def __init__(self, loss: Loss):
          self.loss_list = list()
          self.data_list = list()
          self.n = loss.labels.size(dim=1)
@@ -127,7 +127,7 @@ class LossMat(LinearLossMat):
             self.loss_list[i] = type(loss)(self.data_list[i], ycol, loss.intercept)
          self.id = self.loss_list[0].id
 
-    def eval_tensor(self, input_tensor : torch.Tensor) -> float:
+    def eval_tensor(self, input_tensor: torch.Tensor) -> float:
         sum_value = torch.tensor(0.0)  # Initialize as a PyTorch tensor
 
         for ii in range(self.num_class):  # Assuming _N is defined somewhere
@@ -138,7 +138,7 @@ class LossMat(LinearLossMat):
             
         return sum_value
 
-    def eval(self, input_tensor : torch.Tensor, i : int) -> float:
+    def eval(self, input_tensor: torch.Tensor, i: int) -> float:
         sum_value = torch.tensor(0.0)  # Initialize as a PyTorch tensor
 
         for ii in range(self.num_class):
@@ -149,7 +149,7 @@ class LossMat(LinearLossMat):
 
         return sum_value
 
-    def add_grad(self, input_tensor : torch.Tensor, i : int, eta : float = 1.0) -> torch.Tensor:
+    def add_grad(self, input_tensor: torch.Tensor, i: int, eta: float = 1.0) -> torch.Tensor:
         output = torch.zeros_like(input_tensor)
 
         for ii in range(self.num_class): 
@@ -157,7 +157,7 @@ class LossMat(LinearLossMat):
 
         return output
 
-    def double_add_grad(self, input1 : torch.Tensor, input2 : torch.Tensor, i : int, eta1 : float = 1.0, eta2 : float = -1.0, dummy : float = 1.0) -> torch.Tensor:
+    def double_add_grad(self, input1: torch.Tensor, input2: torch.Tensor, i: int, eta1: float = 1.0, eta2: float = -1.0, dummy: float = 1.0) -> torch.Tensor:
         # Input tensor is a vector
         output = torch.Tensor(input1.size())
 
@@ -166,7 +166,7 @@ class LossMat(LinearLossMat):
 
         return output
 
-    def grad(self, input_tensor : torch.Tensor) -> torch.Tensor:
+    def grad(self, input_tensor: torch.Tensor) -> torch.Tensor:
         output = torch.zeros_like(input_tensor)
 
         for ii in range(self.num_class):  # Assuming self.num_class is defined somewhere
@@ -181,7 +181,7 @@ class LossMat(LinearLossMat):
     def provides_fenchel(self) -> bool:
         return self.loss_list[0].provides_fenchel()
 
-    def get_dual_variable(self, input : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_dual_variable(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         # Input tensor is a vector
         grad1 = torch.Tensor((self.n, input.size(dim=1)))
         grad2 = torch.Tensor(input.size())
@@ -191,7 +191,7 @@ class LossMat(LinearLossMat):
             
         return grad1, grad2
 
-    def fenchel(self, input_tensor : torch.Tensor) -> float:
+    def fenchel(self, input_tensor: torch.Tensor) -> float:
         sum_value = torch.tensor(0.0)  # Initialize as a PyTorch tensor
 
         for ii in range(self.num_class):
@@ -205,20 +205,20 @@ class LossMat(LinearLossMat):
     def lipschitz(self) -> float:
         return self.loss_list[0].lipschitz()
 
-    def lipschitz_li(self, Li : torch.Tensor) -> torch.Tensor:
+    def lipschitz_li(self, Li: torch.Tensor) -> torch.Tensor:
         return self.loss_list[0].lipschitz_li(Li)
 
     # input; nclass x n
     # output: p x nclass
-    def add_feature_tensor(self, input : torch.Tensor, input2 : torch.Tensor, s : float) -> torch.Tensor:
+    def add_feature_tensor(self, input: torch.Tensor, input2: torch.Tensor, s: float) -> torch.Tensor:
         output = torch.Tensor(input.size())
 
         for ii in range(self.num_class):  # Assuming self.num_class is defined somewhere
-            output[:, ii] = self.loss_list[ii].add_feature_tensor(input[ii, :], input2[:, ii], s)
+            output[:, ii] = self.loss_list[ii].add_feature_tensor(input[ii,:], input2[:, ii], s)
 
         return output
     
-    def add_feature(self, i : int, s : torch.Tensor, input2 : torch.Tensor) -> torch.Tensor:
+    def add_feature(self, i: int, s: torch.Tensor, input2: torch.Tensor) -> torch.Tensor:
         # Input tensor is a vector
         output = torch.Tensor((self.loss_list[0].input_data.size(dim=0) , self.num_class))
 
@@ -227,7 +227,7 @@ class LossMat(LinearLossMat):
 
         return output
 
-    def scal_grad(self, input_tensor : torch.Tensor, i : int) -> torch.Tensor:
+    def scal_grad(self, input_tensor: torch.Tensor, i: int) -> torch.Tensor:
         output = torch.Tensor(self.num_class)
 
         for ii in range(self.num_class):  # Assuming self.num_class is defined somewhere
@@ -238,14 +238,14 @@ class LossMat(LinearLossMat):
     def transpose(self) -> bool: 
         return False
 
-    def get_grad_aux(self, input : torch.Tensor) -> None:
+    def get_grad_aux(self, input: torch.Tensor) -> None:
         logger.error("Not used")
 
     def lipschitz_constant(self) -> float:
         logger.error("Not used")
         return 0
 
-    def get_dual_constraints(self, grad1 : torch.Tensor)-> None:
+    def get_dual_constraints(self, grad1: torch.Tensor)-> None:
         logger.error("Not used")
       
 

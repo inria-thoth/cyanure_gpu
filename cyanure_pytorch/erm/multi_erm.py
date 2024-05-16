@@ -33,7 +33,7 @@ class MultiErm(Estimator):
 
     global EPSILON
 
-    def __init__(self, initial_weight : torch.Tensor, weight : torch.Tensor, problem_parameters: ProblemParameters, model_parameters: ModelParameters, optim_info: torch.Tensor, dual_variable : torch.Tensor):
+    def __init__(self, initial_weight: torch.Tensor, weight: torch.Tensor, problem_parameters: ProblemParameters, model_parameters: ModelParameters, optim_info: torch.Tensor, dual_variable: torch.Tensor):
         super().__init__(problem_parameters, model_parameters, optim_info)
         self.initial_weight = initial_weight
         self.weight = weight
@@ -43,7 +43,7 @@ class MultiErm(Estimator):
     # y is nclasses x n
     # W0 is p x nclasses if no intercept (or p+1 x nclasses with intercept)
     # prediction model is   W0^FeatureType X  gives  nclasses x n
-    def solve_problem_vector(self, features : torch.Tensor, labels_vector : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def solve_problem_vector(self, features: torch.Tensor, labels_vector: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         
         self.verify_input(features)
         # print(f"Starting Memory Usage Vector: {torch.cuda.memory_allocated() / 1e6} MB")
@@ -88,7 +88,7 @@ class MultiErm(Estimator):
     # y is nclasses x n
     # W0 is p x nclasses if no intercept (or p+1 x nclasses with intercept)
     # prediction model is   W0^FeatureType X  gives  nclasses x n
-    def solve_problem_matrix(self, features : torch.Tensor, labels : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def solve_problem_matrix(self, features: torch.Tensor, labels: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         self.verify_input(features)
         # print(f"Starting Memory Usage Matrix: {torch.cuda.memory_allocated() / 1e6} MB")
         loss_string = self.problem_parameters.loss.upper()
@@ -148,7 +148,7 @@ class MultiErm(Estimator):
 
         return self.optim_info, self.weight
 
-    def verify_input(self, X : torch.Tensor) -> None:
+    def verify_input(self, X: torch.Tensor) -> None:
         if (self.problem_parameters.intercept):
             if (X.size(dim=0) + 1 != self.initial_weight.size(dim=0)):
                 logger.error("Dimension of initial point is not consistent. With intercept, if X is m x n, w0 should be (n+1)-dimensional.")
@@ -165,7 +165,7 @@ class MultiErm(Estimator):
         if (self.model_parameters.tol < 0):
             raise ValueError("Tolerance for stopping criteria must be positive")
 
-    def get_loss_matrix(self, data : torch.Tensor, y : torch.Tensor) -> Loss:
+    def get_loss_matrix(self, data: torch.Tensor, y: torch.Tensor) -> Loss:
         loss = None
 
         self.problem_parameters.loss = self.problem_parameters.loss.upper()
@@ -178,7 +178,7 @@ class MultiErm(Estimator):
             loss = SquareLossMat(data, y, self.problem_parameters.intercept)
         return loss
 
-    def solve_mat(self, loss : Loss, regul : Regularizer) -> Tuple[torch.Tensor, torch.Tensor]:
+    def solve_mat(self, loss: Loss, regul: Regularizer) -> Tuple[torch.Tensor, torch.Tensor]:
 
         solver = None
         if (self.model_parameters.max_iter == 0):
@@ -222,7 +222,7 @@ class MultiErm(Estimator):
 
         return solver.get_optim_info(), self.weight
 
-    def get_solver(self, loss : Loss, regul : Regularizer, param : ModelParameters) -> Solver:
+    def get_solver(self, loss: Loss, regul: Regularizer, param: ModelParameters) -> Solver:
         solver_type = param.solver.upper()
 
         if "BARZILAI" in solver_type:
@@ -262,7 +262,7 @@ class MultiErm(Estimator):
             
         return solver
 
-    def get_regul_mat(self, num_class : int, transpose : bool) -> Regularizer:
+    def get_regul_mat(self, num_class: int, transpose: bool) -> Regularizer:
         regul = None
 
         if self.problem_parameters.regul is not None:

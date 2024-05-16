@@ -8,18 +8,18 @@ logger = setup_custom_logger("INFO")
 
 class LogisticLoss(LinearLossVec):
 
-    def __init__(self, data : torch.Tensor, y : torch.Tensor, intercept : bool):
+    def __init__(self, data: torch.Tensor, y: torch.Tensor, intercept: bool):
         super().__init__(data, y, intercept)
         self.id="LOGISTIC"
 
-    def eval(self, input : torch.Tensor, i : int) -> float:
+    def eval(self, input: torch.Tensor, i: int) -> float:
         res = self.labels[i] * self.pred(i,input)
         if res > 0:
             return torch.log(1.0 + torch.exp(-res))
         else:
             return torch.log(1.0 + torch.exp(res))
         
-    def pre_compute(self, input : torch.Tensor) -> float:
+    def pre_compute(self, input: torch.Tensor) -> float:
 
         tmp = self.pred_tensor(input, None)
 
@@ -27,7 +27,7 @@ class LogisticLoss(LinearLossVec):
 
         return tmp
 
-    def eval_tensor(self, input : torch.Tensor, matmul_result : torch.Tensor = None, precompute : torch.Tensor = None) -> float:
+    def eval_tensor(self, input: torch.Tensor, matmul_result: torch.Tensor = None, precompute: torch.Tensor = None) -> float:
         if precompute is None:
             if matmul_result is None:
                 tmp = self.pred_tensor(input, None)
@@ -42,21 +42,21 @@ class LogisticLoss(LinearLossVec):
     def print(self) -> None:
         logger.info("Logistic Loss is used")
 
-    def fenchel(self, input : torch.Tensor) -> float:
+    def fenchel(self, input: torch.Tensor) -> float:
         
         n = input.size(dim=0)
         prod = torch.mul(self.labels, input)
         sum_vector = torch.special.xlogy(1.0+prod, 1.0+prod)+torch.special.xlogy(-prod, -prod)
         return torch.sum(sum_vector)/n
 
-    def scal_grad(self, input : torch.Tensor, i : int) -> float:
+    def scal_grad(self, input: torch.Tensor, i: int) -> float:
         label = self.labels[i]
         ss = self.pred(i,input)
         s = -label/(1.0+torch.exp(label*ss))
     
         return s
 
-    def get_grad_aux(self, input : torch.Tensor, matmul_result : torch.Tensor = None, precompute : torch.Tensor = None) -> torch.Tensor:
+    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None, precompute: torch.Tensor = None) -> torch.Tensor:
         if precompute is None:
             if matmul_result is not None:
                 grad1 = matmul_result
@@ -74,13 +74,13 @@ class LogisticLoss(LinearLossVec):
     def lipschitz_constant(self) -> float:
         return 0.25
     
-    def get_dual_constraints(self, grad1 : torch.Tensor) -> torch.Tensor:
+    def get_dual_constraints(self, grad1: torch.Tensor) -> torch.Tensor:
         if (self.intercept):
             grad1 = self.project_sft_binary(grad1, self.labels);
         
         return grad1
 
-    def project_sft_binary(self, grad1 : torch.Tensor, y : torch.Tensor) -> torch.Tensor:
+    def project_sft_binary(self, grad1: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         mean = torch.mean(grad1)
         n = grad1.size(dim=0)
         ztilde = torch.Tensor(n)
@@ -109,7 +109,7 @@ class LogisticLoss(LinearLossVec):
         return grad1
 
     # Vectors
-    def l1project(self, input : torch.Tensor, thrs : float, simplex : bool = False) -> torch.Tensor:
+    def l1project(self, input: torch.Tensor, thrs: float, simplex: bool = False) -> torch.Tensor:
 
         output = torch.clone(input)
         if (simplex):

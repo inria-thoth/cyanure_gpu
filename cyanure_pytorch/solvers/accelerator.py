@@ -1,12 +1,11 @@
 import torch
 
-from cyanure_pytorch.losses.loss import Loss, ProximalPointLoss
-from cyanure_pytorch.regularizers.regularizer import Regularizer
+from cyanure_pytorch.losses.loss import ProximalPointLoss
 from cyanure_pytorch.erm.param.model_param import ModelParameters
 
 from cyanure_pytorch.solvers.solver import Solver
 
-from cyanure_pytorch.constants import EPSILON, DEVICE
+from cyanure_pytorch.constants import DEVICE
 
 from cyanure_pytorch.erm.algebra import solve_binomial
 
@@ -14,8 +13,9 @@ from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 
+
 class Catalyst(Solver):
-    def __init__(self, param : ModelParameters, solver: Solver):
+    def __init__(self, param: ModelParameters, solver: Solver):
         super().__init__(solver.loss, solver.regul, param)
 
         self.y = None
@@ -175,7 +175,7 @@ class QNing(Catalyst):
         self.solver.print()
 
     def get_lbfgs_direction(self) -> torch.Tensor:
-        g = torch.clone(self.gk)
+        g = torch.clone(self.gk)        
         g_vectorize = torch.flatten(g)
         g_vectorize = self.get_lbfgs_direction_aux(g_vectorize)
         g = torch.reshape(g_vectorize, self.gk.size())

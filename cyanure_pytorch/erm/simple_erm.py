@@ -27,13 +27,13 @@ class SimpleErm(Estimator):
 
     global EPSILON
 
-    def __init__(self, initial_weight : torch.Tensor, weight : torch.Tensor, problem_parameters: ProblemParameters, model_parameters: ModelParameters, optim_info: torch.Tensor, dual_variable : torch.Tensor):
+    def __init__(self, initial_weight: torch.Tensor, weight: torch.Tensor, problem_parameters: ProblemParameters, model_parameters: ModelParameters, optim_info: torch.Tensor, dual_variable: torch.Tensor):
         super().__init__(problem_parameters, model_parameters, optim_info)
         self.initial_weight = initial_weight
         self.weight = weight
         self.dual_variable = dual_variable
 
-    def solve_problem(self, features : torch.Tensor, labels : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def solve_problem(self, features: torch.Tensor, labels: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         
         if (self.model_parameters.verbose):
             logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
@@ -80,7 +80,7 @@ class SimpleErm(Estimator):
 
         return solver.get_optim_info(), self.weight
 
-    def verify_input(self, X : torch.Tensor) -> None:
+    def verify_input(self, X: torch.Tensor) -> None:
         if (self.problem_parameters.intercept):
             if (X.size(dim=0) + 1 != self.initial_weight.size(dim=0)):
                 logger.error("Dimension of initial point is not consistent. With intercept, if X is m x n, w0 should be (n+1)-dimensional.")
@@ -114,7 +114,7 @@ class SimpleErm(Estimator):
         return regul
     
 
-    def get_solver(self, loss : Loss, regul : Regularizer, param : ModelParameters) -> Solver:
+    def get_solver(self, loss: Loss, regul: Regularizer, param: ModelParameters) -> Solver:
         solver_type = param.solver.upper()
 
         if "BARZILAI" in solver_type:
@@ -155,7 +155,7 @@ class SimpleErm(Estimator):
         return solver
 
 
-    def get_loss(self, data : torch.Tensor, y : torch.Tensor):
+    def get_loss(self, data: torch.Tensor, y: torch.Tensor):
         loss = None
 
         self.problem_parameters.loss = self.problem_parameters.loss.upper()
