@@ -139,13 +139,13 @@ class MultiErm(Estimator):
                 self.optim_info[ii] = optim_info_col
                 if (self.model_parameters.verbose):
                     noptim = optim_info_col.size(dim=2) - 1
-                    logger.info("Solver " + ii + " has terminated after " + optim_info_col(0, 0, noptim) 
+                    logger.info("Solver " + ii + " has terminated after " + optim_info_col(0, 0, noptim)
                                 + " epochs in " + optim_info_col(0, 5, noptim) + " seconds")
                     if (optim_info_col[0, 4, noptim] == 0):
-                        logger.info("   Primal objective: " + optim_info_col(0, 1, noptim) + ", relative duality gap: " 
+                        logger.info("   Primal objective: " + optim_info_col(0, 1, noptim) + ", relative duality gap: "
                                     + optim_info_col(0, 3, noptim))
                     else:
-                        logger.info("   Primal objective: " + optim_info_col(0, 1, noptim) 
+                        logger.info("   Primal objective: " + optim_info_col(0, 1, noptim)
                                     + ", tol: " + optim_info_col(0, 4, noptim))
 
             final_time = time.time()
