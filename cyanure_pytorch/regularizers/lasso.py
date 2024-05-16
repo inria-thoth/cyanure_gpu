@@ -1,5 +1,4 @@
 import torch
-import math
 
 from cyanure_pytorch.regularizers.regularizer import Regularizer
 from cyanure_pytorch.erm.param.problem_param import ProblemParameters
