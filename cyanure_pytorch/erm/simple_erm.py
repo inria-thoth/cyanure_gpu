@@ -83,7 +83,8 @@ class SimpleErm(Estimator):
     def verify_input(self, X: torch.Tensor) -> None:
         if (self.problem_parameters.intercept):
             if (X.size(dim=0) + 1 != self.initial_weight.size(dim=0)):
-                logger.error("Dimension of initial point is not consistent. With intercept, if X is m x n, w0 should be (n+1)-dimensional.")
+                logger.error("Dimension of initial point is not consistent."
+                             " With intercept, if X is m x n, w0 should be (n+1)-dimensional.")
                 return None
         else:
             if (X.size(dim=0) != self.initial_weight.size(dim=0)):
