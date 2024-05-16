@@ -272,7 +272,7 @@ class LinearLossVec(Loss):
         else:
             return torch.dot(col, input)
 
-    def get_w(self, input:.Tensor) -> torch.Tensor:
+    def get_w(self, input: torch.Tensor) -> torch.Tensor:
         n = input.n()
         return input[:n-1]
 
@@ -314,7 +314,7 @@ class ProximalPointLoss:
 
         return grad
 
-    def double_add_grad(self, input1: torch.Tensor, input2: torch.Tensor, i: eta1: int = 1.0, eta2: int = -1.0, dummy: int = 1.0) -> torch.Tensor:
+    def double_add_grad(self, input1: torch.Tensor, input2: torch.Tensor, i: int, eta1: int = 1.0, eta2: int = -1.0, dummy: int = 1.0) -> torch.Tensor:
         output = self.loss.double_add_grad(input1, input2, i, eta1, eta2)
         if (dummy):
             output = output + input1 * dummy * self.kappa * eta1
