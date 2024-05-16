@@ -4,20 +4,21 @@ from cyanure_pytorch.losses.loss_matrix import LinearLossMat
 
 logger = setup_custom_logger("INFO")
 
+
 class SquareLossMat(LinearLossMat):
 
     def __init__(self, data: torch.Tensor, y: torch.Tensor, intercept: bool):
         super().__init__(data, y, intercept)
-        self.id="SQUARE"
+        self.id = "SQUARE"
 
     def eval_tensor(self, input: torch.Tensor) -> float:
         tmp = self.pred_tensor(input, None)
-        tmp.sub_(self.labels) 
+        tmp.sub_(self.labels)
         return 0.5 * torch.linalg.norm(tmp)**2 / tmp.size(dim=1)
-      
+
     def eval(self, input: torch.Tensor, i: int) -> float:
-        tmp = self.pred(i,input, None)
-        tmp.sub_(self.labels[:, i]) 
+        tmp = self.pred(i, input, None)
+        tmp.sub_(self.labels[:, i])
         return 0.5 * torch.linalg.norm(tmp)**2
 
     def print(self) -> None:
@@ -25,10 +26,9 @@ class SquareLossMat(LinearLossMat):
 
     def fenchel(self, input: torch.Tensor) -> float:
         num_class = input.size(dim=1)
-        
+
         # Assuming 'input' and 'self.labels' are your tensors
         input_size = input.size()
-        labels_size = self.labels.size()
 
         # Define the chunk size along the last dimension
         chunk_size = 1000
@@ -53,7 +53,7 @@ class SquareLossMat(LinearLossMat):
 
             # Add the result to the sum
             result_sum += dot_product_chunk
-        
+
         return 0.5 * torch.linalg.norm(input)**2 / num_class + torch.sum(result_sum) / num_class
 
     def get_grad_aux(self, input: torch.Tensor) -> torch.Tensor:
@@ -62,7 +62,7 @@ class SquareLossMat(LinearLossMat):
         return grad1
 
     def scal_grad(self, input: torch.Tensor, i: int) -> torch.Tensor:
-        output = self.pred(i,input, None)
+        output = self.pred(i, input, None)
         ycol = self.labels[:, i]
         return output.sub_(ycol)
 
@@ -70,7 +70,7 @@ class SquareLossMat(LinearLossMat):
         return 1.0
 
     def get_dual_constraints(self, grad1: torch.Tensor) -> torch.Tensor:
-        if (self.intercept): 
+        if (self.intercept):
             grad1 = self.center_rows(grad1)
         return grad1
 
