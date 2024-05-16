@@ -38,7 +38,7 @@ class Solver:
 
         initial_time = time.time()
         weight = torch.clone(initial_weight)
-                      
+           
         if (not self.duality and self.max_iter > 1):
             self.previous_weight = torch.clone(initial_weight)
 
@@ -47,12 +47,12 @@ class Solver:
             logger.info("*********************************")
             self.loss.print()
             self.regul.print()
-        fprox=0
+        fprox = 0
         for it in range(1, self.max_iter + 1):
             if ((it % self.duality_gap_interval) == 0):
                 if (self.test_stopping_criterion(weight, it)):
                     break
-            weight, fprox = self.solver_aux(weight, it)            
+            weight, fprox = self.solver_aux(weight, it)       
             self.elapsed_time = time.time() - initial_time
         if (self.verbose):
             logger.info("This is the elapsed time: " + str(self.elapsed_time))
@@ -60,29 +60,29 @@ class Solver:
             weight = torch.clone(self.best_weight)
 
         return weight, fprox
-    
+
     def get_optim_info(self) -> None:
         count = 0
         for index in range(self.optim_info.size(dim=1)):
             if (self.optim_info[0, index] != 0):
-                count+=1
+                count += 1
 
         if (count > 0):
             optim = torch.Tensor(1, self.NUMBER_OPTIM_PROCESS_INFO, count)
         for index in range(count):
-            for inner_index in range (self.NUMBER_OPTIM_PROCESS_INFO):
+            for inner_index in range(self.NUMBER_OPTIM_PROCESS_INFO):
                 optim[0, inner_index, index] = self.optim_info[inner_index, index]
         if (count > 0):
             return optim
         else:
             return self.optim_info
 
-    def eval(self, x : torch.Tensor) -> None:
+    def eval(self, x: torch.Tensor) -> None:
         self.test_stopping_criterion(x, 1)
         self.optim_info[5, 0] = 0
 
     @abc.abstractmethod
-    def set_dual_variable(self, initial_dual : float):
+    def set_dual_variable(self, initial_dual: float):
         return
 
     @abc.abstractmethod
@@ -92,12 +92,12 @@ class Solver:
     @abc.abstractmethod
     def restore_state(self):
         return
-    
+
     def get_dual(self, weight: torch.Tensor) -> float:
         if (not self.regul.provides_fenchel() or not self.loss.provides_fenchel()):
             logger.error("Error: no duality gap available")
             return -float("Inf")
-  
+
         grad1, grad2 = self.loss.get_dual_variable(weight)
         dual, grad1, grad2 = self.regul.fenchel(grad1, grad2)
         loss_fenchel = self.loss.fenchel(grad1)
@@ -115,9 +115,11 @@ class Solver:
             self.best_weight = torch.clone(weight)
         if (self.verbose):
             if (primal == self.best_primal):
-                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + ", time: " + "{:.5f}".format(self.elapsed_time))
+                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + 
+                            ", time: " + "{:.5f}".format(self.elapsed_time))
             else:
-                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + ", best primal: " + str(self.best_primal) + ", time: " + "{:.5f}".format(self.elapsed_time))
+                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + 
+                            ", best primal: " + str(self.best_primal) + ", time: " + "{:.5f}".format(self.elapsed_time))
         optim[0] = iteration
         optim[1] = primal
         optim[5] = self.elapsed_time
@@ -125,7 +127,7 @@ class Solver:
             dual = self.get_dual(weight)
             self.best_dual = torch.max(self.best_dual, dual)
             duality_gap = (self.best_primal - self.best_dual) / torch.abs(self.best_primal)
-            stop = False            
+            stop = False        
             if ((iteration / self.duality_gap_interval) >= 4):
                 if (self.optim_info[3, int(iteration / self.duality_gap_interval) - 4] == duality_gap):
                     stop = True
@@ -135,9 +137,9 @@ class Solver:
                 logger.info("Best relative duality gap: " + str(duality_gap))
             optim[2] = self.best_dual
             optim[3] = duality_gap
-            if(duality_gap < self.tol):
+            if (duality_gap < self.tol):
                 stop = True
-            elif(duality_gap <= 0 ):
+            elif (duality_gap <= 0):
                 logger.warning("Your problem is prone to numerical instability. It would be safer to use double.")
                 stop = True
             self.optim_info[:, ii] = optim
@@ -151,16 +153,16 @@ class Solver:
             return diff < self.tol
 
     @abc.abstractmethod
-    def solver_init(self, x0 : torch.Tensor):
+    def solver_init(self, x0: torch.Tensor):
         return
 
     @abc.abstractmethod
-    def solver_aux(self, x : torch.Tensor, it : int):
+    def solver_aux(self, x: torch.Tensor, it: int):
         return
 
     @abc.abstractmethod
     def print(self):
         return
 
-    def minibatch(self): 
+    def minibatch(self):
         return 1
