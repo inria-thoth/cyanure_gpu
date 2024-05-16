@@ -9,7 +9,7 @@ logger = setup_custom_logger("INFO")
 
 class MultiClassLogisticLoss(LinearLossMat):
 
-    def __init__(self, data : torch.Tensor, y : torch.Tensor, intercept : bool):
+    def __init__(self, data: torch.Tensor, y: torch.Tensor, intercept: bool):
         super().__init__(data, y, intercept)
         self.n_classes = int(torch.max(y) + 1)
         self.id = 'MULTI_LOGISTIC'
@@ -21,7 +21,7 @@ class MultiClassLogisticLoss(LinearLossMat):
         self.boolean_mask = torch.eq(index_mask, label_mask)
         self.loss_labels = self.labels.type(torch.LongTensor).to(DEVICE)   
     
-    def pre_compute(self, input : torch.Tensor) -> float:
+    def pre_compute(self, input: torch.Tensor) -> float:
 
         tmp = self.pred_tensor(input, None)
         diff = torch.masked_select(tmp, self.boolean_mask).unsqueeze(0).expand(self.n_classes, self.number_data)
@@ -38,7 +38,7 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         return tmp, sum_matrix, mm
     
-    def eval_tensor(self, input : torch.Tensor, matmul_result : torch.Tensor = None, precompute : torch.Tensor = None) -> float:
+    def eval_tensor(self, input: torch.Tensor, matmul_result: torch.Tensor = None, precompute: torch.Tensor = None) -> float:
         if precompute is None:
             if matmul_result is not None:
                 tmp = matmul_result
@@ -66,7 +66,7 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         return sum_value / self.number_data
 
-    def eval(self, input : torch.Tensor, i : int) -> float:
+    def eval(self, input: torch.Tensor, i: int) -> float:
         tmp = self.pred(i, input)
         tmp += -tmp[self.labels[i]]
         mm = torch.max(tmp)
@@ -92,7 +92,7 @@ class MultiClassLogisticLoss(LinearLossMat):
         
         return res
    
-    def fenchel(self, input : torch.Tensor) -> float:
+    def fenchel(self, input: torch.Tensor) -> float:
         n = input.size(1)
 
         # Use advanced indexing to select the relevant elements
@@ -105,7 +105,7 @@ class MultiClassLogisticLoss(LinearLossMat):
         
         return sum_val / n
 
-    def get_grad_aux2(self, col : torch.Tensor, ind : int) -> torch.Tensor:
+    def get_grad_aux2(self, col: torch.Tensor, ind: int) -> torch.Tensor:
         value = col[ind].clone()
         col -= value
         mm = torch.max(col)
@@ -117,7 +117,7 @@ class MultiClassLogisticLoss(LinearLossMat):
         col[ind] = -(torch.sum(torch.abs(col)))
         return col
 
-    def get_grad_aux(self, input : torch.Tensor, matmul_result : torch.Tensor = None, precompute : torch.Tensor = None) -> torch.Tensor:
+    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None, precompute: torch.Tensor = None) -> torch.Tensor:
         if precompute is None:
             if matmul_result is not None:
                 grad1 = matmul_result
@@ -158,7 +158,7 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         return grad1
     
-    def get_grad_aux_to_compile(self, matmul_result : torch.Tensor) -> torch.Tensor:
+    def get_grad_aux_to_compile(self, matmul_result: torch.Tensor) -> torch.Tensor:
         grad1 = matmul_result
 
         # Subtract one-hot encoded vector from each element in grad1
@@ -195,14 +195,14 @@ class MultiClassLogisticLoss(LinearLossMat):
         
         return grad1
     
-    def scal_grad(self, input : torch.Tensor, i : int) -> torch.Tensor:
+    def scal_grad(self, input: torch.Tensor, i: int) -> torch.Tensor:
         col = self.pred(i, input, None)
         return self.get_grad_aux2(col, int(self.labels[i]))
 
     def lipschitz_constant(self) -> float:
         return 0.25
 
-    def get_dual_constraints(self, grad1 : torch.Tensor) -> torch.Tensor:
+    def get_dual_constraints(self, grad1: torch.Tensor) -> torch.Tensor:
         # scale grad1 by 1/Nclasses
         if (self.intercept):
             for i in range(grad1.size(0)):
@@ -212,13 +212,13 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         return grad1
    
-    def project_sft(self, grad1_vector : torch.Tensor, labels : torch.Tensor, clas : int) -> torch.Tensor:
+    def project_sft(self, grad1_vector: torch.Tensor, labels: torch.Tensor, clas: int) -> torch.Tensor:
         labels_binary = torch.Tensor(grad1_vector.size(dim=0))
         labels_binary[labels == clas] = 1.0 
         labels_binary[labels != clas] = -1.0
         return self.project_sft_binary(grad1_vector, labels_binary)
 
-    def project_sft_binary(self, grad1 : torch.Tensor, y : torch.Tensor) -> torch.Tensor:
+    def project_sft_binary(self, grad1: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         mean = torch.mean(grad1)
         n = grad1.size(dim=0)
         ztilde = torch.Tensor(n)
@@ -247,7 +247,7 @@ class MultiClassLogisticLoss(LinearLossMat):
         return grad1
 
     # Vectors
-    def l1project(self, input : torch.Tensor, thrs : float, simplex : bool = False) -> torch.Tensor:
+    def l1project(self, input: torch.Tensor, thrs: float, simplex: bool = False) -> torch.Tensor:
 
         output = torch.clone(input)
         if (simplex):

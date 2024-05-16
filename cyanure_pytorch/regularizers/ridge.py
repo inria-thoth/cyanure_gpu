@@ -10,12 +10,12 @@ logger = setup_custom_logger("INFO")
 
 class Ridge(Regularizer):
 
-    def __init__(self, model : ProblemParameters) :
+    def __init__(self, model: ProblemParameters):
         super().__init__(model)
 
         self.id = "L2"
 
-    def prox(self, input : torch.Tensor, eta : float) -> torch.Tensor:
+    def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:
         output = torch.clone(input)
         scaling_factor = (1.0 / (1.0 + self.lambda_1 * eta))
         output.mul_(scaling_factor)
@@ -25,12 +25,12 @@ class Ridge(Regularizer):
         
         return output
 
-    def eval_tensor(self, input : torch.Tensor) -> float:
+    def eval_tensor(self, input: torch.Tensor) -> float:
         n = input.size(dim=0)
         res = torch.sum(torch.tensordot(input, input, dims=len(input.shape)))
         return (0.5 * self.lambda_1 * (res - torch.pow(input[n - 1], 2)) if self.intercept else 0.5 * self.lambda_1 * res)
 
-    def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
+    def fenchel(self, grad1: torch.Tensor, grad2: torch.Tensor) -> float:
         if (self.intercept and (abs(grad2[grad2.size(dim=0) - 1]) > 1e-6)):
             value = float("inf")
         else:
@@ -43,7 +43,7 @@ class Ridge(Regularizer):
     def strong_convexity(self) -> float:
         return 0 if self.intercept else self.lambda_1
 
-    def lazy_prox(self, input : torch.Tensor, indices : torch.Tensor, eta : float) -> None:
+    def lazy_prox(self, input: torch.Tensor, indices: torch.Tensor, eta: float) -> None:
         scal = 1.0 / (1.0 + self.lambda_1 * eta)
         output = torch.Tensor(input.size())
         p = input.size(dim=0)

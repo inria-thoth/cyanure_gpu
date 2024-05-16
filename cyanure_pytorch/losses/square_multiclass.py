@@ -6,16 +6,16 @@ logger = setup_custom_logger("INFO")
 
 class SquareLossMat(LinearLossMat):
 
-    def __init__(self, data : torch.Tensor, y : torch.Tensor, intercept : bool):
+    def __init__(self, data: torch.Tensor, y: torch.Tensor, intercept: bool):
         super().__init__(data, y, intercept)
         self.id="SQUARE"
 
-    def eval_tensor(self, input : torch.Tensor) -> float:
+    def eval_tensor(self, input: torch.Tensor) -> float:
         tmp = self.pred_tensor(input, None)
         tmp.sub_(self.labels) 
         return 0.5 * torch.linalg.norm(tmp)**2 / tmp.size(dim=1)
       
-    def eval(self, input : torch.Tensor, i : int) -> float:
+    def eval(self, input: torch.Tensor, i: int) -> float:
         tmp = self.pred(i,input, None)
         tmp.sub_(self.labels[:, i]) 
         return 0.5 * torch.linalg.norm(tmp)**2
@@ -23,7 +23,7 @@ class SquareLossMat(LinearLossMat):
     def print(self) -> None:
         logger.info("Square Loss is used")
 
-    def fenchel(self, input : torch.Tensor) -> float:
+    def fenchel(self, input: torch.Tensor) -> float:
         num_class = input.size(dim=1)
         
         # Assuming 'input' and 'self.labels' are your tensors
@@ -56,12 +56,12 @@ class SquareLossMat(LinearLossMat):
         
         return 0.5 * torch.linalg.norm(input)**2 / num_class + torch.sum(result_sum) / num_class
 
-    def get_grad_aux(self, input : torch.Tensor) -> torch.Tensor:
+    def get_grad_aux(self, input: torch.Tensor) -> torch.Tensor:
         grad1 = self.pred_tensor(input, None)
         grad1.sub_(self.labels)
         return grad1
 
-    def scal_grad(self, input : torch.Tensor, i : int) -> torch.Tensor:
+    def scal_grad(self, input: torch.Tensor, i: int) -> torch.Tensor:
         output = self.pred(i,input, None)
         ycol = self.labels[:, i]
         return output.sub_(ycol)
@@ -69,7 +69,7 @@ class SquareLossMat(LinearLossMat):
     def lipschitz_constant(self) -> float:
         return 1.0
 
-    def get_dual_constraints(self, grad1 : torch.Tensor) -> torch.Tensor:
+    def get_dual_constraints(self, grad1: torch.Tensor) -> torch.Tensor:
         if (self.intercept): 
             grad1 = self.center_rows(grad1)
         return grad1

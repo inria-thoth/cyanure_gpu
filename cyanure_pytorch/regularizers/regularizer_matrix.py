@@ -10,14 +10,14 @@ logger = setup_custom_logger("INFO")
 
 class RegMat(Regularizer):
 
-    def __init__(self, regularizer : Regularizer, model : ProblemParameters, num_cols : int, transpose : bool):
+    def __init__(self, regularizer: Regularizer, model: ProblemParameters, num_cols: int, transpose: bool):
         self.transpose = transpose
         self.num_cols = num_cols.type(torch.int32)
         self.regularizer_list = list()
         for i in range(self.num_cols):
             self.regularizer_list.append(type(regularizer)(model))
 
-    def prox(self, input : torch.Tensor, eta : float) -> torch.Tensor:
+    def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:
         output = torch.clone(input)
         for i in range(self.num_cols):
             if self.transpose:
@@ -45,7 +45,7 @@ class RegMat(Regularizer):
 
         return sum_value
 
-    def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
+    def fenchel(self, grad1: torch.Tensor, grad2: torch.Tensor) -> float:
         sum_value = torch.tensor(0.0)  # Initialize as a PyTorch tensor
 
         for i in range(self.num_cols):  # Assuming self.num_cols is defined somewhere
@@ -101,22 +101,22 @@ class RegMat(Regularizer):
 
 class RegVecToMat(Regularizer):
     
-    def __init__(self, regularizer : Regularizer, model : ProblemParameters):
+    def __init__(self, regularizer: Regularizer, model: ProblemParameters):
         super().__init__(model)
         parameter_tmp = model
         parameter_tmp.verbose = False
         self.regularizer = type(regularizer)(parameter_tmp)
 
-    def prox(self, input : torch.Tensor, eta : float) -> torch.Tensor:
+    def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:
         weight, _ = self.get_wb(input)
         output = self.regularizer.prox(weight, eta)
         return output
 
-    def eval_tensor(self, input : torch.Tensor) -> float:
+    def eval_tensor(self, input: torch.Tensor) -> float:
         weight, _ = self.get_wb(input)
         return self.regularizer.eval_tensor(weight)
 
-    def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
+    def fenchel(self, grad1: torch.Tensor, grad2: torch.Tensor) -> float:
         weight, bias = self.get_wb(grad2)
         if self.intercept:
             bias_nrm_squ = torch.linalg.norm(bias)**2
@@ -133,14 +133,14 @@ class RegVecToMat(Regularizer):
     def lambda_1(self) -> float:
         return self.regularizer.lambda_1()
 
-    def lazy_prox(self, input : torch.Tensor, indices : torch.Tensor, eta : float) -> None:
+    def lazy_prox(self, input: torch.Tensor, indices: torch.Tensor, eta: float) -> None:
         weight, _ = self.get_wb(input)
         return self.regularizer.lazy_prox(weight, indices, eta)
     
     def is_lazy(self) -> bool:
         return self.regularizer.is_lazy()
 
-    def get_wb(self, input : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_wb(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         p = input.size(dim=1)
         if (self.intercept):
             weight = input[:, :p-1]

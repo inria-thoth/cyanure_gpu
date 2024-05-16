@@ -125,12 +125,12 @@ def type_of_target(y, input_name=""):
     y : {array-like, sparse matrix}
         Target values. If a sparse matrix, `y` is expected to be a
         CSR/CSC matrix.
-    input_name : str, default=""
+    input_name: str, default=""
         The data name used to construct the error message.
         .. versionadded:: 1.1.0
     Returns
     -------
-    target_type : str
+    target_type: str
         One of:
         * 'continuous': `y` is an array-like of floats that are not all
           integers, and is 1d or a column vector.
@@ -243,7 +243,7 @@ def is_multilabel(y):
         Target values.
     Returns
     -------
-    out : bool
+    out: bool
         Return ``True``, if ``y`` is in a multilabel format, else ```False``.
     Examples
     --------

@@ -10,15 +10,15 @@ logger = setup_custom_logger("INFO")
 
 class Lasso(Regularizer):
 
-    def __init__(self, model : ProblemParameters) :
+    def __init__(self, model: ProblemParameters):
         super().__init__(model)     
 
         self.id = "L1"
 
-    def fastSoftThrs(self, x : float) -> float:
+    def fastSoftThrs(self, x: float) -> float:
         return x + 0.5*(torch.abs(x - self.lambda_1) - torch.abs(x + self.lambda_1))
     
-    def prox(self, input : torch.Tensor, eta : float) -> torch.Tensor:      
+    def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:      
 
         output = input + 0.5 * (torch.abs(input - eta * self.lambda_1) - torch.abs(input + eta * self.lambda_1))
         if (self.intercept):
@@ -26,12 +26,12 @@ class Lasso(Regularizer):
             output[n - 1] = input[n - 1]
         return output
 
-    def eval_tensor(self, input : torch.Tensor) -> float:
+    def eval_tensor(self, input: torch.Tensor) -> float:
         n = input.size(dim=0)
         res = torch.sum(torch.abs(input))
         return (self.lambda_1 * (res - torch.abs(input[n - 1])) if self.intercept else self.lambda_1 * res)
 
-    def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
+    def fenchel(self, grad1: torch.Tensor, grad2: torch.Tensor) -> float:
         indices = (torch.abs(grad2)==torch.max(torch.abs(grad2))).nonzero()[0]
         if len(indices) > 1:
             mm = torch.abs(grad2[indices[0], indices[1]])
@@ -45,7 +45,7 @@ class Lasso(Regularizer):
     def print(self) -> None:
         logger.info(self.getName())
 
-    def lazy_prox(self, input : torch.Tensor, indices : torch.Tensor, eta : float) -> None:
+    def lazy_prox(self, input: torch.Tensor, indices: torch.Tensor, eta: float) -> None:
         p = input.size(dim=0)
         #TODO output probablement faux
         #TODO plante surement en 1D
