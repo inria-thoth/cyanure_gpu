@@ -20,7 +20,7 @@ class MultiClassLogisticLoss(LinearLossMat):
         label_mask = torch.unsqueeze(self.labels, 0).expand(self.n_classes, self.number_data)
         self.boolean_mask = torch.eq(index_mask, label_mask)
         self.loss_labels = self.labels.type(torch.LongTensor).to(DEVICE)   
-    
+
     def pre_compute(self, input: torch.Tensor) -> float:
 
         tmp = self.pred_tensor(input, None)
@@ -28,38 +28,38 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         tmp.sub_(diff)
         # Find max and perform subsequent operations
-        
+
         mm = tmp.max(dim=0, keepdim=True).values
         tmp.sub_(mm)
-                   
+
         tmp = tmp.exp()
-        
+
         sum_matrix = torch.abs(tmp).sum(dim=0, keepdim=True)
 
         return tmp, sum_matrix, mm
-    
+
     def eval_tensor(self, input: torch.Tensor, matmul_result: torch.Tensor = None, precompute: torch.Tensor = None) -> float:
         if precompute is None:
             if matmul_result is not None:
                 tmp = matmul_result
             else:
                 tmp = torch.matmul(input, self.input_data)
-        
+
             diff = torch.masked_select(tmp, self.boolean_mask).unsqueeze(0).expand(self.n_classes, self.number_data)
 
             tmp = tmp - diff
             # Find max and perform subsequent operations
-            
+
             mm_vector = tmp.max(dim=0, keepdim=True).values
             tmp.sub_(mm_vector)
-                    
+
             tmp = tmp.exp()
-            
+
             sum_matrix = torch.abs(tmp).sum(dim=0, keepdim=True)
         else:
             tmp = precompute[0]
-            sum_matrix = precompute[1]  
-            mm_vector = precompute[2]  
+            sum_matrix = precompute[1]
+            mm_vector = precompute[2]
 
         log_sums = torch.log(sum_matrix)
         sum_value = torch.sum(mm_vector) + torch.sum(log_sums)
@@ -78,7 +78,7 @@ class MultiClassLogisticLoss(LinearLossMat):
         logger.info("Multiclass logistic Loss is used")
 
     def xlogx(self, x):
-        
+
         # Handling condition where x is greater than or equal to 1e-20
         res = x * torch.log(x)
 
@@ -88,21 +88,21 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         small_mask = x < 1e-20
         # Handling condition where x is less than 1e-20
-        res.masked_fill_(small_mask, 0)   
-        
+        res.masked_fill_(small_mask, 0)
+
         return res
-   
+
     def fenchel(self, input: torch.Tensor) -> float:
         n = input.size(1)
 
         # Use advanced indexing to select the relevant elements
         # Add the condition for sum += xlogx(input[i * _nclasses + j] + 1.0)
         input += self.one_hot
-        
+
         selected_xlogx = self.xlogx(input)
         # Sum along the second dimension (class dimension)
         sum_val = torch.sum(selected_xlogx)
-        
+
         return sum_val / n
 
     def get_grad_aux2(self, col: torch.Tensor, ind: int) -> torch.Tensor:
@@ -117,7 +117,8 @@ class MultiClassLogisticLoss(LinearLossMat):
         col[ind] = -(torch.sum(torch.abs(col)))
         return col
 
-    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None, precompute: torch.Tensor = None) -> torch.Tensor:
+    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None,
+                     precompute: torch.Tensor = None) -> torch.Tensor:
         if precompute is None:
             if matmul_result is not None:
                 grad1 = matmul_result
@@ -137,7 +138,7 @@ class MultiClassLogisticLoss(LinearLossMat):
             sum_matrix = torch.abs(grad1).sum(dim=0, keepdim=True)
         else:
             grad1 = precompute[0]
-            sum_matrix = precompute[1]    
+            sum_matrix = precompute[1]
 
         grad1 /= sum_matrix
 
@@ -171,7 +172,7 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         mm = grad1.max(dim=0, keepdim=True).values
         grad1.sub_(mm)
-        
+
         grad1 = grad1.exp()
 
         sum_matrix = torch.abs(grad1).sum(dim=0, keepdim=True)
@@ -189,10 +190,10 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         # Compute the adjustment tensor
         adjustment = self.one_hot * abs_sum
-    
+
         # Subtract the adjustment tensor from grad1
         grad1.sub_(adjustment)
- 
+
         return grad1
 
     def scal_grad(self, input: torch.Tensor, i: int) -> torch.Tensor:
