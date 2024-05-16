@@ -51,7 +51,7 @@ class ISTA_Solver(Solver):
             self.sbb.sub_(grad)
             self.xbb.sub_(weight)
             alpha = torch.dot(self.sbb.view(-1), self.sbb.view(-1)) / torch.norm(self.sbb)**2
-            alpha = torch.min(torch.max(alpha, alpha_min), alpha_max)         
+            alpha = torch.min(torch.max(alpha, alpha_min), alpha_max)
             self.L = 1 / alpha
 
         while (iter < self.max_iter_backtracking):
