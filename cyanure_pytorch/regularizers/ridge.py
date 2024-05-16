@@ -1,5 +1,4 @@
 import torch
-import math
 
 from cyanure_pytorch.regularizers.regularizer import Regularizer
 from cyanure_pytorch.erm.param.problem_param import ProblemParameters
@@ -7,6 +6,7 @@ from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
+
 
 class Ridge(Regularizer):
 
@@ -22,7 +22,7 @@ class Ridge(Regularizer):
         if (self.intercept):
             n = input.size(dim=0)
             output[n - 1] = input[n - 1]
-        
+
         return output
 
     def eval_tensor(self, input: torch.Tensor) -> float:

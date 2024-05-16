@@ -29,7 +29,7 @@ class Catalyst(Solver):
         self.freq_restart = param.max_iter + 2 if solver.regul.strong_convexity() > 0 else param.freq_restart
         self.accelerated_solver = True
         self.solver = solver
-        
+
     def set_dual_variable(self, initial_dual: torch.Tensor) -> None:
         self.dual_var = torch.clone(initial_dual)
 
@@ -38,7 +38,7 @@ class Catalyst(Solver):
         self.kappa = self.solver.init_kappa_acceleration(initial_weight)
         self.mu = self.regul.strong_convexity()
         self.count = 0
-        self.accelerated_solver = self.kappa > 0 # this->_oldL/(_n) >= _mu;
+        self.accelerated_solver = self.kappa > 0  # this->_oldL/(_n) >= _mu;
         if (self.accelerated_solver):
             param2 = ModelParameters()
             param2.max_iter = 1
@@ -56,7 +56,7 @@ class Catalyst(Solver):
         else:
             if (self.verbose):
                 logger.info("Switching to regular solver, problem is well conditioned")
-            self.solver.solver_init(initial_weight);
+            self.solver.solver_init(initial_weight)
 
     def solver_aux(self, weight: torch.Tensor, it: int = -1) -> torch.Tensor:
         if (self.accelerated_solver):
@@ -78,7 +78,7 @@ class Catalyst(Solver):
             weight, _ = self.solver.solver_aux(weight, it)
 
         return weight, None
-    
+
     def print(self) -> None:
         logger.info("Catalyst Accelerator")
         self.solver.print()
@@ -90,7 +90,7 @@ class QNing(Catalyst):
         super().__init__(param, solver)
 
         self.l_memory = param.l_memory
-        self.initial_h = None 
+        self.initial_h = None
         self.ys = None
         self.ss = None
         self.rhos = None
@@ -112,7 +112,7 @@ class QNing(Catalyst):
 
     def solver_init(self, initial_weight: torch.Tensor) -> None:
         if (len(initial_weight.size()) == 2):
-                dim_0_size = initial_weight.size(dim=0) * initial_weight.size(dim=1)
+            dim_0_size = initial_weight.size(dim=0) * initial_weight.size(dim=1)
         else:
             dim_0_size = initial_weight.size(dim=0)
         self.ys = torch.empty(dim_0_size, self.l_memory).to(device=DEVICE, non_blocking=True)
@@ -146,7 +146,7 @@ class QNing(Catalyst):
                 self.y = torch.clone(oldyk)
                 self.y.sub_(g, alpha=self.etak)
                 self.y.add_(oldgk, alpha=((self.etak - 1.0) / self.kappa))
-                weight = self.get_gradient(weight) # _gk = kappa(x-y)
+                weight = self.get_gradient(weight)  # _gk = kappa(x-y)
                 if (self.etak == 0 or self.Fk <= (oldFk - (0.25 / self.kappa) * torch.linalg.norm(oldgk)**2)):
                     break
                 if (self.Fk > 1.05 * oldFk):
@@ -169,19 +169,19 @@ class QNing(Catalyst):
             weight, _ = self.solver.solver_aux(weight, it)
 
         return weight, None
-    
+ 
     def print(self) -> None:
         logger.info("QNing Accelerator")
         self.solver.print()
 
     def get_lbfgs_direction(self) -> torch.Tensor:
-        g = torch.clone(self.gk)        
+        g = torch.clone(self.gk)
         g_vectorize = torch.flatten(g)
         g_vectorize = self.get_lbfgs_direction_aux(g_vectorize)
         g = torch.reshape(g_vectorize, self.gk.size())
 
         return g
-    
+
     def get_lbfgs_direction_aux(self, g: torch.Tensor) -> torch.Tensor:
         # two-loop recursion algorithm
         alphas = torch.Tensor(self.l_memory).to(DEVICE)
@@ -220,7 +220,7 @@ class QNing(Catalyst):
 
     def reset_lbfgs(self) -> None:
         self.m = 0
-    
+
     def get_gradient(self, weight: torch.Tensor) -> torch.Tensor:
         self.loss_ppa.anchor_point = self.y
         weight, fprox = self.auxiliary_solver.solve(self.y, weight)
@@ -229,5 +229,3 @@ class QNing(Catalyst):
         self.Fk = self.loss_ppa.eval_tensor(weight, None, None, fprox) + self.regul.eval_tensor(weight)
 
         return weight
-
-
