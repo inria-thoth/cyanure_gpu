@@ -20,9 +20,6 @@ import numpy as np
 import scipy.sparse
 
 import torch
-torch.manual_seed(0)
-torch.set_default_dtype(torch.float32)
-torch.set_printoptions(precision=20)
 
 from cyanure_pytorch.data_processing import check_input_fit, check_input_inference, windows_conversion
 
@@ -35,6 +32,10 @@ from cyanure_pytorch.erm.simple_erm import SimpleErm
 from cyanure_pytorch.erm.multi_erm import MultiErm
 
 from cyanure_pytorch.constants import DEVICE
+
+torch.manual_seed(0)
+torch.set_default_dtype(torch.float32)
+torch.set_printoptions(precision=20)
 
 logger = setup_custom_logger("INFO")
 
@@ -298,12 +299,11 @@ class ERM(BaseEstimator, ABC):
         labels = np.squeeze(labels)
         initial_weight, yf, nclasses = self._initialize_weight(X, labels)
 
-
-        #TODO Remove when done
-        #with profile(activities=[ProfilerActivity.CUDA], profile_memory=True, experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
+        # TODO Remove when done
+        # with profile(activities=[ProfilerActivity.CUDA], profile_memory=True, experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
 
         initial_weight_torch = torch.tensor(initial_weight).to(DEVICE)
-        
+
         training_data_fortran = X.T if scipy.sparse.issparse(
             X) else np.asfortranarray(X.T)
         w = initial_weight.copy()
@@ -324,41 +324,39 @@ class ERM(BaseEstimator, ABC):
                     self._binary_problem = False
 
             self.loss = "multiclass-logistic"
-            logger.info(
-                "Loss has been set to multiclass-logistic because "
-                "the multiclass parameter is set to multinomial!")
+            logger.info("Loss has been set to multiclass-logistic because "
+                        "the multiclass parameter is set to multinomial!")
 
         if loss is None:
-            loss = self.loss        
+            loss = self.loss
 
-        model_parameter = ModelParameters(int(self.max_iter), float(self.tol), int(self.duality_gap_interval), 500, 1, int(self.n_threads), int(self.limited_memory_qning), int(self.fista_restart), bool(self.verbose), False, self.solver)
+        model_parameter = ModelParameters(int(self.max_iter), float(self.tol), int(self.duality_gap_interval),
+                                          500, 1, int(self.n_threads), int(self.limited_memory_qning),
+                                          int(self.fista_restart), bool(self.verbose), False, self.solver)
 
-        problem_parameter = ProblemParameters(float(self.lambda_1), float(self.lambda_2), float(self.lambda_3), bool(self.fit_intercept), self.penalty, loss=loss)
+        problem_parameter = ProblemParameters(float(self.lambda_1), float(self.lambda_2), float(self.lambda_3),
+                                              bool(self.fit_intercept), self.penalty, loss=loss)
 
         optim_info = torch.empty
-        
-        with torch.no_grad():            
+
+        with torch.no_grad():
             if self._binary_problem:
-                erm = SimpleErm(initial_weight_torch, weight_torch, problem_parameter, model_parameter, optim_info, dual_variable=self.dual)
+                erm = SimpleErm(initial_weight_torch, weight_torch, problem_parameter,
+                                model_parameter, optim_info, dual_variable=self.dual)
                 self.optimization_info_, w = erm.solve_problem(training_data_gpu, labels_gpu)
             else:
-                erm = MultiErm(initial_weight_torch, weight_torch, problem_parameter, model_parameter, optim_info, dual_variable=self.dual) 
+                erm = MultiErm(initial_weight_torch, weight_torch, problem_parameter,
+                               model_parameter, optim_info, dual_variable=self.dual)
                 if len(yf.shape) == 1:
                     self.optimization_info_, w = erm.solve_problem_vector(training_data_gpu, labels_gpu)
                 else:
                     self.optimization_info_, w = erm.solve_problem_matrix(training_data_gpu, labels_gpu)
-
-        try:
-            torch.cuda.memory._dump_snapshot(f"memory_snapshot.pickle")
-        except Exception as e:
-            logger.error(f"Failed to capture memory snapshot {e}")
                 
-
-        #print(prof.key_averages().table(sort_by="cuda_memory_usage", row_limit=10))
-        #prof.export_memory_timeline(f"memory_profiler.html", device="cuda:0")
-        #prof.export_chrome_trace("trace_gpu_multi.json")
+        # print(prof.key_averages().table(sort_by="cuda_memory_usage", row_limit=10))
+        # prof.export_memory_timeline(f"memory_profiler.html", device="cuda:0")
+        # prof.export_chrome_trace("trace_gpu_multi.json")
         # prof.export_stacks("profiler_stacks_gpu.txt", "self_cuda_time_total")
-        #prof.export_stacks("profiler_stacks_cpu.txt", "self_cpu_time_total")
+        # prof.export_stacks("profiler_stacks_cpu.txt", "self_cpu_time_total")
 
         if ("cuda" in DEVICE.type):
             w = w.cpu().numpy()
@@ -836,13 +834,13 @@ class Classifier(ClassifierAbstraction):
     (which is optional).
 
     In the case of binary classification:
-    :math:`w` is a p-dimensional vector representing model parameters, 
+    :math:`w` is a p-dimensional vector representing model parameters,
     and b is an optional unregularized intercept. We expect binary labels in {-1,+1}.
 
-    In a multivariate scenario, if you set multi_class parameter to "multinomial" 
-    or if multi_class="auto" and loss="logistic". 
+    In a multivariate scenario, if you set multi_class parameter to "multinomial"
+    or if multi_class="auto" and loss="logistic".
     The loss will automatically be changed to "multiclass-logistic".
-    If you have a multivariate problem and are not in one of the previous configuration, 
+    If you have a multivariate problem and are not in one of the previous configuration,
     a one-vs-all strategy will be used.
 
 
@@ -977,7 +975,7 @@ class Classifier(ClassifierAbstraction):
 
     fista_restart (int): default=50
         Restart strategy for fista (useful for computing regularization path)
-    
+
     multi_class (string): default="auto"
         Determine the comportment of the instance in case of multivariate problem
 
