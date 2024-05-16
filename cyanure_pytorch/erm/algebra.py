@@ -1,4 +1,4 @@
-import torch 
+import torch
 
 
 def solve_binomial(a: float, b: float, c: float) -> float:

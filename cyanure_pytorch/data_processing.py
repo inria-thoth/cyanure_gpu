@@ -40,7 +40,7 @@ def preprocess(X, centering=False, normalize=True, columns=True):
 
             normalize (boolean): default=True
                 l2-normalization
-  
+
     """
 
     training_data_fortran = np.asfortranarray(X.T)
