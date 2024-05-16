@@ -169,7 +169,7 @@ class QNing(Catalyst):
             weight, _ = self.solver.solver_aux(weight, it)
 
         return weight, None
- 
+
     def print(self) -> None:
         logger.info("QNing Accelerator")
         self.solver.print()
