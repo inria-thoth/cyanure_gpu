@@ -1,7 +1,6 @@
 import abc
 
 import torch
-import math
 import time
 
 from cyanure_pytorch.erm.param.model_param import ModelParameters
@@ -10,6 +9,7 @@ from cyanure_pytorch.constants import EPSILON
 from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
+
 
 class Solver:
 
@@ -34,11 +34,11 @@ class Solver:
         self.elapsed_time = 0
         self.duality = self.loss.provides_fenchel() and self.regul.provides_fenchel()
 
-    def solve(self, initial_weight : torch.Tensor, weight : torch.Tensor) -> torch.Tensor:
+    def solve(self, initial_weight: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
 
         initial_time = time.time()
         weight = torch.clone(initial_weight)
-           
+
         if (not self.duality and self.max_iter > 1):
             self.previous_weight = torch.clone(initial_weight)
 
@@ -52,7 +52,7 @@ class Solver:
             if ((it % self.duality_gap_interval) == 0):
                 if (self.test_stopping_criterion(weight, it)):
                     break
-            weight, fprox = self.solver_aux(weight, it)       
+            weight, fprox = self.solver_aux(weight, it)   
             self.elapsed_time = time.time() - initial_time
         if (self.verbose):
             logger.info("This is the elapsed time: " + str(self.elapsed_time))
@@ -115,10 +115,10 @@ class Solver:
             self.best_weight = torch.clone(weight)
         if (self.verbose):
             if (primal == self.best_primal):
-                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + 
+                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) +
                             ", time: " + "{:.5f}".format(self.elapsed_time))
             else:
-                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) + 
+                logger.info("Epoch: " + str(iteration) + ", primal objective: " + str(primal) +
                             ", best primal: " + str(self.best_primal) + ", time: " + "{:.5f}".format(self.elapsed_time))
         optim[0] = iteration
         optim[1] = primal
@@ -127,7 +127,7 @@ class Solver:
             dual = self.get_dual(weight)
             self.best_dual = torch.max(self.best_dual, dual)
             duality_gap = (self.best_primal - self.best_dual) / torch.abs(self.best_primal)
-            stop = False        
+            stop = False
             if ((iteration / self.duality_gap_interval) >= 4):
                 if (self.optim_info[3, int(iteration / self.duality_gap_interval) - 4] == duality_gap):
                     stop = True
