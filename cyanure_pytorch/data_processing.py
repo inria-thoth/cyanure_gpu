@@ -40,7 +40,7 @@ def preprocess(X, centering=False, normalize=True, columns=True):
 
             normalize (boolean): default=True
                 l2-normalization
-                
+  
     """
 
     training_data_fortran = np.asfortranarray(X.T)
@@ -57,9 +57,8 @@ def preprocess(X, centering=False, normalize=True, columns=True):
             training_data_fortran = training_data_fortran - row_means
         if normalize:
             training_data_fortran = skNormalize(training_data_fortran, axis=1, norm="l2")
-    
-    return training_data_fortran
 
+    return training_data_fortran
 
 
 def sklearn_catch_warnings(y, check_y_kwargs):
@@ -109,6 +108,7 @@ def sklearn_check_old_format(y):
             )
     except IndexError:
         pass
+
 
 # Code from scikit-learn
 def type_of_target(y, input_name=""):
