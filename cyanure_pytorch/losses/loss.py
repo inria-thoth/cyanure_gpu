@@ -41,11 +41,11 @@ class Loss:
         return
 
     @abc.abstractmethod
-    def add_feature_tensor(self, input:orch.Tensor, input2: torch.Tensor, s: float)-> torch.Tensor:
+    def add_feature_tensor(self, input: torch.Tensor, input2: torch.Tensor, s: float)-> torch.Tensor:
         return
 
     @abc.abstractmethod
-    def add_feature(self, i:t, s: float, input2: torch.Tensor) -> torch.Tensor:
+    def add_feature(self, i: int, s: float, input2: torch.Tensor) -> torch.Tensor:
         return
 
     @abc.abstractmethod
@@ -109,7 +109,7 @@ class Loss:
             sum += self.eval(input,random.randint(0, sys.maxsize) % n)
         return (sum/minibatch)
     
-    def grad_random_minibatch(self, input: torch.Tensor, grad:orch.Tensor, minibatch: int) -> torch.Tensor:
+    def grad_random_minibatch(self, input: torch.Tensor, grad: torch.Tensor, minibatch: int) -> torch.Tensor:
         n = self.n()
         for ii in range(minibatch):
             coef = 0.0 if ii == 0 else 1.0
@@ -280,7 +280,7 @@ class LinearLossVec(Loss):
 
 class ProximalPointLoss:
 
-    def __init__(self, loss:ss, z: torch.Tensor, kappa: float): 
+    def __init__(self, loss: Loss, z: torch.Tensor, kappa: float): 
         self.anchor_point = z
         self.id="PPA"
         self.kappa = kappa
@@ -300,7 +300,7 @@ class ProximalPointLoss:
         tmp.sub_(self.anchor_point)
         return self.loss.eval(input, i) + 0.5 * self.kappa * torch.linalg.norm(tmp)**2
 
-    def grad(self, input:orch.Tensor, matmul_result: torch.Tensor = None, precompute: torch.Tensor = None) -> torch.Tensor:
+    def grad(self, input: torch.Tensor, matmul_result: torch.Tensor = None, precompute: torch.Tensor = None) -> torch.Tensor:
         grad = self.loss.grad(input, matmul_result, precompute)
         grad = grad + input * self.kappa
         grad = grad + self.anchor_point * (-self.kappa)
