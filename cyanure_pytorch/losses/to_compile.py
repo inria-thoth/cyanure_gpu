@@ -3,7 +3,7 @@ import torch
 
 import torch._dynamo as dynamo
 
-import torch_tensorrt
+import torch_tensorrt  # noqa: F401
 
 py_loss = torch.nn.CrossEntropyLoss()
 
