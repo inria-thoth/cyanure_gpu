@@ -54,10 +54,10 @@ class LogisticLoss(LinearLossVec):
         label = self.labels[i]
         ss = self.pred(i, input)
         s = -label/(1.0+torch.exp(label*ss))
-    
+
         return s
 
-    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None, 
+    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None,
                      precompute: torch.Tensor = None) -> torch.Tensor:
         if precompute is None:
             if matmul_result is not None:

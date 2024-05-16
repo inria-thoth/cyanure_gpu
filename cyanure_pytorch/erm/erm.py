@@ -2,6 +2,7 @@ import torch
 from cyanure_pytorch.erm.param.model_param import ModelParameters
 from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 
+
 class Estimator:
 
     def __init__(self, problem_parameters: ProblemParameters, model_parameters: ModelParameters, optim_info: torch.Tensor):
@@ -18,14 +19,12 @@ class Estimator:
 
     def is_loss_for_matrices(self, loss: str) -> bool:
         return loss == "SQUARE" or loss == "MULTICLASS-LOGISTIC"
-    
 
     def is_regression_loss(self, loss: str) -> bool:
         return loss == "SQUARE"
-    
 
     def is_regul_for_matrices(self, reg: str) -> bool:
-    
+
         return reg == "L1L2" or reg == "L1LINF"
 
 

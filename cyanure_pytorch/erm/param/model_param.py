@@ -12,7 +12,9 @@ class ModelParameters:
     freq_restart: int
     solver: str
 
-    def __init__(self, max_iter: int = 500, tol: float = 1e-3, duality_gap_interval: int = 10, max_iter_backtracking: float = 500, minibatch: int = 1, threads: int = -1, l_memory: int = 20, freq_restart: int = 50, verbose: bool = False, non_uniform_sampling: bool = True, solver: str ="QNING_ISTA"):
+    def __init__(self, max_iter: int = 500, tol: float = 1e-3, duality_gap_interval: int = 10, max_iter_backtracking: float = 500,
+                 minibatch: int = 1, threads: int = -1, l_memory: int = 20, freq_restart: int = 50, verbose: bool = False,
+                 non_uniform_sampling: bool = True, solver: str = "QNING_ISTA"):
         self.max_iter = max_iter
         self.tol = tol
         self.duality_gap_interval = duality_gap_interval
