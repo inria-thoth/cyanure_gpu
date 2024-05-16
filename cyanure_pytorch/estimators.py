@@ -300,13 +300,15 @@ class ERM(BaseEstimator, ABC):
         initial_weight, yf, nclasses = self._initialize_weight(X, labels)
 
         # TODO Remove when done
-        # with profile(activities=[ProfilerActivity.CUDA], profile_memory=True, 
+        # with profile(activities=[ProfilerActivity.CUDA], profile_memory=True,
         #               experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
 
         initial_weight_torch = torch.tensor(initial_weight).to(DEVICE)
 
-        training_data_fortran = X.T if scipy.sparse.issparse(
-            X) else np.asfortranarray(X.T)
+        if scipy.sparse.issparse(X):
+            training_data_fortran = X.T
+        else:
+            training_data_fortran = np.asfortranarray(X.T)
         w = initial_weight.copy()
         weight_torch = torch.tensor(w).to(DEVICE)
 
@@ -318,15 +320,15 @@ class ERM(BaseEstimator, ABC):
         loss = None
         self.le_ = le_parameter
 
-        if (self.multi_class == "multinomial" or
-        (self.multi_class == "auto" and not self._binary_problem)) and self.loss == "logistic":
+        if (self.multi_class == "multinomial" or 
+            (self.multi_class == "auto" and not self._binary_problem)) and self.loss == "logistic":
             if self.multi_class == "multinomial":
                 if len(np.unique(labels)) != 2:
                     self._binary_problem = False
 
             self.loss = "multiclass-logistic"
             logger.info("Loss has been set to multiclass-logistic because "
-                         "the multiclass parameter is set to multinomial!")
+                        "the multiclass parameter is set to multinomial!")
 
         if loss is None:
             loss = self.loss
