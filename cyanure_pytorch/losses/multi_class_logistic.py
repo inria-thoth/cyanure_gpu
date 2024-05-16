@@ -19,7 +19,7 @@ class MultiClassLogisticLoss(LinearLossMat):
         index_mask = torch.arange(self.n_classes).unsqueeze(1).expand(self.n_classes, self.number_data).to(DEVICE)
         label_mask = torch.unsqueeze(self.labels, 0).expand(self.n_classes, self.number_data)
         self.boolean_mask = torch.eq(index_mask, label_mask)
-        self.loss_labels = self.labels.type(torch.LongTensor).to(DEVICE)   
+        self.loss_labels = self.labels.type(torch.LongTensor).to(DEVICE)
 
     def pre_compute(self, input: torch.Tensor) -> float:
 
