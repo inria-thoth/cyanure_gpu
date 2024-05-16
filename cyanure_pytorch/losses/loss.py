@@ -307,7 +307,7 @@ class ProximalPointLoss:
 
         return grad
 
-    def add_grad(self, input:torch.Tensor, i: int, eta::t = 1.0) -> torch.Tensor: 
+    def add_grad(self, input: torch.Tensor, i: int, eta: int = 1.0) -> torch.Tensor: 
         grad = self.loss.add_grad(input, i, eta)
         grad = grad + input * self.kappa * eta
         grad = grad + self.anchor_point * (-self.kappa * eta)
