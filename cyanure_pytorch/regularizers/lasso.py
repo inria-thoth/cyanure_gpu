@@ -8,17 +8,18 @@ from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 
+
 class Lasso(Regularizer):
 
     def __init__(self, model: ProblemParameters):
-        super().__init__(model)     
+        super().__init__(model)
 
         self.id = "L1"
 
     def fastSoftThrs(self, x: float) -> float:
         return x + 0.5*(torch.abs(x - self.lambda_1) - torch.abs(x + self.lambda_1))
-    
-    def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:      
+
+    def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:
 
         output = input + 0.5 * (torch.abs(input - eta * self.lambda_1) - torch.abs(input + eta * self.lambda_1))
         if (self.intercept):
@@ -32,7 +33,7 @@ class Lasso(Regularizer):
         return (self.lambda_1 * (res - torch.abs(input[n - 1])) if self.intercept else self.lambda_1 * res)
 
     def fenchel(self, grad1: torch.Tensor, grad2: torch.Tensor) -> float:
-        indices = (torch.abs(grad2)==torch.max(torch.abs(grad2))).nonzero()[0]
+        indices = (torch.abs(grad2) == torch.max(torch.abs(grad2))).nonzero()[0]
         if len(indices) > 1:
             mm = torch.abs(grad2[indices[0], indices[1]])
         else:
@@ -47,8 +48,8 @@ class Lasso(Regularizer):
 
     def lazy_prox(self, input: torch.Tensor, indices: torch.Tensor, eta: float) -> None:
         p = input.size(dim=0)
-        #TODO output probablement faux
-        #TODO plante surement en 1D
+        # TODO output probablement faux
+        # TODO plante surement en 1D
         output = torch.Tensor(input.size())
         # Calculate the soft thresholding operation for all elements of the input tensor
         soft_thresholded = input + 0.5 * (torch.abs(input - self.lambda_1) - torch.abs(input + self.lambda_1))
@@ -60,7 +61,7 @@ class Lasso(Regularizer):
         # Apply the mask to select elements along the first dimension and update them with soft thresholded values
         output.masked_scatter_(mask.bool(), soft_thresholded)
         if (self.intercept):
-            output[p - 1] = input[p - 1]    
+            output[p - 1] = input[p - 1]
 
         return output
 

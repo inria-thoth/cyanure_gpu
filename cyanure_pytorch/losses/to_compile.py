@@ -11,13 +11,16 @@ input_data = torch.randn(2048, 2448873)
 loss_labels = torch.randint(0, 204, (2448873, )).to(torch.int64)
 input = torch.randn(205, 2048)
 
-def eval_tensor(input: torch.Tensor, loss_labels: torch.Tensor, input_data: torch.Tensor, matmul_result: torch.Tensor = None) -> float:
+
+def eval_tensor(input: torch.Tensor, loss_labels: torch.Tensor,
+                input_data: torch.Tensor, matmul_result: torch.Tensor = None) -> float:
     if matmul_result is not None:
         tmp = matmul_result
     else:
         tmp = torch.matmul(input, input_data)
 
     return py_loss(tmp.T, loss_labels)
+
 
 eval_tensor_compiled = torch.compile(eval_tensor, backend="dynamo", mode="max-autotune")
 
