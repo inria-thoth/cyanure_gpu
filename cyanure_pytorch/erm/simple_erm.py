@@ -1,5 +1,3 @@
-import copy
-
 import torch
 import torch.nn
 
@@ -23,21 +21,23 @@ from typing import Tuple
 
 logger = setup_custom_logger("INFO")
 
+
 class SimpleErm(Estimator):
 
     global EPSILON
 
-    def __init__(self, initial_weight: torch.Tensor, weight: torch.Tensor, problem_parameters: ProblemParameters, model_parameters: ModelParameters, optim_info: torch.Tensor, dual_variable: torch.Tensor):
+    def __init__(self, initial_weight: torch.Tensor, weight: torch.Tensor, problem_parameters: ProblemParameters,
+                 model_parameters: ModelParameters, optim_info: torch.Tensor, dual_variable: torch.Tensor):
         super().__init__(problem_parameters, model_parameters, optim_info)
         self.initial_weight = initial_weight
         self.weight = weight
         self.dual_variable = dual_variable
 
     def solve_problem(self, features: torch.Tensor, labels: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        
+
         if (self.model_parameters.verbose):
             logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
-            
+      
         self.verify_input(features)
         loss = self.get_loss(features, labels)
         regul = self.get_regularization()
@@ -63,10 +63,10 @@ class SimpleErm(Estimator):
                 new_initial_weight = loss.set_intercept(self.initial_weight)
             else:
                 new_initial_weight = torch.clone(self.initial_weight)
-            
+
             if (self.dual_variable is not None and self.dual_variable.size(dim=0) != 0):
                 solver.set_dual_variable(self.dual_variable)
-            
+
             self.weight, fprox = solver.solve(new_initial_weight, self.weight)
 
             if (self.problem_parameters.intercept):
@@ -97,7 +97,6 @@ class SimpleErm(Estimator):
         if (self.model_parameters.tol < 0):
             raise ValueError("Tolerance for stopping criteria must be positive")
 
-
     def get_regularization(self) -> Regularizer:
         regul = None
 
@@ -110,9 +109,8 @@ class SimpleErm(Estimator):
             pass
         else:
             logger.error("Not implemented, no regularization is chosen")
-        
+
         return regul
-    
 
     def get_solver(self, loss: Loss, regul: Regularizer, param: ModelParameters) -> Solver:
         solver_type = param.solver.upper()
@@ -143,7 +141,10 @@ class SimpleErm(Estimator):
         elif solver_type == "FISTA":
             solver = FISTA_Solver(loss, regul, param)
         elif solver_type == "MISO":
-            solver = MISO_Solver(loss, regul, param) if regul.strong_convexity() > 0 else Catalyst(MISO_Solver(loss, regul, param))
+            if regul.strong_convexity() > 0:
+                solver = MISO_Solver(loss, regul, param)
+            else:
+                solver = Catalyst(MISO_Solver(loss, regul, param))
         elif solver_type == "CATALYST_MISO":
             solver = Catalyst(param, MISO_Solver(loss, regul, param))
         elif solver_type == "QNING_MISO":
@@ -151,9 +152,8 @@ class SimpleErm(Estimator):
         else:
             solver = None
             raise NotImplementedError("This solver is not implemented !")
-            
+    
         return solver
-
 
     def get_loss(self, data: torch.Tensor, y: torch.Tensor):
         loss = None
@@ -166,5 +166,5 @@ class SimpleErm(Estimator):
         else:
             logger.error("Not implemented, square loss is chosen by default")
             loss = SquareLoss(data, y, self.problem_parameters.intercept)
-        
+
         return loss

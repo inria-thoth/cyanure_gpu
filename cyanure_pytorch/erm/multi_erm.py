@@ -25,15 +25,17 @@ from cyanure_pytorch.constants import EPSILON, NUMBER_OPTIM_PROCESS_INFO, DEVICE
 from typing import Tuple
 import numpy as np
 
+import time
+
 logger = setup_custom_logger("INFO")
 
-import time
 
 class MultiErm(Estimator):
 
     global EPSILON
 
-    def __init__(self, initial_weight: torch.Tensor, weight: torch.Tensor, problem_parameters: ProblemParameters, model_parameters: ModelParameters, optim_info: torch.Tensor, dual_variable: torch.Tensor):
+    def __init__(self, initial_weight: torch.Tensor, weight: torch.Tensor, problem_parameters: ProblemParameters,
+                 model_parameters: ModelParameters, optim_info: torch.Tensor, dual_variable: torch.Tensor):
         super().__init__(problem_parameters, model_parameters, optim_info)
         self.initial_weight = initial_weight
         self.weight = weight
@@ -44,7 +46,7 @@ class MultiErm(Estimator):
     # W0 is p x nclasses if no intercept (or p+1 x nclasses with intercept)
     # prediction model is   W0^FeatureType X  gives  nclasses x n
     def solve_problem_vector(self, features: torch.Tensor, labels_vector: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        
+
         self.verify_input(features)
         # print(f"Starting Memory Usage Vector: {torch.cuda.memory_allocated() / 1e6} MB")
         nclass = torch.max(labels_vector) + 1
@@ -52,7 +54,7 @@ class MultiErm(Estimator):
 
         if (super().is_regression_loss(loss_string) or not super().is_loss_for_matrices(loss_string)):
             n = labels_vector.size(dim=0)
-        
+    
             labels_np = np.full((int(nclass), n), fill_value=-1.0)
 
             # Assuming labels_vector is a PyTorch tensor
@@ -63,8 +65,9 @@ class MultiErm(Estimator):
 
             # Convert NumPy array to PyTorch tensor
             labels = torch.tensor(labels_np.astype("float32"), device=DEVICE)
-            
-            erm_tmp = MultiErm(self.initial_weight, self.weight, self.problem_parameters, self.model_parameters, self.optim_info, dual_variable=self.dual_variable)
+
+            erm_tmp = MultiErm(self.initial_weight, self.weight, self.problem_parameters,
+                               self.model_parameters, self.optim_info, dual_variable=self.dual_variable)
             return erm_tmp.solve_problem_matrix(features, labels)
 
         if (self.model_parameters.verbose):
@@ -72,17 +75,16 @@ class MultiErm(Estimator):
             pass
 
         loss = MultiClassLogisticLoss(features, labels_vector, self.problem_parameters.intercept)
-        
+
         if (loss_string != 'MULTICLASS-LOGISTIC'):
             logger.error("Multilog loss is the only multi class implemented loss!")
             logger.info("Multilog loss is used!")
-        
+
         transpose = loss.transpose()
 
         regul = self.get_regul_mat(nclass, transpose)
 
         return self.solve_mat(loss, regul)
-
 
     # X is p x n
     # y is nclasses x n
@@ -111,25 +113,28 @@ class MultiErm(Estimator):
             self.weight = self.initial_weight
             n_class = self.initial_weight.size(dim=1)
             duality_gap_interval = max(self.model_parameters.duality_gap_interval, 1)
-            self.optim_info = torch.zeros([n_class, NUMBER_OPTIM_PROCESS_INFO, int(max(self.model_parameters.max_iter / duality_gap_interval, 1))])
+            self.optim_info = torch.zeros([n_class, NUMBER_OPTIM_PROCESS_INFO,
+                                           int(max(self.model_parameters.max_iter / duality_gap_interval, 1))])
             parameter_tmp = self.model_parameters
             parameter_tmp.verbose = False
             if (self.model_parameters.verbose):
                 logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
                 pass
             initial_time = time.time()
-            for ii in range (n_class):
-                optim_info_col = torch.zeros([1, NUMBER_OPTIM_PROCESS_INFO, int(max(self.model_parameters.max_iter / duality_gap_interval, 1))])
+            for ii in range(n_class):
+                optim_info_col = torch.zeros([1, NUMBER_OPTIM_PROCESS_INFO,
+                                              int(max(self.model_parameters.max_iter / duality_gap_interval, 1))])
                 initial_weight_col = self.initial_weight[:, ii]
                 weight_col = self.weight[:, ii]
                 labels_col = labels[ii, :]
                 if (self.dual_variable.size(dim=0) == n_class):
                     dualcol = self.dual_variable[ii]
-                problem_configuration = SimpleErm(initial_weight_col, weight_col, parameter_tmp, self.model_parameters, optim_info_col, dualcol)
+                problem_configuration = SimpleErm(initial_weight_col, weight_col, parameter_tmp,
+                                                  self.model_parameters, optim_info_col, dualcol)
                 optim_info_col, weight_col = problem_configuration.solve_problem(features, labels_col)
                 if (self.dual_variable.size(dim=0) == n_class):
                     self.dual_variable[ii] = problem_configuration.dual_variable
-            
+
                 self.weight[:, ii] = weight_col
                 self.optim_info[ii] = optim_info_col
                 if (self.model_parameters.verbose):
@@ -139,7 +144,6 @@ class MultiErm(Estimator):
                         logger.info("   Primal objective: " + optim_info_col(0, 1, noptim) + ", relative duality gap: " + optim_info_col(0, 3, noptim))
                     else:
                         logger.info("   Primal objective: " + optim_info_col(0, 1, noptim) + ", tol: " + optim_info_col(0, 4, noptim))
-                
 
             final_time = time.time()
             if (self.model_parameters.verbose):
@@ -190,14 +194,14 @@ class MultiErm(Estimator):
                 solver.eval(initial_weight_transposed)
             else:
                 solver.eval(self.initial_weight)
-            self.weight = torch.clone(self.initial_weight)        
+            self.weight = torch.clone(self.initial_weight)
         else:
             solver = self.get_solver(loss, regul, self.model_parameters)
-            
+
             if (solver is None):
                 self.weight = torch.clone(self.initial_weight)
                 return solver.get_optim_info(), self.weight
-            
+
             new_initial_weight = None
             if (self.problem_parameters.intercept):
                 loss.set_intercept(self.initial_weight, new_initial_weight)
@@ -205,7 +209,7 @@ class MultiErm(Estimator):
                 new_initial_weight = self.initial_weight
             if (self.dual_variable is not None and self.dual_variable.size(dim=0) != 0):
                 solver.set_dual_variable(self.dual_variable)
-                
+
             if (loss.transpose()):
                 weight_transposed = None
                 initial_weight_transposed = torch.transpose(new_initial_weight, 0, 1)
@@ -251,7 +255,10 @@ class MultiErm(Estimator):
         elif solver_type == "FISTA":
             solver = FISTA_Solver(loss, regul, param)
         elif solver_type == "MISO":
-            solver = MISO_Solver(loss, regul, param) if regul.strong_convexity() > 0 else Catalyst(MISO_Solver(loss, regul, param))
+            if regul.strong_convexity() > 0:
+                solver = MISO_Solver(loss, regul, param)
+            else:
+                solver = Catalyst(MISO_Solver(loss, regul, param))
         elif solver_type == "CATALYST_MISO":
             solver = Catalyst(param, MISO_Solver(loss, regul, param))
         elif solver_type == "QNING_MISO":
@@ -259,7 +266,7 @@ class MultiErm(Estimator):
         else:
             solver = None
             raise NotImplementedError("This solver is not implemented !")
-            
+    
         return solver
 
     def get_regul_mat(self, num_class: int, transpose: bool) -> Regularizer:
@@ -269,9 +276,15 @@ class MultiErm(Estimator):
             self.problem_parameters.regul = self.problem_parameters.regul.upper()
             regularizer_string = self.problem_parameters.regul
             if (regularizer_string == "L2"):
-                regul = RegVecToMat(Ridge(self.problem_parameters), self.problem_parameters) if transpose else RegMat(Ridge(self.problem_parameters), self.problem_parameters, num_class, transpose)
+                if transpose:
+                    regul = RegVecToMat(Ridge(self.problem_parameters), self.problem_parameters)
+                else:
+                    regul = RegMat(Ridge(self.problem_parameters), self.problem_parameters, num_class, transpose)
             elif (regularizer_string == "L1"):
-                regul = RegVecToMat(Lasso(self.problem_parameters), self.problem_parameters) if transpose else RegMat(Lasso(self.problem_parameters), self.problem_parameters, num_class, transpose)
+                if transpose:
+                    regul = RegVecToMat(Lasso(self.problem_parameters), self.problem_parameters)
+                else:
+                    regul = RegMat(Lasso(self.problem_parameters), self.problem_parameters, num_class, transpose)
             elif (regularizer_string is None):
                 pass
             else:
