@@ -7,17 +7,18 @@ from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 
+
 class NoRegul(Regularizer):
 
     def __init__(self, model: ProblemParameters):
-        super().__init__(model)     
+        super().__init__(model)
 
         self.id = "None"
 
-    def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:    
+    def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:
         return input
 
-    def eval_tensor(self,input: torch.Tensor) -> float:
+    def eval_tensor(self, input: torch.Tensor) -> float:
         return 0
 
     def fenchel(self, grad1: torch.Tensor, grad2: torch.Tensor) -> float:

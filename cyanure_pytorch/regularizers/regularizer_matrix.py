@@ -8,6 +8,7 @@ from cyanure_pytorch.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 
+
 class RegMat(Regularizer):
 
     def __init__(self, regularizer: Regularizer, model: ProblemParameters, num_cols: int, transpose: bool):
@@ -35,7 +36,7 @@ class RegMat(Regularizer):
     def eval(self, input_tensor):
         sum_value = torch.tensor(0.0)  # Initialize as a PyTorch tensor
 
-        for i in range(self.num_cols): 
+        for i in range(self.num_cols):
             if self.transpose:
                 col = input_tensor[i, :]
             else:
@@ -99,8 +100,9 @@ class RegMat(Regularizer):
     def is_lazy(self) -> bool:
         return self.regularizer_list[0].is_lazy()
 
+
 class RegVecToMat(Regularizer):
-    
+
     def __init__(self, regularizer: Regularizer, model: ProblemParameters):
         super().__init__(model)
         parameter_tmp = model
@@ -122,7 +124,7 @@ class RegVecToMat(Regularizer):
             bias_nrm_squ = torch.linalg.norm(bias)**2
             if bias_nrm_squ > 1e-7:
                 return float("inf"), grad1, grad2
-        return  self.regularizer.fenchel(grad1, weight)
+        return self.regularizer.fenchel(grad1, weight)
 
     def print(self) -> None:
         self.regularizer.print()
@@ -136,7 +138,7 @@ class RegVecToMat(Regularizer):
     def lazy_prox(self, input: torch.Tensor, indices: torch.Tensor, eta: float) -> None:
         weight, _ = self.get_wb(input)
         return self.regularizer.lazy_prox(weight, indices, eta)
-    
+
     def is_lazy(self) -> bool:
         return self.regularizer.is_lazy()
 
@@ -148,5 +150,5 @@ class RegVecToMat(Regularizer):
         else:
             weight = input[:, :p]
             bias = None
-            
+
         return weight, bias

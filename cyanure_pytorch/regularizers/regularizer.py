@@ -3,6 +3,7 @@ import torch
 
 from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 
+
 class Regularizer:
 
     def __init__(self, model: ProblemParameters):
@@ -28,18 +29,18 @@ class Regularizer:
         return
 
     def is_lazy(self) -> bool:
-        return False 
+        return False
 
     def lazy_prox(self, input: torch.Tensor, indices: torch.Tensor, eta: float) -> None:
         return None
 
-    def provides_fenchel(self) -> bool: 
+    def provides_fenchel(self) -> bool:
         return True
 
     def id(self) -> str:
         return self.id
 
-    def intercept(self) -> bool: 
+    def intercept(self) -> bool:
         return self.intercept
 
     def strong_convexity(self):
