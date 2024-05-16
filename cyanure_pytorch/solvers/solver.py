@@ -52,7 +52,7 @@ class Solver:
             if ((it % self.duality_gap_interval) == 0):
                 if (self.test_stopping_criterion(weight, it)):
                     break
-            weight, fprox = self.solver_aux(weight, it)   
+            weight, fprox = self.solver_aux(weight, it)
             self.elapsed_time = time.time() - initial_time
         if (self.verbose):
             logger.info("This is the elapsed time: " + str(self.elapsed_time))

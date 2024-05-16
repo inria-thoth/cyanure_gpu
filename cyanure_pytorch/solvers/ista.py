@@ -51,7 +51,7 @@ class ISTA_Solver(Solver):
             self.sbb.sub_(grad)
             self.xbb.sub_(weight)
             alpha = torch.dot(self.sbb.view(-1), self.sbb.view(-1)) / torch.norm(self.sbb)**2
-            alpha = torch.min(torch.max(alpha, alpha_min), alpha_max)            
+            alpha = torch.min(torch.max(alpha, alpha_min), alpha_max)         
             self.L = 1 / alpha
 
         while (iter < self.max_iter_backtracking):
@@ -78,29 +78,27 @@ class ISTA_Solver(Solver):
             self.xbb = weight.clone()
 
         weight = torch.clone(tmp)
-        
+
         return weight, fprox
-    
+
     def print(self) -> None:
         logger.info("ISTA Solver")
-    
-    def init_kappa_acceleration(self, initial_weight : torch.Tensor) -> float:
+
+    def init_kappa_acceleration(self, initial_weight: torch.Tensor) -> float:
         self.solver_init(initial_weight)
         return self.L
-        
-
 
 
 class FISTA_Solver(ISTA_Solver):
-    def __init__(self, loss : Loss, regul : Regularizer, param: ModelParameters):
+    def __init__(self, loss: Loss, regul: Regularizer, param: ModelParameters):
         super().__init__(loss, regul, param)
 
     def solver_init(self, initial_weight: torch.Tensor) -> None:
         super().solver_init(initial_weight)
         self.t = torch.Tensor([1.0]).to(DEVICE)
         self.y = torch.clone(initial_weight)
-    
-    def solver_aux(self, weight : torch.Tensor, it : int = -1) -> torch.Tensor:
+
+    def solver_aux(self, weight: torch.Tensor, it: int = -1) -> torch.Tensor:
         diff = torch.clone(weight)
         weight, _ = super().solver_aux(self.y, it)
         diff = diff - weight
@@ -109,6 +107,6 @@ class FISTA_Solver(ISTA_Solver):
         self.y = self.y + diff * (1.0 - old_t) / self.t
 
         return weight, _
-    
+
     def print(self) -> None:
         logger.info("FISTA Solver")
