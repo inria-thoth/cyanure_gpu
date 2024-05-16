@@ -30,7 +30,7 @@ class SquareLoss(LinearLossVec):
 
     def scal_grad(self, input: torch.Tensor, i: int) -> float:
         return self.pred(i, input, None) - self.labels[i]
-    
+
     def get_grad_aux(self, input: torch.Tensor) -> torch.Tensor:
         grad1 = self.pred_tensor(input)
         grad1 = torch.sub(grad1, self.labels)
