@@ -20,7 +20,7 @@ class Lasso(Regularizer):
     
     def prox(self, input : torch.Tensor, eta : float) -> torch.Tensor:      
 
-        output = input + 0.5 * (torch.abs(input - self.lambda_1) - torch.abs(input + self.lambda_1))
+        output = input + 0.5 * (torch.abs(input - eta * self.lambda_1) - torch.abs(input + eta * self.lambda_1))
         if (self.intercept):
             n = input.size(dim=1)
             output[n - 1] = input[n - 1]
@@ -34,9 +34,9 @@ class Lasso(Regularizer):
     def fenchel(self, grad1 : torch.Tensor, grad2 : torch.Tensor) -> float:
         indices = (torch.abs(grad2)==torch.max(torch.abs(grad2))).nonzero()[0]
         if len(indices) > 1:
-            mm = grad2[indices[0], indices[1]]
+            mm = torch.abs(grad2[indices[0], indices[1]])
         else:
-            mm = grad2[indices]
+            mm = torch.abs(grad2[indices])
         n = grad2.size(dim=0)
         if (mm > self.lambda_1):
             grad1 *= self.lambda_1 / mm
