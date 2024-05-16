@@ -113,7 +113,7 @@ class MultiClassLogisticLoss(LinearLossMat):
         col = torch.exp(col)
         col /= (torch.sum(torch.abs(col)))
 
-        col[ind] = 0        
+        col[ind] = 0
         col[ind] = -(torch.sum(torch.abs(col)))
         return col
 
@@ -123,41 +123,41 @@ class MultiClassLogisticLoss(LinearLossMat):
                 grad1 = matmul_result
             else:
                 grad1 = torch.matmul(input, self.input_data)
-        
+
             diff = torch.masked_select(grad1, self.boolean_mask).unsqueeze(0).expand(self.n_classes, self.number_data)
 
             grad1 = grad1 - diff
             # Find max and perform subsequent operations
-            
+
             mm = grad1.max(dim=0, keepdim=True).values
             grad1.sub_(mm)
-                    
+
             grad1 = grad1.exp()
-            
+
             sum_matrix = torch.abs(grad1).sum(dim=0, keepdim=True)
         else:
             grad1 = precompute[0]
-            sum_matrix = precompute[1]        
-        
+            sum_matrix = precompute[1]    
+
         grad1 /= sum_matrix
-        
+
         # Compute the mask for elements to be zeroed out
         mask = 1 - self.one_hot
-        
+
         # Apply the mask to grad1
         grad1 = torch.mul(grad1, mask)
-        
+
         # Compute the sum of absolute values along the first dimension
         abs_sum = torch.sum(torch.abs(grad1), dim=0, keepdim=True)
-        
+
         # Compute the adjustment tensor
         adjustment = torch.mul(self.one_hot, abs_sum)
-        
+
         # Subtract the adjustment tensor from grad1
         grad1.sub_(adjustment)
 
         return grad1
-    
+
     def get_grad_aux_to_compile(self, matmul_result: torch.Tensor) -> torch.Tensor:
         grad1 = matmul_result
 
@@ -165,36 +165,36 @@ class MultiClassLogisticLoss(LinearLossMat):
         diff = grad1[self.labels.to(torch.int64), torch.arange(grad1.shape[1])]
         grad1 = grad1.clone()
         grad1 -= diff
-        
+
         grad1.sub_(diff)
         # Find max and perform subsequent operations
-        
+
         mm = grad1.max(dim=0, keepdim=True).values
         grad1.sub_(mm)
-                   
+        
         grad1 = grad1.exp()
-        
+
         sum_matrix = torch.abs(grad1).sum(dim=0, keepdim=True)
-        
+
         grad1 /= sum_matrix
-        
+
         # Compute the mask for elements to be zeroed out
         mask = 1 - self.one_hot
-        
+
         # Apply the mask to grad1
         grad1 *= mask
-        
+
         # Compute the sum of absolute values along the first dimension
         abs_sum = torch.sum(torch.abs(grad1), dim=0, keepdim=True)
-        
+
         # Compute the adjustment tensor
         adjustment = self.one_hot * abs_sum
-        
+    
         # Subtract the adjustment tensor from grad1
         grad1.sub_(adjustment)
-        
+ 
         return grad1
-    
+
     def scal_grad(self, input: torch.Tensor, i: int) -> torch.Tensor:
         col = self.pred(i, input, None)
         return self.get_grad_aux2(col, int(self.labels[i]))
@@ -211,10 +211,10 @@ class MultiClassLogisticLoss(LinearLossMat):
                 grad1[i, :] = row
 
         return grad1
-   
+
     def project_sft(self, grad1_vector: torch.Tensor, labels: torch.Tensor, clas: int) -> torch.Tensor:
         labels_binary = torch.Tensor(grad1_vector.size(dim=0))
-        labels_binary[labels == clas] = 1.0 
+        labels_binary[labels == clas] = 1.0
         labels_binary[labels != clas] = -1.0
         return self.project_sft_binary(grad1_vector, labels_binary)
 
@@ -276,7 +276,7 @@ class MultiClassLogisticLoss(LinearLossMat):
             sizeG = 1
             sumG = pivot
 
-            for i in range (1, sizeU):
+            for i in range(1, sizeU):
                 if (prU[i] >= pivot):
                     sumG += prU[i]
                     tmp = prU[sizeG]
@@ -299,8 +299,8 @@ class MultiClassLogisticLoss(LinearLossMat):
         if (simplex):
             output[output < 0] = 0
 
-        output[output>lambda_1] = output - lambda_1
-        output[output<(-lambda_1)] = output + lambda_1
-        output[-lambda_1<output<lambda_1] = 0
+        output[output > lambda_1] = output - lambda_1
+        output[output < (-lambda_1)] = output + lambda_1
+        output[-lambda_1 < output < lambda_1] = 0
 
         return output
