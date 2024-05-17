@@ -9,6 +9,9 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+[tool.cibuildwheel.windows]
+skip = ["cp36-*", "cp37-*"]
+
 [tool.pytest.ini_options]
 filterwarnings = [
     "ignore::sklearn.exceptions.ConvergenceWarning"
