@@ -43,8 +43,8 @@ jobs:
         run: |
           python -m ensurepip --upgrade
           python -m pip install --upgrade setuptools
-          pip install --upgrade pip
-          pip install setuptools wheel
+          python -m pip install --upgrade pip
+          python -m pip install setuptools wheel
 
       - name: Build the package
         run: pip wheel -w wheelhouse .
