@@ -69,15 +69,6 @@ class Estimator:
             solver = Catalyst(param, ISTA_Solver(loss, regul, param, linesearch))
         elif solver_type == "FISTA":
             solver = FISTA_Solver(loss, regul, param)
-        elif solver_type == "MISO":
-            if regul.strong_convexity() > 0:
-                solver = MISO_Solver(loss, regul, param)
-            else:
-                solver = Catalyst(MISO_Solver(loss, regul, param))
-        elif solver_type == "CATALYST_MISO":
-            solver = Catalyst(param, MISO_Solver(loss, regul, param))
-        elif solver_type == "QNING_MISO":
-            solver = QNing(param, MISO_Solver(loss, regul, param))
         else:
             solver = None
             raise NotImplementedError("This solver is not implemented !")
