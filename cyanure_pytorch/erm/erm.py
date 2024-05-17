@@ -33,7 +33,7 @@ class Estimator:
     def is_regul_for_matrices(self, reg: str) -> bool:
 
         return reg == "L1L2" or reg == "L1LINF"
-    
+
     def auto_mode(self, loss: Loss, regul: Regularizer):
 
         L = loss.lipschitz()
@@ -47,7 +47,7 @@ class Estimator:
             solver_type = "CATALYST_MISO"
 
         return solver_type
-    
+
     def get_solver(self, loss: Loss, regul: Regularizer, param: ModelParameters) -> Solver:
         solver_type = param.solver.upper()
 
