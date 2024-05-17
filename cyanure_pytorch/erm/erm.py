@@ -4,7 +4,6 @@ from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 
 from cyanure_pytorch.solvers.accelerator import Catalyst, QNing
 from cyanure_pytorch.solvers.ista import ISTA_Solver, FISTA_Solver
-from cyanure_pytorch.solvers.miso import MISO_Solver
 from cyanure_pytorch.solvers.solver import Solver
 
 from cyanure_pytorch.losses.loss import Loss
