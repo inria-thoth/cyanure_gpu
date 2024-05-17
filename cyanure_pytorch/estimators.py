@@ -106,6 +106,17 @@ class ERM(BaseEstimator, ABC):
         initial_weight = np.asfortranarray(initial_weight, X.dtype)
 
         return initial_weight, yf, nclasses
+    
+    def _multiclass_logistic(self, labels: torch.Tensor):
+        if self.loss == "logistic":
+            if (self.multi_class == "multinomial" or (self.multi_class == "auto" and not self._binary_problem)):
+                if self.multi_class == "multinomial":
+                    if len(np.unique(labels)) != 2:
+                        self._binary_problem = False
+
+                self.loss = "multiclass-logistic"
+                logger.info("Loss has been set to multiclass-logistic because "
+                            "the multiclass parameter is set to multinomial!")
 
     def __init__(self, loss='square', penalty='l2', fit_intercept=False, dual=None, tol=1e-3,
                  solver="auto", random_state=0, max_iter=2000, fista_restart=60,
@@ -320,15 +331,7 @@ class ERM(BaseEstimator, ABC):
         loss = None
         self.le_ = le_parameter
 
-        if self.loss == "logistic":
-            if (self.multi_class == "multinomial" or (self.multi_class == "auto" and not self._binary_problem)):
-                if self.multi_class == "multinomial":
-                    if len(np.unique(labels)) != 2:
-                        self._binary_problem = False
-
-                self.loss = "multiclass-logistic"
-                logger.info("Loss has been set to multiclass-logistic because "
-                            "the multiclass parameter is set to multinomial!")
+        self._multiclass_logistic(labels)
 
         if loss is None:
             loss = self.loss
