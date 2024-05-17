@@ -106,7 +106,7 @@ class ERM(BaseEstimator, ABC):
         initial_weight = np.asfortranarray(initial_weight, X.dtype)
 
         return initial_weight, yf, nclasses
-    
+
     def _multiclass_logistic(self, labels: torch.Tensor):
         if self.loss == "logistic":
             if (self.multi_class == "multinomial" or (self.multi_class == "auto" and not self._binary_problem)):
