@@ -6,7 +6,6 @@ from cyanure_pytorch.erm.param.model_param import ModelParameters
 from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 from cyanure_pytorch.logger import setup_custom_logger
 from cyanure_pytorch.losses.logistic import LogisticLoss
-from cyanure_pytorch.losses.loss import Loss
 from cyanure_pytorch.losses.square import SquareLoss
 from cyanure_pytorch.regularizers.regularizer import Regularizer
 from cyanure_pytorch.regularizers.ridge import Ridge

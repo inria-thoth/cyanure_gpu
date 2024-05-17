@@ -35,6 +35,20 @@ class Estimator:
 
         return reg == "L1L2" or reg == "L1LINF"
     
+    def auto_mode(self, loss: Loss, regul: Regularizer):
+
+        L = loss.lipschitz()
+        n = loss.n()
+        lambda_1 = regul.strong_convexity()
+        if (n < 1000):
+            solver_type = "QNING_ISTA"
+        elif (lambda_1 < L / (100 * n)):
+            solver_type = "QNING_MISO"
+        else:
+            solver_type = "CATALYST_MISO"
+
+        return solver_type
+    
     def get_solver(self, loss: Loss, regul: Regularizer, param: ModelParameters) -> Solver:
         solver_type = param.solver.upper()
 
@@ -46,15 +60,7 @@ class Estimator:
         solver_type = solver_type.replace('_BARZILAI', '')
 
         if (solver_type == "AUTO"):
-            L = loss.lipschitz()
-            n = loss.n()
-            lambda_1 = regul.strong_convexity()
-            if (n < 1000):
-                solver_type = "QNING_ISTA"
-            elif (lambda_1 < L / (100 * n)):
-                solver_type = "QNING_MISO"
-            else:
-                solver_type = "CATALYST_MISO"
+            solver_type = self.auto_mode(loss, regul)
         if solver_type == "ISTA":
             solver = ISTA_Solver(loss, regul, param, linesearch)
         elif solver_type == "QNING_ISTA":
