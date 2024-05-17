@@ -47,7 +47,7 @@ jobs:
           python -m pip install setuptools wheel
 
       - name: Build the package
-        run: pip wheel -w wheelhouse .
+        run: python -m pip wheel -w wheelhouse .
 
       - uses: actions/upload-artifact@v3
         with:
