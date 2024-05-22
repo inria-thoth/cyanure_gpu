@@ -77,4 +77,4 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Try to import cyanure
-      run: pip install "python -m pip install --no-index --find-links dist cyanure_pytorch &&  python -c "import cyanure_pytorch;"
+      run: pip install python -m pip install --no-index --find-links dist cyanure_pytorch &&  python -c "import cyanure_pytorch;"
