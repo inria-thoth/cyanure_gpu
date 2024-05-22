@@ -29,7 +29,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
       - uses: actions/checkout@v3
@@ -48,7 +48,7 @@ jobs:
           python -m pip install setuptools wheel
 
       - name: Build the package
-        run: python -m pip wheel -w wheelhouse .
+        run: TORCH_CUDA_ARCH_LIST=Turing python -m pip wheel -w wheelhouse .
 
       - uses: actions/upload-artifact@v3
         with:
