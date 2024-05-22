@@ -48,7 +48,9 @@ jobs:
           python -m pip install setuptools wheel
 
       - name: Build the package
-        run: TORCH_CUDA_ARCH_LIST=Turing python -m pip wheel -w wheelhouse .
+        run: python -m pip wheel -w wheelhouse .
+        env:
+          TORCH_CUDA_ARCH_LIST: Turing
 
       - uses: actions/upload-artifact@v3
         with:
