@@ -10,6 +10,7 @@ from cyanure_pytorch.losses.square import SquareLoss
 from cyanure_pytorch.regularizers.regularizer import Regularizer
 from cyanure_pytorch.regularizers.ridge import Ridge
 from cyanure_pytorch.regularizers.lasso import Lasso
+from cyanure_pytorch.regularizers.none import NoRegul
 from cyanure_pytorch.solvers.ista import ISTA_Solver
 from cyanure_pytorch.constants import EPSILON
 
@@ -69,7 +70,7 @@ class SimpleErm(Estimator):
                 self.weight = loss.reverse_intercept(self.weight)
 
         if (self.problem_parameters.regul == "L1"):
-            self.weight[abs(self.weight) < EPSILON] = 0
+            self.weight[torch.abs(self.weight) < EPSILON] = 0
 
         if (self.weight is None):
             self.weight = self.initial_weight
@@ -102,10 +103,9 @@ class SimpleErm(Estimator):
             regul = Ridge(self.problem_parameters)
         elif self.problem_parameters.regul == "L1":
             regul = Lasso(self.problem_parameters)
-        elif self.problem_parameters.regul is None:
-            pass
         else:
             logger.error("Not implemented, no regularization is chosen")
+            regul = NoRegul(self.problem_parameters)
 
         return regul
 
