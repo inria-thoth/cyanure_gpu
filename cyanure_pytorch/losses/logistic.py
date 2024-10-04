@@ -108,7 +108,7 @@ class LogisticLoss(LinearLossVec):
                     count += 1
                     ztilde[ii] = -grad1[ii] + 1.0
             xtilde = self.l1project(ztilde, count)
-            
+
             for ii in range(n):
                 grad1[ii] = -xtilde[ii] if y[ii] > 0 else -xtilde[ii] + 1.0
 

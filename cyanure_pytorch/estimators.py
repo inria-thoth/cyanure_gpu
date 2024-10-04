@@ -110,7 +110,7 @@ class ERM(BaseEstimator, ABC):
         if self.loss == "logistic":
             if (self.multi_class == "multinomial" or (self.multi_class == "auto" and not self._binary_problem)):
                 if len(np.unique(labels)) != 2:
-           
+
                     self._binary_problem = False
 
                     logger.info("Loss has been set to multiclass-logistic because "
@@ -340,7 +340,7 @@ class ERM(BaseEstimator, ABC):
             self.lambda_1 = 0
 
         self.duality_gap_interval = -1 if self.duality_gap_interval <= 0 else min(self.duality_gap_interval, self.max_iter)
-    
+
         model_parameter = ModelParameters(int(self.max_iter), float(self.tol), int(self.duality_gap_interval),
                                           500, 1, int(self.n_threads), int(self.limited_memory_qning),
                                           int(self.fista_restart), bool(self.verbose), False, self.solver)
