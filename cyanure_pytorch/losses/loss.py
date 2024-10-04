@@ -1,6 +1,5 @@
 import abc
 import sys
-import math
 import torch
 import random
 
@@ -74,7 +73,7 @@ class Loss:
                 if norms is not None:
                     self.norms_tensor = norms + torch.pow(self.scale_intercept, 2)
                 else:
-                    norms =  torch.pow(self.scale_intercept, 2)
+                    norms = torch.pow(self.scale_intercept, 2)
 
         norms = self.norms_tensor
 
@@ -159,7 +158,7 @@ class Loss:
         if (len(weight.size()) == 1):
             weight[weight.size(0) - 1] /= self.scale_intercept
         else:
-            weight[: , weight.size(1) - 1] /= self.scale_intercept
+            weight[:, weight.size(1) - 1] /= self.scale_intercept
 
         return weight
 
@@ -168,8 +167,8 @@ class Loss:
             if (len(weight.size()) == 1):
                 weight[weight.size(0) - 1] *= self.scale_intercept
             else:
-                weight[: , weight.size(1) - 1] *= self.scale_intercept
-            
+                weight[:, weight.size(1) - 1] *= self.scale_intercept
+
         return weight
 
     def check_grad(self, input: torch.Tensor, output: torch.Tensor) -> None:
