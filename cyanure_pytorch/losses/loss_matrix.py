@@ -107,7 +107,7 @@ class LinearLossMat(Loss):
         p = input.size(dim=1)
         weight = input[:, : p-1]
         bias = input[:, p-1]
-        
+
         return weight, bias
 
     @abc.abstractmethod
