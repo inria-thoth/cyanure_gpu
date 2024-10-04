@@ -33,8 +33,8 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         # Apply log-sum-exp trick to improve numerical stability
         mm = tmp.max(dim=0, keepdim=True).values
-        tmp = tmp - mm  
-        tmp = tmp.exp() 
+        tmp = tmp - mm
+        tmp = tmp.exp()
 
         # Sum matrix along the first dimension, ensuring numerical stability with epsilon
         sum_matrix = tmp.sum(dim=0, keepdim=True)
@@ -120,8 +120,8 @@ class MultiClassLogisticLoss(LinearLossMat):
         col[ind] = -(torch.sum(torch.abs(col)))
         return col
 
-    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None,
-                 precompute: torch.Tensor = None) -> torch.Tensor:
+    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None, 
+                     precompute: torch.Tensor = None) -> torch.Tensor:
 
         if precompute is None:
             if matmul_result is not None:
@@ -156,7 +156,6 @@ class MultiClassLogisticLoss(LinearLossMat):
         grad1.sub_(adjustment)
 
         return grad1
-
 
     def get_grad_aux_to_compile(self, matmul_result: torch.Tensor) -> torch.Tensor:
         grad1 = matmul_result
@@ -202,7 +201,6 @@ class MultiClassLogisticLoss(LinearLossMat):
     def lipschitz_constant(self) -> float:
         return 0.25
 
-
     def get_dual_constraints(self, grad1: torch.Tensor) -> torch.Tensor:
         if self.intercept:
             for i in range(grad1.size(0)):
@@ -229,7 +227,6 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         return grad1
 
-
     def l1project(self, input: torch.Tensor, thrs: float, simplex: bool = False) -> torch.Tensor:
         if simplex:
             output = torch.clamp(input, min=0)
@@ -247,7 +244,8 @@ class MultiClassLogisticLoss(LinearLossMat):
         cumulative_sum = torch.cumsum(sorted_output, dim=0) - thrs
 
         # Find rho, which is the largest index where the condition holds
-        rho = torch.nonzero(sorted_output * torch.arange(1, sorted_output.size(0) + 1, device=input.device) > cumulative_sum, as_tuple=True)[0].max()
+        tmp = sorted_output * torch.arange(1, sorted_output.size(0) + 1, device=input.device) > cumulative_sum
+        rho = torch.nonzero(tmp, as_tuple=True)[0].max()
 
         # Calculate the threshold lambda
         lambda_1 = cumulative_sum[rho] / (rho + 1)
