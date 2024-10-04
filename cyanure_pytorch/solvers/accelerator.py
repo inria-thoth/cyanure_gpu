@@ -128,7 +128,6 @@ class QNing(Catalyst):
             self.line_search_steps = 0
 
     def solver_aux(self, weight: torch.Tensor, it: int = -1) -> torch.Tensor:
-        
         if (self.accelerated_solver):
             if (self.gk is None):
                 weight = self.get_gradient(weight)

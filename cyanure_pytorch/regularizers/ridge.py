@@ -17,7 +17,7 @@ class Ridge(Regularizer):
 
     def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:
         output = torch.clone(input)
-        
+
         output = output / (1.0 + self.lambda_1 * eta)
         if (self.intercept):
             if len(output.shape) == 1:

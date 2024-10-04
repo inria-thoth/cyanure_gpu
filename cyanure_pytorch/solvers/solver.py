@@ -68,7 +68,7 @@ class Solver:
         for index in range(self.optim_info.size(dim=1)):
             if (self.optim_info[0, index] != 0):
                 count += 1
-        
+
         if (count > 0):
             optim = torch.Tensor(1, self.NUMBER_OPTIM_PROCESS_INFO, count)
         for index in range(count):
@@ -133,7 +133,7 @@ class Solver:
             stop = False
             if ((iteration / self.duality_gap_interval) >= 4):
                 if (all(abs(delta) < self.threshold for delta in self.deltas[-5:])):
-                    #stop = True
+                    # stop = True
                     # TODO Add test to dtype
                     logger.warning("Your problem is prone to numerical instability. It would be safer to use double.")
             if (self.verbose):

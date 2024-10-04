@@ -1,4 +1,3 @@
-import weakref
 import torch
 
 from cyanure_pytorch.losses.loss import Loss
