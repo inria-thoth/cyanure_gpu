@@ -33,13 +33,11 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         # Apply log-sum-exp trick to improve numerical stability
         mm = tmp.max(dim=0, keepdim=True).values
-        tmp = tmp - mm  # Subtract max for numerical stability
-
-        # Apply exponentiation safely, adding epsilon to avoid underflow
-        tmp = tmp.exp() # Add epsilon to avoid tiny values approaching zero
+        tmp = tmp - mm  
+        tmp = tmp.exp() 
 
         # Sum matrix along the first dimension, ensuring numerical stability with epsilon
-        sum_matrix = tmp.sum(dim=0, keepdim=True) # Add epsilon to avoid division by zero later
+        sum_matrix = tmp.sum(dim=0, keepdim=True)
 
         return tmp, sum_matrix, mm
 
@@ -124,7 +122,6 @@ class MultiClassLogisticLoss(LinearLossMat):
 
     def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None,
                  precompute: torch.Tensor = None) -> torch.Tensor:
-        epsilon = torch.finfo(torch.float32).eps  # Small value to prevent division by zero
 
         if precompute is None:
             if matmul_result is not None:
@@ -159,8 +156,6 @@ class MultiClassLogisticLoss(LinearLossMat):
         grad1.sub_(adjustment)
 
         return grad1
-
-
 
 
     def get_grad_aux_to_compile(self, matmul_result: torch.Tensor) -> torch.Tensor:
@@ -208,7 +203,6 @@ class MultiClassLogisticLoss(LinearLossMat):
         return 0.25
 
 
-
     def get_dual_constraints(self, grad1: torch.Tensor) -> torch.Tensor:
         if self.intercept:
             for i in range(grad1.size(0)):
@@ -221,7 +215,6 @@ class MultiClassLogisticLoss(LinearLossMat):
 
     def project_sft_binary(self, grad1: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         mean = torch.mean(grad1)
-        n = grad1.size(0)
 
         if mean > 0:
             ztilde = grad1 + torch.where(y > 0, 1.0, 0.0)
@@ -236,7 +229,7 @@ class MultiClassLogisticLoss(LinearLossMat):
 
         return grad1
 
-    
+
     def l1project(self, input: torch.Tensor, thrs: float, simplex: bool = False) -> torch.Tensor:
         if simplex:
             output = torch.clamp(input, min=0)
