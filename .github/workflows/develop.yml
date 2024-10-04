@@ -78,3 +78,41 @@ jobs:
 
     - name: Try to import cyanure
       run: pip install scipy && pip install numpy && pip install scikit-learn && python -m pip install 'torch<2.3.0' && python -m pip install --no-index --find-links dist cyanure_pytorch &&  python -c "import cyanure_pytorch;"
+
+
+  run_tests:
+    needs: [build_wheels]
+    name: Run the tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: artifact
+        path: dist
+    
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+      
+    - name: Install cyanure
+      run: pip install scipy && pip install numpy && pip install scikit-learn && python -m pip install 'torch<2.3.0' && python -m pip install --no-index --find-links dist cyanure_pytorch
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+          
+    - name: Switch to Current Branch
+      run: git checkout ${{ env.BRANCH }}
+
+    - name: Run tests without the lib
+      uses: knicknic/os-specific-run@v1.0.3
+      with:
+        macos: rm -rf cyanure && rm -rf cyanure_lib && python -m pip install pytest && python -m pip install pandas  && python -m pip install libsvmdata && pip list && python -m pytest test/
+        linux: rm -rf cyanure && rm -rf cyanure_lib && python -m pip install pytest && python -m pip install pandas  && python -m pip install libsvmdata && pip list && python -m pytest test/ 
+        windows: Remove-Item -Force -Recurse cyanure && Remove-Item -Force -Recurse cyanure_lib && python -m pip install pytest && python -m pip install libsvmdata && python -m pip install pandas && python -m pytest test/
