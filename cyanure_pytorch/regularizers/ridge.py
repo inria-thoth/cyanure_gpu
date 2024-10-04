@@ -17,11 +17,15 @@ class Ridge(Regularizer):
 
     def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:
         output = torch.clone(input)
-        scaling_factor = (1.0 / (1.0 + self.lambda_1 * eta))
-        output.mul_(scaling_factor)
+        
+        output = output / (1.0 + self.lambda_1 * eta)
         if (self.intercept):
-            n = input.size(dim=0)
-            output[n - 1] = input[n - 1]
+            if len(output.shape) == 1:
+                n = input.size(dim=0)
+                output[n - 1] = input[n - 1]
+            else:
+                p = input.size(dim=1)
+                output[:, p - 1] = input[:, p-1]
 
         return output
 
@@ -51,7 +55,12 @@ class Ridge(Regularizer):
         for jj in range(r):
             output[indices[jj]] = scal * input[indices[jj]]
         if (self.intercept):
-            output[p - 1] = input[p - 1]
+            if len(output.shape) == 1:
+                n = input.size(dim=0)
+                output[n - 1] = input[n - 1]
+            else:
+                p = input.size(dim=1)
+                output[:, p - 1] = input[:, p-1]
 
         return output
 
