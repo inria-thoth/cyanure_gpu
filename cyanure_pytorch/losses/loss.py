@@ -6,7 +6,7 @@ import random
 
 from typing import Tuple
 
-from cyanure_pytorch.constants import EPSILON
+from cyanure_pytorch.constants import EPSILON, DEVICE, TENSOR_TYPE
 
 from cyanure_pytorch.logger import setup_custom_logger
 
@@ -16,9 +16,9 @@ logger = setup_custom_logger("INFO")
 class Loss:
     def __init__(self, data: torch.Tensor, y: torch.Tensor, intercept: bool) -> None:
         self.intercept = intercept
-        self.scale_intercept = 1.0
+        self.scale_intercept = torch.tensor(1.0)
         self.input_data = data
-        self.labels = y.to(torch.int64)
+        self.labels = y.to(TENSOR_TYPE)
         self.norms_vector = None
         self.grad_aux_compile = None
 
@@ -72,11 +72,13 @@ class Loss:
 
             if (self.intercept):
                 if norms is not None:
-                    self.norms_tensor = norms + math.pow(self.scale_intercept, 2)
+                    self.norms_tensor = norms + torch.pow(self.scale_intercept, 2)
                 else:
-                    self.norms_tensor = math.pow(self.scale_intercept, 2)
+                    norms =  torch.pow(self.scale_intercept, 2)
 
-        return self.norms_tensor
+        norms = self.norms_tensor
+
+        return norms
 
     def norms(self, ind: int) -> float:
         return self.norms[:, ind]
@@ -101,7 +103,7 @@ class Loss:
             n = gradient_size[1]
         else:
             n = gradient_size[0]
-        return self.add_dual_pred_tensor(tmp, None, 1.0/n)
+        return self.add_dual_pred_tensor(tmp, input, 1.0/n, 0)
 
     def eval_random_minibatch(self, input: torch.Tensor, minibatch: int) -> float:
         sum = 0
@@ -126,9 +128,9 @@ class Loss:
     def get_anchor_point(self, z: torch.Tensor) -> None:
         pass
 
-    def get_dual_variable(self, input: torch.Tensor, grad_aux_result: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_dual_variable(self, weight: torch.Tensor, grad_aux_result: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
         if grad_aux_result is None:
-            grad1 = self.get_grad_aux(input)
+            grad1 = self.get_grad_aux(weight)
         else:
             grad1 = grad_aux_result
         grad1 = self.get_dual_constraints(grad1)
@@ -137,7 +139,7 @@ class Loss:
             n = gradient_size[1]
         else:
             n = gradient_size[0]
-        return grad1, self.add_dual_pred_tensor(grad1, None, 1.0/n)
+        return grad1, self.add_dual_pred_tensor(grad1, weight, 1.0/n, 0)
 
     # non-virtual function classes
     def n(self) -> int:
@@ -154,13 +156,21 @@ class Loss:
     def set_intercept(self, initial_weight: torch.Tensor) -> torch.Tensor:
         self.scale_intercept = torch.sqrt(0.1 * torch.linalg.norm(self.input_data)**2 / self.input_data.size(dim=1))
         weight = torch.clone(initial_weight)
-        weight[weight.size(dim=1) - 1] /= self.scale_intercept
+        if (len(weight.size()) == 1):
+            weight[weight.size(0) - 1] /= self.scale_intercept
+        else:
+            weight[: , weight.size(1) - 1] /= self.scale_intercept
 
         return weight
 
     def reverse_intercept(self, weight: torch.Tensor) -> None:
         if (self.scale_intercept != 1.0):
-            weight[weight.size(dim=1) - 1] *= self.scale_intercept
+            if (len(weight.size()) == 1):
+                weight[weight.size(0) - 1] *= self.scale_intercept
+            else:
+                weight[: , weight.size(1) - 1] *= self.scale_intercept
+            
+        return weight
 
     def check_grad(self, input: torch.Tensor, output: torch.Tensor) -> None:
         output = torch.clone(input)
@@ -232,10 +242,10 @@ class LinearLossVec(Loss):
                              a: float = 1.0, b: float = 1.0) -> torch.Tensor:
         if (self.intercept):
             m = self.input_data.size(dim=0)
-            output = torch.Tensor((m + 1))
-            weight = self.get_w(input)
-            weight = a * torch.matmul(self.input_data, input) + weight * b
-            output[m] = self.scale_intercept * a * input.sum()
+            output = torch.Tensor((m + 1)).to(DEVICE)
+            weight = self.get_w(input2)
+            output[:-1] = a * torch.matmul(self.input_data, input) + weight * b
+            output[-1] = self.scale_intercept * a * input.sum() + b * output[-1]
         else:
             if input2 is None:
                 output = a * torch.matmul(self.input_data, input)
@@ -262,7 +272,7 @@ class LinearLossVec(Loss):
         if (self.intercept):
             weight = self.get_w(input)
             output = torch.matmul(torch.transpose(self.input_data, 0, 1), weight)
-            return output + (input[input.size(dim=1) - 1] * self.scale_intercept)
+            return output + (input[input.size(0) - 1] * self.scale_intercept)
         else:
             return torch.matmul(torch.transpose(self.input_data, 0, 1), input)
 
@@ -275,7 +285,7 @@ class LinearLossVec(Loss):
             return torch.dot(col, input)
 
     def get_w(self, input: torch.Tensor) -> torch.Tensor:
-        n = input.n()
+        n = input.size(0)
         return input[:n-1]
 
 

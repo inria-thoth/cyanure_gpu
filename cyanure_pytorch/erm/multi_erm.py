@@ -45,7 +45,6 @@ class MultiErm(Estimator):
     def solve_problem_vector(self, features: torch.Tensor, labels_vector: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
 
         self.verify_input(features)
-        # print(f"Starting Memory Usage Vector: {torch.cuda.memory_allocated() / 1e6} MB")
         nclass = torch.max(labels_vector) + 1
         loss_string = self.problem_parameters.loss.upper()
 
@@ -89,7 +88,6 @@ class MultiErm(Estimator):
     # prediction model is   W0^FeatureType X  gives  nclasses x n
     def solve_problem_matrix(self, features: torch.Tensor, labels: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         self.verify_input(features)
-        # print(f"Starting Memory Usage Matrix: {torch.cuda.memory_allocated() / 1e6} MB")
         loss_string = self.problem_parameters.loss.upper()
         regul_string = self.problem_parameters.regul.upper()
         if (super().is_regul_for_matrices(regul_string) or super().is_loss_for_matrices(loss_string)):
@@ -104,7 +102,6 @@ class MultiErm(Estimator):
             transpose = loss.transpose()
 
             regul = self.get_regul_mat(n_class, transpose)
-            # print(f"Starting Memory Usage Before Solve: {torch.cuda.memory_allocated() / 1e6} MB")
             return self.solve_mat(loss, regul)
         else:
             self.weight = self.initial_weight
@@ -112,8 +109,10 @@ class MultiErm(Estimator):
             duality_gap_interval = max(self.model_parameters.duality_gap_interval, 1)
             self.optim_info = torch.zeros([n_class, NUMBER_OPTIM_PROCESS_INFO,
                                            int(max(self.model_parameters.max_iter / duality_gap_interval, 1))])
-            parameter_tmp = self.model_parameters
+            parameter_tmp = self.problem_parameters
             parameter_tmp.verbose = False
+            if parameter_tmp.loss == 'MULTICLASS-LOGISTIC':
+                parameter_tmp.loss = 'LOGISTIC'
             if (self.model_parameters.verbose):
                 logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
                 pass
@@ -124,16 +123,17 @@ class MultiErm(Estimator):
                 initial_weight_col = self.initial_weight[:, ii]
                 weight_col = self.weight[:, ii]
                 labels_col = labels[ii, :]
-                if (self.dual_variable.size(dim=0) == n_class):
+                dualcol = None
+                if (self.dual_variable is not None and self.dual_variable.size(dim=0) == n_class):
                     dualcol = self.dual_variable[ii]
                 problem_configuration = SimpleErm(initial_weight_col, weight_col, parameter_tmp,
                                                   self.model_parameters, optim_info_col, dualcol)
                 optim_info_col, weight_col = problem_configuration.solve_problem(features, labels_col)
-                if (self.dual_variable.size(dim=0) == n_class):
+                if (self.dual_variable is not None and self.dual_variable.size(dim=0) == n_class):
                     self.dual_variable[ii] = problem_configuration.dual_variable
 
                 self.weight[:, ii] = weight_col
-                self.optim_info[ii] = optim_info_col
+                self.optim_info[ii, :, :optim_info_col.size(2)] = optim_info_col
                 if (self.model_parameters.verbose):
                     noptim = optim_info_col.size(dim=2) - 1
                     logger.info("Solver " + ii + " has terminated after " + optim_info_col(0, 0, noptim)
@@ -205,7 +205,7 @@ class MultiErm(Estimator):
 
             new_initial_weight = None
             if (self.problem_parameters.intercept):
-                loss.set_intercept(self.initial_weight, new_initial_weight)
+                new_initial_weight = loss.set_intercept(self.initial_weight)
             else:
                 new_initial_weight = self.initial_weight
             if (self.dual_variable is not None and self.dual_variable.size(dim=0) != 0):
@@ -220,7 +220,7 @@ class MultiErm(Estimator):
                 self.weight, fprox = solver.solve(new_initial_weight, self.weight)
 
             if (self.problem_parameters.intercept):
-                loss.reverse_intercept(self.weight)
+                self.weight = loss.reverse_intercept(self.weight)
 
         if (self.problem_parameters.regul == "L1"):
             self.weight[abs(self.weight) < EPSILON] = 0
@@ -243,8 +243,6 @@ class MultiErm(Estimator):
                     regul = RegVecToMat(Lasso(self.problem_parameters), self.problem_parameters)
                 else:
                     regul = RegMat(Lasso(self.problem_parameters), self.problem_parameters, num_class, transpose)
-            elif (regularizer_string is None):
-                pass
             else:
                 logger.error("Not implemented, no regularization is chosen")
                 regul = NoRegul(self.problem_parameters)

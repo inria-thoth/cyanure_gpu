@@ -4,6 +4,7 @@ from typing import Tuple
 import abc
 
 from cyanure_pytorch.losses.loss import Loss
+from cyanure_pytorch.constants import DEVICE
 
 logger = setup_custom_logger("INFO")
 
@@ -12,7 +13,7 @@ class LinearLossMat(Loss):
 
     def __init__(self, data: torch.Tensor, y: torch.Tensor, intercept: bool):
         super().__init__(data, y, intercept)
-        self.ones = torch.ones(self.input_data.size(dim=1))
+        self.ones = torch.ones(self.input_data.size(dim=1)).to(DEVICE)
 
     def add_grad(self, input: torch.Tensor, i: int, a: float = 1.0) -> torch.Tensor:
         sgrad = self.scal_grad(input, i)
@@ -50,7 +51,6 @@ class LinearLossMat(Loss):
                 output = torch.matmul(input, self.input_data) + input2
             else:
                 output = torch.matmul(input, self.input_data)
-
         return output
 
     def pred(self, ind: int, input: torch.Tensor, input2: torch.Tensor) -> torch.Tensor:
@@ -69,17 +69,19 @@ class LinearLossMat(Loss):
 
     def add_dual_pred_tensor(self, input: torch.Tensor, input2: torch.Tensor, a1: float = 1.0, a2: float = 1.0) -> torch.Tensor:
         if (self.intercept):
-            output = torch.Tensor(input.size(dim=0), self.input_data.size(dim=0) + 1)
-            weight, bias = self.get_wb(output)
+            output = torch.zeros(input.size(dim=0), self.input_data.size(dim=0) + 1).to(DEVICE)
+            weight, bias = self.get_wb(input2)
             #  W = input * X.T =  (X* input.T).T
             weight = a2 * weight + a1 * torch.matmul(input, torch.transpose(self.input_data, 0, 1))
-            bias = bias * a2 + a1 * self.ones
+            bias = bias * a2 + a1 * torch.matmul(input, self.ones)
+            bias = torch.unsqueeze(bias, 1)
             output = torch.cat((weight, bias), dim=1)
         else:
             if input2 is not None:
-                output = a2 * input2 + a1 * torch.matmul(input, torch.transpose(self.input_data, 0, 1))
+                output = a2 * input2 + a1 * torch.matmul(input, self.input_data.t())
             else:
                 output = a1 * torch.matmul(input, self.input_data.t())
+
         return output
 
     def add_dual_pred(self, ind: int, input: torch.Tensor, input2: torch.Tensor, a: float = 1.0, b: float = 1.0) -> torch.Tensor:
@@ -89,7 +91,7 @@ class LinearLossMat(Loss):
         if (self.intercept):
             output = torch.Tensor(input.size(dim=1), self.input_data.size(dim=0) + 1)
             # Weight and bias are zeros
-            weight, bias = self.get_wb(output)
+            weight, bias = self.get_wb(input)
             weight = weight + a * torch.outer(input, col)
             bias = bias + a*self.scale_intercept * input
             output = torch.cat((weight, bias), dim=1)
@@ -105,7 +107,7 @@ class LinearLossMat(Loss):
         p = input.size(dim=1)
         weight = input[:, : p-1]
         bias = input[:, p-1]
-
+        
         return weight, bias
 
     @abc.abstractmethod

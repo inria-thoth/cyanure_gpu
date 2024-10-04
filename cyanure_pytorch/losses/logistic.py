@@ -63,10 +63,11 @@ class LogisticLoss(LinearLossVec):
             if matmul_result is not None:
                 grad1 = matmul_result
             else:
-                grad1 = torch.matmul(input, self.input_data)
+                grad1 = self.pred_tensor(input, None)
             grad1 = torch.mul(grad1, self.labels)
         else:
             grad1 = precompute
+
         grad1 = 1.0 / (torch.exp(grad1) + 1.0)
         grad1 = torch.mul(grad1, self.labels)
         grad1 = torch.neg(grad1)
@@ -83,6 +84,7 @@ class LogisticLoss(LinearLossVec):
         return grad1
 
     def project_sft_binary(self, grad1: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+
         mean = torch.mean(grad1)
         n = grad1.size(dim=0)
         ztilde = torch.Tensor(n)
@@ -95,6 +97,7 @@ class LogisticLoss(LinearLossVec):
                 else:
                     ztilde[ii] = grad1[ii]
             xtilde = self.l1project(ztilde, count)
+
             for ii in range(n):
                 grad1[ii] = xtilde[ii] - 1.0 if y[ii] > 0 else xtilde[ii]
         else:
@@ -105,6 +108,7 @@ class LogisticLoss(LinearLossVec):
                     count += 1
                     ztilde[ii] = -grad1[ii] + 1.0
             xtilde = self.l1project(ztilde, count)
+            
             for ii in range(n):
                 grad1[ii] = -xtilde[ii] if y[ii] > 0 else -xtilde[ii] + 1.0
 
@@ -123,7 +127,7 @@ class LogisticLoss(LinearLossVec):
         if (norm1 <= thrs):
             if (not simplex):
                 output = torch.clone(input)
-            return None
+            return output
 
         prU = output
         sizeU = input.size(dim=0)
@@ -134,8 +138,8 @@ class LogisticLoss(LinearLossVec):
         while (sizeU > 0):
             # put the pivot in prU[0]
             tmp = prU[0]
-            prU[0] = prU[sizeU / 2]
-            prU[sizeU / 2] = tmp
+            prU[0] = prU[int(sizeU / 2)]
+            prU[int(sizeU / 2)] = tmp
             pivot = prU[0]
             sizeG = 1
             sumG = pivot
@@ -163,8 +167,11 @@ class LogisticLoss(LinearLossVec):
         if (simplex):
             output[output < 0] = 0
 
-        output[output > lambda_1] = output - lambda_1
-        output[output < (-lambda_1)] = output + lambda_1
-        output[-lambda_1 < output < lambda_1] = 0
+        if (output > lambda_1).any():
+            output[output > lambda_1] -= lambda_1
+        if (output < (-lambda_1)).any():
+            output[output < (-lambda_1)] += lambda_1
+        if ((-lambda_1 < output) & (output < lambda_1)).any():
+            output[(-lambda_1 < output) & (output < lambda_1)] = 0
 
         return output

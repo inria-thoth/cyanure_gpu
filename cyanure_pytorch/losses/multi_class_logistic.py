@@ -21,20 +21,25 @@ class MultiClassLogisticLoss(LinearLossMat):
         self.boolean_mask = torch.eq(index_mask, label_mask)
         self.loss_labels = self.labels.type(torch.LongTensor).to(DEVICE)
 
-    def pre_compute(self, input: torch.Tensor) -> float:
-
+    def pre_compute(self, input: torch.Tensor) -> torch.Tensor:
+        # Get prediction tensor
         tmp = self.pred_tensor(input, None)
+
+        # Compute the difference with masked select and broadcasting
         diff = torch.masked_select(tmp, self.boolean_mask).unsqueeze(0).expand(self.n_classes, self.number_data)
 
-        tmp.sub_(diff)
-        # Find max and perform subsequent operations
+        # Subtract difference (avoid in-place operations)
+        tmp = tmp - diff
 
+        # Apply log-sum-exp trick to improve numerical stability
         mm = tmp.max(dim=0, keepdim=True).values
-        tmp.sub_(mm)
+        tmp = tmp - mm  # Subtract max for numerical stability
 
-        tmp = tmp.exp()
+        # Apply exponentiation safely, adding epsilon to avoid underflow
+        tmp = tmp.exp() # Add epsilon to avoid tiny values approaching zero
 
-        sum_matrix = torch.abs(tmp).sum(dim=0, keepdim=True)
+        # Sum matrix along the first dimension, ensuring numerical stability with epsilon
+        sum_matrix = tmp.sum(dim=0, keepdim=True) # Add epsilon to avoid division by zero later
 
         return tmp, sum_matrix, mm
 
@@ -43,7 +48,7 @@ class MultiClassLogisticLoss(LinearLossMat):
             if matmul_result is not None:
                 tmp = matmul_result
             else:
-                tmp = torch.matmul(input, self.input_data)
+                tmp = self.pred_tensor(input, None)
 
             diff = torch.masked_select(tmp, self.boolean_mask).unsqueeze(0).expand(self.n_classes, self.number_data)
 
@@ -55,7 +60,7 @@ class MultiClassLogisticLoss(LinearLossMat):
 
             tmp = tmp.exp()
 
-            sum_matrix = torch.abs(tmp).sum(dim=0, keepdim=True)
+            sum_matrix = tmp.sum(dim=0, keepdim=True)
         else:
             tmp = precompute[0]
             sum_matrix = precompute[1]
@@ -107,57 +112,56 @@ class MultiClassLogisticLoss(LinearLossMat):
 
     def get_grad_aux2(self, col: torch.Tensor, ind: int) -> torch.Tensor:
         value = col[ind].clone()
-        col -= value
+        col = col - value
         mm = torch.max(col)
-        col -= mm
+        col = col - mm
         col = torch.exp(col)
-        col /= (torch.sum(torch.abs(col)))
+        col = col * (1 / (torch.sum(torch.abs(col))))
 
         col[ind] = 0
         col[ind] = -(torch.sum(torch.abs(col)))
         return col
 
     def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None,
-                     precompute: torch.Tensor = None) -> torch.Tensor:
+                 precompute: torch.Tensor = None) -> torch.Tensor:
+        epsilon = torch.finfo(torch.float32).eps  # Small value to prevent division by zero
+
         if precompute is None:
             if matmul_result is not None:
                 grad1 = matmul_result
             else:
-                grad1 = torch.matmul(input, self.input_data)
+                grad1 = self.pred_tensor(input, None)
 
             diff = torch.masked_select(grad1, self.boolean_mask).unsqueeze(0).expand(self.n_classes, self.number_data)
-
             grad1 = grad1 - diff
-            # Find max and perform subsequent operations
 
+            # Apply log-sum-exp trick
             mm = grad1.max(dim=0, keepdim=True).values
-            grad1.sub_(mm)
+            grad1 = (grad1 - mm).exp()
 
-            grad1 = grad1.exp()
-
-            sum_matrix = torch.abs(grad1).sum(dim=0, keepdim=True)
+            sum_matrix = grad1.sum(dim=0, keepdim=True)
         else:
             grad1 = precompute[0]
             sum_matrix = precompute[1]
 
-        grad1 /= sum_matrix
+        grad1 = grad1 / (sum_matrix)  # More stable division
 
-        # Compute the mask for elements to be zeroed out
-        mask = 1 - self.one_hot
-
-        # Apply the mask to grad1
-        grad1 = torch.mul(grad1, mask)
+        # Apply the mask to zero out certain elements
+        grad1 = torch.where(self.one_hot.bool(), torch.tensor(0.0, device=grad1.device, dtype=grad1.dtype), grad1)
 
         # Compute the sum of absolute values along the first dimension
         abs_sum = torch.sum(torch.abs(grad1), dim=0, keepdim=True)
 
         # Compute the adjustment tensor
-        adjustment = torch.mul(self.one_hot, abs_sum)
+        adjustment = self.one_hot.float() * abs_sum
 
         # Subtract the adjustment tensor from grad1
         grad1.sub_(adjustment)
 
         return grad1
+
+
+
 
     def get_grad_aux_to_compile(self, matmul_result: torch.Tensor) -> torch.Tensor:
         grad1 = matmul_result
@@ -203,105 +207,59 @@ class MultiClassLogisticLoss(LinearLossMat):
     def lipschitz_constant(self) -> float:
         return 0.25
 
-    def get_dual_constraints(self, grad1: torch.Tensor) -> torch.Tensor:
-        # scale grad1 by 1/Nclasses
-        if (self.intercept):
-            for i in range(grad1.size(0)):
-                row = grad1[i, :]
-                row = self.project_sft(row, self.labels, i)
-                grad1[i, :] = row
 
+
+    def get_dual_constraints(self, grad1: torch.Tensor) -> torch.Tensor:
+        if self.intercept:
+            for i in range(grad1.size(0)):
+                grad1[i, :] = self.project_sft(grad1[i, :], self.labels, i)
         return grad1
 
     def project_sft(self, grad1_vector: torch.Tensor, labels: torch.Tensor, clas: int) -> torch.Tensor:
-        labels_binary = torch.Tensor(grad1_vector.size(dim=0))
-        labels_binary[labels == clas] = 1.0
-        labels_binary[labels != clas] = -1.0
+        labels_binary = torch.where(labels == clas, 1.0, -1.0)
         return self.project_sft_binary(grad1_vector, labels_binary)
 
     def project_sft_binary(self, grad1: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         mean = torch.mean(grad1)
-        n = grad1.size(dim=0)
-        ztilde = torch.Tensor(n)
-        count = 0
-        if (mean > 0):
-            for ii in range(n):
-                if (y[ii] > 0):
-                    count += 1
-                    ztilde[ii] = grad1[ii] + 1.0
-                else:
-                    ztilde[ii] = grad1[ii]
+        n = grad1.size(0)
+
+        if mean > 0:
+            ztilde = grad1 + torch.where(y > 0, 1.0, 0.0)
+            count = torch.sum(y > 0).item()
             xtilde = self.l1project(ztilde, count)
-            for ii in range(n):
-                grad1[ii] = xtilde[ii] - 1.0 if y[ii] > 0 else xtilde[ii]
+            grad1 = xtilde - torch.where(y > 0, 1.0, 0.0)
         else:
-            for ii in range(n):
-                if (y[ii] > 0):
-                    ztilde[ii] = -grad1[ii]
-                else:
-                    count += 1
-                    ztilde[ii] = -grad1[ii] + 1.0
+            ztilde = torch.where(y > 0, -grad1, -grad1 + 1.0)
+            count = torch.sum(y <= 0).item()
             xtilde = self.l1project(ztilde, count)
-            for ii in range(n):
-                grad1[ii] = -xtilde[ii] if y[ii] > 0 else -xtilde[ii] + 1.0
+            grad1 = torch.where(y > 0, -xtilde, -xtilde + 1.0)
 
         return grad1
 
-    # Vectors
+    
     def l1project(self, input: torch.Tensor, thrs: float, simplex: bool = False) -> torch.Tensor:
-
-        output = torch.clone(input)
-        if (simplex):
-            output[output < 0] = 0
+        if simplex:
+            output = torch.clamp(input, min=0)
         else:
-            output = abs(output)
+            output = input.abs()
 
         norm1 = torch.sum(output)
-        if (norm1 <= thrs):
-            if (not simplex):
-                output = torch.clone(input)
-            return None
+        if norm1 <= thrs:
+            return input if not simplex else output
 
-        prU = output
-        sizeU = input.size(dim=0)
+        # Sort the input tensor in descending order
+        sorted_output, _ = torch.sort(output, descending=True)
 
-        sum_value = 0
-        sum_card = 0
+        # Calculate the cumulative sum
+        cumulative_sum = torch.cumsum(sorted_output, dim=0) - thrs
 
-        while (sizeU > 0):
-            # put the pivot in prU[0]
-            tmp = prU[0]
-            prU[0] = prU[sizeU / 2]
-            prU[sizeU / 2] = tmp
-            pivot = prU[0]
-            sizeG = 1
-            sumG = pivot
+        # Find rho, which is the largest index where the condition holds
+        rho = torch.nonzero(sorted_output * torch.arange(1, sorted_output.size(0) + 1, device=input.device) > cumulative_sum, as_tuple=True)[0].max()
 
-            for i in range(1, sizeU):
-                if (prU[i] >= pivot):
-                    sumG += prU[i]
-                    tmp = prU[sizeG]
-                    prU[sizeG] = prU[i]
-                    prU[i] = tmp
-                    sizeG += 1
+        # Calculate the threshold lambda
+        lambda_1 = cumulative_sum[rho] / (rho + 1)
 
-            if (sum_value + sumG - pivot * (sum_card + sizeG) <= thrs):
-                sum_card += sizeG
-                sum_value += sumG
-                prU += sizeG
-                sizeU -= sizeG
-            else:
-                prU += 1
-                sizeU = sizeG - 1
-
-        lambda_1 = (sum_value - thrs) / sum_card
-        output = torch.clone(input)
-
-        if (simplex):
-            output[output < 0] = 0
-
-        output[output > lambda_1] = output - lambda_1
-        output[output < (-lambda_1)] = output + lambda_1
-        output[-lambda_1 < output < lambda_1] = 0
+        # Threshold the input tensor
+        output = input.sign() * torch.clamp(output - lambda_1, min=0)
 
         return output

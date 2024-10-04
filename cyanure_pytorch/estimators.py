@@ -31,10 +31,10 @@ from cyanure_pytorch.erm.param.problem_param import ProblemParameters
 from cyanure_pytorch.erm.simple_erm import SimpleErm
 from cyanure_pytorch.erm.multi_erm import MultiErm
 
-from cyanure_pytorch.constants import DEVICE
+from cyanure_pytorch.constants import DEVICE, TENSOR_TYPE, ARRAY_TYPE
 
 torch.manual_seed(0)
-torch.set_default_dtype(torch.float32)
+torch.set_default_dtype(TENSOR_TYPE)
 torch.set_printoptions(precision=20)
 
 logger = setup_custom_logger("INFO")
@@ -86,8 +86,8 @@ class ERM(BaseEstimator, ABC):
         nclasses = 0
         p = X.shape[1] + 1 if self.fit_intercept else X.shape[1]
         if self._binary_problem:
-            initial_weight = np.zeros((p), dtype=X.dtype)
-            yf = np.squeeze(labels.astype(X.dtype))
+            initial_weight = np.zeros((p))
+            yf = np.squeeze(labels)
         else:
             if labels.squeeze().ndim > 1:
                 nclasses = labels.squeeze().shape[1]
@@ -98,25 +98,27 @@ class ERM(BaseEstimator, ABC):
                     yf = np.squeeze(np.intc(np.float64(labels)))
                 else:
                     yf = np.squeeze(np.int32(labels))
-            initial_weight = np.zeros(
-                [p, nclasses], dtype=X.dtype, order='F')
+            initial_weight = np.zeros([p, nclasses], order='F')
 
         initial_weight = self._warm_start(X, initial_weight, nclasses)
 
-        initial_weight = np.asfortranarray(initial_weight, X.dtype)
+        initial_weight = np.asfortranarray(initial_weight, ARRAY_TYPE)
 
         return initial_weight, yf, nclasses
 
-    def _multiclass_logistic(self, labels: torch.Tensor):
+    def _multiclass_logistic(self, labels: torch.Tensor) -> str:
         if self.loss == "logistic":
-            if (self.multi_class == "multinomial" or (self.multi_class == "auto" and not self._binary_problem)):
-                if self.multi_class == "multinomial":
-                    if len(np.unique(labels)) != 2:
-                        self._binary_problem = False
+            if (self.multi_class == "multinomial" or (self.multi_class == "auto" and not self._binary_problem )):
+                if len(np.unique(labels)) != 2:
+                    
+                    self._binary_problem = False
 
-                self.loss = "multiclass-logistic"
-                logger.info("Loss has been set to multiclass-logistic because "
-                            "the multiclass parameter is set to multinomial!")
+                    logger.info("Loss has been set to multiclass-logistic because "
+                                "the multiclass parameter is set to multinomial!")
+                    
+                    return "multiclass-logistic"
+                else:
+                    return self.loss
 
     def __init__(self, loss='square', penalty='l2', fit_intercept=False, dual=None, tol=1e-3,
                  solver="auto", random_state=0, max_iter=2000, fista_restart=60,
@@ -263,8 +265,6 @@ class ERM(BaseEstimator, ABC):
 
         """
         self.loss = loss
-        if loss == 'squared_hinge':
-            self.loss = 'sqhinge'
         self.penalty = penalty
         self.fit_intercept = fit_intercept
         self.dual = dual
@@ -319,7 +319,7 @@ class ERM(BaseEstimator, ABC):
         if scipy.sparse.issparse(X):
             training_data_fortran = X.T
         else:
-            training_data_fortran = np.asfortranarray(X.T)
+            training_data_fortran = np.asfortranarray(X.T, ARRAY_TYPE)
         w = initial_weight.copy()
         weight_torch = torch.tensor(w).to(DEVICE)
 
@@ -331,10 +331,16 @@ class ERM(BaseEstimator, ABC):
         loss = None
         self.le_ = le_parameter
 
-        self._multiclass_logistic(labels)
+        loss = self._multiclass_logistic(labels)
 
         if loss is None:
             loss = self.loss
+
+        if (loss == "multiclass-logistic" or loss == "logistic") and self.lambda_1 == np.inf:
+            self.lambda_1 = 0
+
+        self.duality_gap_interval = -1 if self.duality_gap_interval <= 0  else min(self.duality_gap_interval, self.max_iter)
+            
 
         model_parameter = ModelParameters(int(self.max_iter), float(self.tol), int(self.duality_gap_interval),
                                           500, 1, int(self.n_threads), int(self.limited_memory_qning),
@@ -345,14 +351,19 @@ class ERM(BaseEstimator, ABC):
 
         optim_info = torch.empty
 
+        if self.dual is not None:
+            dual_torch = torch.tensor(self.dual).to(DEVICE)
+        else:
+            dual_torch = None
+
         with torch.no_grad():
             if self._binary_problem:
                 erm = SimpleErm(initial_weight_torch, weight_torch, problem_parameter,
-                                model_parameter, optim_info, dual_variable=self.dual)
+                                model_parameter, optim_info, dual_variable=dual_torch)
                 self.optimization_info_, w = erm.solve_problem(training_data_gpu, labels_gpu)
             else:
                 erm = MultiErm(initial_weight_torch, weight_torch, problem_parameter,
-                               model_parameter, optim_info, dual_variable=self.dual)
+                               model_parameter, optim_info, dual_variable=dual_torch)
                 if len(yf.shape) == 1:
                     self.optimization_info_, w = erm.solve_problem_vector(training_data_gpu, labels_gpu)
                 else:
@@ -1198,33 +1209,13 @@ class Classifier(ClassifierAbstraction):
         return softmax(decision, copy=False)
 
 
-class LinearSVC(Classifier):
-    """A pre-configured class for square hinge loss."""
-
-    def __init__(self, loss='sqhinge', penalty='l2', fit_intercept=True,
-                 verbose=False, lambda_1=0.1, lambda_2=0, lambda_3=0,
-                 solver='auto', tol=1e-3, duality_gap_interval=10,
-                 max_iter=500, limited_memory_qning=20,
-                 fista_restart=50, warm_start=False, n_threads=-1, random_state=0, dual=None, safe=True):
-        if loss not in ['squared_hinge', 'sqhinge']:
-            logger.error("LinearSVC is only compatible with squared hinge loss at "
-                         "the moment")
-        super().__init__(
-            loss=loss, penalty=penalty, fit_intercept=fit_intercept,
-            solver=solver, tol=tol, random_state=random_state, verbose=verbose,
-            lambda_1=lambda_1, lambda_2=lambda_2, lambda_3=lambda_3,
-            duality_gap_interval=duality_gap_interval, max_iter=max_iter,
-            limited_memory_qning=limited_memory_qning,
-            fista_restart=fista_restart, warm_start=warm_start, n_threads=n_threads, dual=dual, safe=safe)
-
-
 class LogisticRegression(Classifier):
     """A pre-configured class for logistic regression loss."""
 
     _estimator_type = "classifier"
 
     def __init__(self, penalty='l2', loss='logistic', fit_intercept=True,
-                 verbose=False, lambda_1=0, lambda_2=0, lambda_3=0,
+                 verbose=False, lambda_1=np.inf, lambda_2=0, lambda_3=0,
                  solver='auto', tol=1e-3, duality_gap_interval=10,
                  max_iter=500, limited_memory_qning=20,
                  fista_restart=50, warm_start=False, n_threads=-1,
