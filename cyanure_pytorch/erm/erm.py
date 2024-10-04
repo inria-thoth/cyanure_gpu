@@ -40,11 +40,9 @@ class Estimator:
         n = loss.n()
         lambda_1 = regul.strong_convexity()
         if (n < 1000):
-            solver_type = "QNING_ISTA"
-        elif (lambda_1 < L / (100 * n)):
-            solver_type = "QNING_MISO"
+            solver_type = "QNING-ISTA"
         else:
-            solver_type = "CATALYST_MISO"
+            solver_type = "CATALYST-ISTA"
 
         return solver_type
 
@@ -62,9 +60,9 @@ class Estimator:
             solver_type = self.auto_mode(loss, regul)
         if solver_type == "ISTA":
             solver = ISTA_Solver(loss, regul, param, linesearch)
-        elif solver_type == "QNING_ISTA":
+        elif solver_type == "QNING-ISTA":
             solver = QNing(param, ISTA_Solver(loss, regul, param, linesearch))
-        elif solver_type == "CATALYST_ISTA":
+        elif solver_type == "CATALYST-ISTA":
             solver = Catalyst(param, ISTA_Solver(loss, regul, param, linesearch))
         elif solver_type == "FISTA":
             solver = FISTA_Solver(loss, regul, param)
