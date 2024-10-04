@@ -36,9 +36,7 @@ class Estimator:
 
     def auto_mode(self, loss: Loss, regul: Regularizer):
 
-        L = loss.lipschitz()
         n = loss.n()
-        lambda_1 = regul.strong_convexity()
         if (n < 1000):
             solver_type = "QNING-ISTA"
         else:
