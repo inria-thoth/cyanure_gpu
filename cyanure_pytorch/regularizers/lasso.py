@@ -22,7 +22,7 @@ class Lasso(Regularizer):
 
         output = input + 0.5 * (torch.abs(input - eta * self.lambda_1) - torch.abs(input + eta * self.lambda_1))
         if (self.intercept):
-            n = input.size(dim=1)
+            n = input.size(0)
             output[n - 1] = input[n - 1]
         return output
 
