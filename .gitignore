@@ -6,3 +6,4 @@ cyanure_pytorch.egg-info/*
 *.npy
 *.json
 build/*
+*.csv
