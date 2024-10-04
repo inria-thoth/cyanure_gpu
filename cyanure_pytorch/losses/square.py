@@ -45,7 +45,8 @@ class SquareLoss(LinearLossVec):
     def scal_grad(self, input: torch.Tensor, i: int) -> float:
         return self.pred(i, input, None) - self.labels[i]
 
-    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None, precompute: torch.Tensor = None) -> torch.Tensor:
+    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None, 
+                     precompute: torch.Tensor = None) -> torch.Tensor:
 
         if precompute is None:
             if matmul_result is not None:

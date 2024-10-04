@@ -70,7 +70,8 @@ class SquareLossMat(LinearLossMat):
 
         return 0.5 * torch.linalg.norm(input)**2 / num_class + torch.sum(torch.tensor([result_sum])) / num_class
 
-    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None, precompute: torch.Tensor = None) -> torch.Tensor:
+    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None, 
+                     precompute: torch.Tensor = None) -> torch.Tensor:
         if precompute is None:
             if matmul_result is not None:
                 grad1 = matmul_result

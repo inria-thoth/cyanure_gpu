@@ -120,7 +120,7 @@ class MultiClassLogisticLoss(LinearLossMat):
         col[ind] = -(torch.sum(torch.abs(col)))
         return col
 
-    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None, 
+    def get_grad_aux(self, input: torch.Tensor, matmul_result: torch.Tensor = None,
                      precompute: torch.Tensor = None) -> torch.Tensor:
 
         if precompute is None:
