@@ -110,21 +110,24 @@ class RegVecToMat(Regularizer):
         self.regularizer = type(regularizer)(parameter_tmp)
 
     def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:
-        weight, _ = self.get_wb(input)
+        weight, bias = self.get_wb(input)
         output = self.regularizer.prox(weight, eta)
+        if self.intercept:
+            output = torch.cat((output, torch.unsqueeze(bias, dim=1)), dim=1)
         return output
 
     def eval_tensor(self, input: torch.Tensor) -> float:
         weight, _ = self.get_wb(input)
-        return self.regularizer.eval_tensor(weight)
+        return self.regularizer.eval_tensor(torch.flatten(weight))
 
     def fenchel(self, grad1: torch.Tensor, grad2: torch.Tensor) -> float:
         weight, bias = self.get_wb(grad2)
         if self.intercept:
-            bias_nrm_squ = torch.linalg.norm(bias)**2
+            bias_nrm_squ = torch.dot(bias, bias)
             if bias_nrm_squ > 1e-7:
                 return float("inf"), grad1, grad2
-        return self.regularizer.fenchel(grad1, weight)
+        dual, grad1_flatten, weight_flatten = self.regularizer.fenchel(grad1.flatten(), weight.flatten())
+        return dual, grad1_flatten.view(grad1.size()), weight_flatten.view(weight.size())
 
     def print(self) -> None:
         self.regularizer.print()
@@ -146,7 +149,7 @@ class RegVecToMat(Regularizer):
         p = input.size(dim=1)
         if (self.intercept):
             weight = input[:, :p-1]
-            bias = input[:, p]
+            bias = input[:, p-1]
         else:
             weight = input[:, :p]
             bias = None
