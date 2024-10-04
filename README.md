@@ -3,13 +3,15 @@
 This project is a partial reimplementation of [Cyanure](https://github.com/inria-thoth/cyanure)
 
 
-This is version is an implementation using python as the programming language as pytorch for the linear algebra part.
+This  version is an implementation using python as the programming language and pytorch for the linear algebra part.
 
 To be able to fit as much data as possible on a GPU which as much less memory than the RAM a server can have, the computation use floating point 32 numbers compared to the Cyanure CPU implementation which is using 64 bits floating point numbers for numerical stability.
 
 The available solvers are ista and fista which can be used with catalyst or qning acceleration. 
 
 The regularizations available are l1 and l2. The losses are square and logistic for binary and multiclass problem.
+
+This version does not support sparse data.
 
 
 Installation from source
