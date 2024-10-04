@@ -33,6 +33,8 @@ class Solver:
         self.regul = regul
         self.elapsed_time = 0
         self.duality = self.loss.provides_fenchel() and self.regul.provides_fenchel()
+        self.deltas = list()
+        self.threshold = 1e-3
 
     def solve(self, initial_weight: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
 
@@ -56,26 +58,27 @@ class Solver:
             self.elapsed_time = time.time() - initial_time
         if (self.verbose):
             logger.info("This is the elapsed time: " + str(self.elapsed_time))
-        if (self.best_primal != float("Inf")):
+        if (self.best_primal != torch.tensor(float("inf"))):
             weight = torch.clone(self.best_weight)
 
         return weight, fprox
 
-    def get_optim_info(self) -> None:
+    def get_optim_info(self) -> torch.Tensor:
         count = 0
         for index in range(self.optim_info.size(dim=1)):
             if (self.optim_info[0, index] != 0):
                 count += 1
-
+        
         if (count > 0):
             optim = torch.Tensor(1, self.NUMBER_OPTIM_PROCESS_INFO, count)
         for index in range(count):
             for inner_index in range(self.NUMBER_OPTIM_PROCESS_INFO):
                 optim[0, inner_index, index] = self.optim_info[inner_index, index]
+
         if (count > 0):
             return optim
         else:
-            return self.optim_info
+            return torch.unsqueeze(self.optim_info, 0)
 
     def eval(self, x: torch.Tensor) -> None:
         self.test_stopping_criterion(x, 1)
@@ -129,8 +132,8 @@ class Solver:
             duality_gap = (self.best_primal - self.best_dual) / torch.abs(self.best_primal)
             stop = False
             if ((iteration / self.duality_gap_interval) >= 4):
-                if (self.optim_info[3, int(iteration / self.duality_gap_interval) - 4] == duality_gap):
-                    stop = True
+                if (all(abs(delta) < self.threshold for delta in self.deltas[-5:])):
+                    #stop = True
                     # TODO Add test to dtype
                     logger.warning("Your problem is prone to numerical instability. It would be safer to use double.")
             if (self.verbose):
@@ -143,6 +146,7 @@ class Solver:
                 logger.warning("Your problem is prone to numerical instability. It would be safer to use double.")
                 stop = True
             self.optim_info[:, ii] = optim
+            self.deltas.append(duality_gap)
             return stop
         else:
             self.previous_weight -= weight

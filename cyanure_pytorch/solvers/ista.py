@@ -1,3 +1,4 @@
+import weakref
 import torch
 
 from cyanure_pytorch.losses.loss import Loss
@@ -19,9 +20,8 @@ class ISTA_Solver(Solver):
 
     def __init__(self, loss: Loss, regul: Regularizer, param: ModelParameters, linesearch: bool, Li: torch.Tensor = None):
         super().__init__(loss, regul, param)
-
         self.L = 0
-        if (Li):
+        if Li is not None:
             self.Li = torch.clone(Li)
             self.L = torch.max(self.Li) / 100.0
 
@@ -36,6 +36,7 @@ class ISTA_Solver(Solver):
             self.L = torch.max(self.Li) / 100.0
 
     def solver_aux(self, weight: torch.Tensor, it: int) -> torch.Tensor:
+
         iter = 1
         if hasattr(self.loss, 'loss'):
             precompute = self.loss.loss.pre_compute(weight)
@@ -56,12 +57,12 @@ class ISTA_Solver(Solver):
 
         while (iter < self.max_iter_backtracking):
             tmp2 = weight.clone()
-            scaled_grad = grad / self.L
-            tmp2.sub_(scaled_grad)
+            # Perform in-place subtraction for better performance
+            tmp2 = tmp2 - grad / self.L
             tmp = self.regul.prox(tmp2, 1.0 / self.L)
-            tmp2 = tmp.clone()
-            tmp2.sub_(weight)
             fprox = self.loss.eval_tensor(tmp)
+            tmp2 = tmp.clone()
+            tmp2 = tmp2 - weight
             dot_product = torch.tensordot(grad, tmp2, dims=len(grad.shape))
             norm_squared = torch.pow(torch.norm(tmp2), 2)
             if ((self.linesearch and it > 1) or fprox <= fx + dot_product + 0.5 * self.L * norm_squared + EPSILON):
@@ -91,7 +92,7 @@ class ISTA_Solver(Solver):
 
 class FISTA_Solver(ISTA_Solver):
     def __init__(self, loss: Loss, regul: Regularizer, param: ModelParameters):
-        super().__init__(loss, regul, param)
+        super().__init__(loss, regul, param, linesearch=False)
 
     def solver_init(self, initial_weight: torch.Tensor) -> None:
         super().solver_init(initial_weight)
@@ -101,6 +102,7 @@ class FISTA_Solver(ISTA_Solver):
     def solver_aux(self, weight: torch.Tensor, it: int = -1) -> torch.Tensor:
         diff = torch.clone(weight)
         weight, _ = super().solver_aux(self.y, it)
+        self.y = weight
         diff = diff - weight
         old_t = self.t
         self.t = (1.0 + torch.sqrt(1 + 4 * self.t * self.t)) / 2

@@ -34,7 +34,6 @@ class Catalyst(Solver):
         self.dual_var = torch.clone(initial_dual)
 
     def solver_init(self, initial_weight: torch.Tensor) -> None:
-        self.solver.solver_init(initial_weight)
         self.kappa = self.solver.init_kappa_acceleration(initial_weight)
         self.mu = self.regul.strong_convexity()
         self.count = 0
@@ -48,7 +47,7 @@ class Catalyst(Solver):
 
             self.solver.Li = self.solver.Li + self.kappa
             self.loss_ppa = ProximalPointLoss(self.loss, initial_weight, self.kappa)
-            self.auxiliary_solver = type(self.solver)(self.loss_ppa, self.regul, param2, self.Li)
+            self.auxiliary_solver = type(self.solver)(self.loss_ppa, self.regul, param2, self.solver.linesearch, self.solver.Li)
             if (self.dual_var is not None):
                 self.auxiliary_solver.set_dual_variable(self.dual_var)
             self.y = torch.clone(initial_weight)
@@ -129,6 +128,7 @@ class QNing(Catalyst):
             self.line_search_steps = 0
 
     def solver_aux(self, weight: torch.Tensor, it: int = -1) -> torch.Tensor:
+        
         if (self.accelerated_solver):
             if (self.gk is None):
                 weight = self.get_gradient(weight)
