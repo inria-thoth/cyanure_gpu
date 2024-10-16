@@ -33,6 +33,8 @@ from cyanure_pytorch.erm.multi_erm import MultiErm
 
 from cyanure_pytorch.constants import DEVICE, TENSOR_TYPE, ARRAY_TYPE
 
+torch.backends.cudnn.benchmark = False
+np.random.seed(0)
 torch.manual_seed(0)
 torch.set_default_dtype(TENSOR_TYPE)
 torch.set_printoptions(precision=20)
@@ -136,11 +138,6 @@ class ERM(BaseEstimator, ABC):
                     :math:`L(y,z) = \\frac{1}{2} ( y-z)^2`
                 - 'logistic'
                     :math:`L(y,z) = \\log(1 + e^{-y z} )`
-                - 'sqhinge' or 'squared_hinge'
-                    :math:`L(y,z) = \\frac{1}{2} \\max( 0, 1- y z)^2`
-                - 'safe-logistic'
-                    :math:`L(y,z) = e^{ yz - 1 } - y z ~\\text{if}~ yz
-                    \\leq 1~~\\text{and}~~0` otherwise
                 - 'multiclass-logistic'
                     which is also called multinomial or softmax logistic:
                     .. math::`L(y, W^\\top x + b) = \\sum_{j=1}^k
@@ -157,15 +154,6 @@ class ERM(BaseEstimator, ABC):
                 :math:`psi(w) = \\frac{\\lambda_1}{2} ||w||_2^2`
             - 'l1'
                 :math:`psi(w) = \\lambda_1 ||w||_1`
-            - 'elasticnet'
-                :math:`psi(w) = \\lambda_1 ||w||_1 + \\frac{\\lambda_2}{2}||w||_2^2`
-            - 'fused-lasso'
-                :math:`psi(w) = \\lambda_3 \\sum_{i=2}^p |w[i]-w[i-1]| +
-                \\lambda_1||w||_1 + \\frac{\\lambda_2}{2}||w||_2^2`
-            - 'l1-ball'
-                encodes the constraint :math:`||w||_1 <= \\lambda`
-            - 'l2-ball'
-                encodes the constraint :math:`||w||_2 <= \\lambda`
 
             For multivariate problems, the previous penalties operate on each
             individual (e.g., class) predictor.
@@ -337,7 +325,12 @@ class ERM(BaseEstimator, ABC):
             loss = self.loss
 
         if (loss == "multiclass-logistic" or loss == "logistic") and self.lambda_1 == np.inf:
-            self.lambda_1 = 0
+            self.lambda_1 = 1 / training_data_fortran.shape[1]
+        elif (loss == "multiclass-logistic" or loss == "logistic")  and self.lambda_1 != 0:
+            self.lambda_1 = self.lambda_1 / training_data_fortran.shape[1]
+        elif (self.lambda_1 == np.inf):
+            self.lambda_1 = 1
+
 
         self.duality_gap_interval = -1 if self.duality_gap_interval <= 0 else min(self.duality_gap_interval, self.max_iter)
 
