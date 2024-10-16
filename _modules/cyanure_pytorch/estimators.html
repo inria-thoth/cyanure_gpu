@@ -113,6 +113,8 @@
 
 <span class="kn">from</span> <span class="nn">cyanure_pytorch.constants</span> <span class="kn">import</span> <span class="n">DEVICE</span><span class="p">,</span> <span class="n">TENSOR_TYPE</span><span class="p">,</span> <span class="n">ARRAY_TYPE</span>
 
+<span class="n">torch</span><span class="o">.</span><span class="n">backends</span><span class="o">.</span><span class="n">cudnn</span><span class="o">.</span><span class="n">benchmark</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">torch</span><span class="o">.</span><span class="n">set_default_dtype</span><span class="p">(</span><span class="n">TENSOR_TYPE</span><span class="p">)</span>
 <span class="n">torch</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
@@ -216,11 +218,6 @@
 <span class="sd">                    :math:`L(y,z) = \\frac{1}{2} ( y-z)^2`</span>
 <span class="sd">                - &#39;logistic&#39;</span>
 <span class="sd">                    :math:`L(y,z) = \\log(1 + e^{-y z} )`</span>
-<span class="sd">                - &#39;sqhinge&#39; or &#39;squared_hinge&#39;</span>
-<span class="sd">                    :math:`L(y,z) = \\frac{1}{2} \\max( 0, 1- y z)^2`</span>
-<span class="sd">                - &#39;safe-logistic&#39;</span>
-<span class="sd">                    :math:`L(y,z) = e^{ yz - 1 } - y z ~\\text{if}~ yz</span>
-<span class="sd">                    \\leq 1~~\\text{and}~~0` otherwise</span>
 <span class="sd">                - &#39;multiclass-logistic&#39;</span>
 <span class="sd">                    which is also called multinomial or softmax logistic:</span>
 <span class="sd">                    .. math::`L(y, W^\\top x + b) = \\sum_{j=1}^k</span>
@@ -237,15 +234,6 @@
 <span class="sd">                :math:`psi(w) = \\frac{\\lambda_1}{2} ||w||_2^2`</span>
 <span class="sd">            - &#39;l1&#39;</span>
 <span class="sd">                :math:`psi(w) = \\lambda_1 ||w||_1`</span>
-<span class="sd">            - &#39;elasticnet&#39;</span>
-<span class="sd">                :math:`psi(w) = \\lambda_1 ||w||_1 + \\frac{\\lambda_2}{2}||w||_2^2`</span>
-<span class="sd">            - &#39;fused-lasso&#39;</span>
-<span class="sd">                :math:`psi(w) = \\lambda_3 \\sum_{i=2}^p |w[i]-w[i-1]| +</span>
-<span class="sd">                \\lambda_1||w||_1 + \\frac{\\lambda_2}{2}||w||_2^2`</span>
-<span class="sd">            - &#39;l1-ball&#39;</span>
-<span class="sd">                encodes the constraint :math:`||w||_1 &lt;= \\lambda`</span>
-<span class="sd">            - &#39;l2-ball&#39;</span>
-<span class="sd">                encodes the constraint :math:`||w||_2 &lt;= \\lambda`</span>
 
 <span class="sd">            For multivariate problems, the previous penalties operate on each</span>
 <span class="sd">            individual (e.g., class) predictor.</span>
@@ -417,7 +405,12 @@
             <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss</span>
 
         <span class="k">if</span> <span class="p">(</span><span class="n">loss</span> <span class="o">==</span> <span class="s2">&quot;multiclass-logistic&quot;</span> <span class="ow">or</span> <span class="n">loss</span> <span class="o">==</span> <span class="s2">&quot;logistic&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_1</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lambda_1</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lambda_1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">training_data_fortran</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">loss</span> <span class="o">==</span> <span class="s2">&quot;multiclass-logistic&quot;</span> <span class="ow">or</span> <span class="n">loss</span> <span class="o">==</span> <span class="s2">&quot;logistic&quot;</span><span class="p">)</span>  <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_1</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lambda_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_1</span> <span class="o">/</span> <span class="n">training_data_fortran</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lambda_1</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lambda_1</span> <span class="o">=</span> <span class="mi">1</span>
+
 
         <span class="bp">self</span><span class="o">.</span><span class="n">duality_gap_interval</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duality_gap_interval</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">duality_gap_interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span><span class="p">)</span>
 
