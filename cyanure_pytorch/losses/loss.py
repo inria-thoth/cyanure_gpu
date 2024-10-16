@@ -241,7 +241,7 @@ class LinearLossVec(Loss):
                              a: float = 1.0, b: float = 1.0) -> torch.Tensor:
         if (self.intercept):
             m = self.input_data.size(dim=0)
-            output = torch.Tensor((m + 1)).to(DEVICE)
+            output = torch.zeros((m + 1)).to(DEVICE)
             weight = self.get_w(input2)
             output[:-1] = a * torch.matmul(self.input_data, input) + weight * b
             output[-1] = self.scale_intercept * a * input.sum() + b * output[-1]
@@ -258,7 +258,7 @@ class LinearLossVec(Loss):
         if input2 is None:
             input2 = torch.zeros((m))
         if (self.intercept):
-            output = torch.Tensor((m + 1))
+            output = torch.zeros((m + 1))
             weight = self.get_w(input)
             col = a * weight + b * col
             output[m] = a * self.scale_intercept + b * output[m]
