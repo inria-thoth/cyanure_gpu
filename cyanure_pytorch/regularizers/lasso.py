@@ -19,11 +19,15 @@ class Lasso(Regularizer):
         return x + 0.5*(torch.abs(x - self.lambda_1) - torch.abs(x + self.lambda_1))
 
     def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:
-
         output = input + 0.5 * (torch.abs(input - eta * self.lambda_1) - torch.abs(input + eta * self.lambda_1))
+        
         if (self.intercept):
-            n = input.size(0)
-            output[n - 1] = input[n - 1]
+            if len(output.shape) == 1:
+                n = input.size(dim=0)
+                output[n - 1] = input[n - 1]
+            else:
+                p = input.size(dim=1)
+                output[:, p - 1] = input[:, p-1]
         return output
 
     def eval_tensor(self, input: torch.Tensor) -> float:
@@ -49,18 +53,23 @@ class Lasso(Regularizer):
         p = input.size(dim=0)
         # TODO output probablement faux
         # TODO plante surement en 1D
-        output = torch.Tensor(input.size())
+        output = torch.zeros(input.size())
         # Calculate the soft thresholding operation for all elements of the input tensor
         soft_thresholded = input + 0.5 * (torch.abs(input - self.lambda_1) - torch.abs(input + self.lambda_1))
 
         # Create a mask to select elements along the first dimension based on indices
-        mask = torch.zeros_like(output)
+        mask = torch.zeros(output)
         mask[indices, torch.arange(output.size(1))] = 1
 
         # Apply the mask to select elements along the first dimension and update them with soft thresholded values
         output.masked_scatter_(mask.bool(), soft_thresholded)
         if (self.intercept):
-            output[p - 1] = input[p - 1]
+            if len(output.shape) == 1:
+                n = input.size(dim=0)
+                output[n - 1] = input[n - 1]
+            else:
+                p = input.size(dim=1)
+                output[:, p - 1] = input[:, p-1]
 
         return output
 

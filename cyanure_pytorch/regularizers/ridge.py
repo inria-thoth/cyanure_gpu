@@ -26,7 +26,6 @@ class Ridge(Regularizer):
             else:
                 p = input.size(dim=1)
                 output[:, p - 1] = input[:, p-1]
-
         return output
 
     def eval_tensor(self, input: torch.Tensor) -> float:
@@ -49,7 +48,7 @@ class Ridge(Regularizer):
 
     def lazy_prox(self, input: torch.Tensor, indices: torch.Tensor, eta: float) -> None:
         scal = 1.0 / (1.0 + self.lambda_1 * eta)
-        output = torch.Tensor(input.size())
+        output = torch.zeros(input.size())
         p = input.size(dim=0)
         r = indices.size(dim=0)
         for jj in range(r):
