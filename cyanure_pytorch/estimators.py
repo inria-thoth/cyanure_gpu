@@ -298,7 +298,7 @@ class ERM(BaseEstimator, ABC):
 
         if loss is None:
             loss = self.loss
-        
+
         lambda_1_ = self.lambda_1 / training_data_fortran.shape[1]
 
         self.duality_gap_interval = -1 if self.duality_gap_interval <= 0 else min(self.duality_gap_interval, self.max_iter)

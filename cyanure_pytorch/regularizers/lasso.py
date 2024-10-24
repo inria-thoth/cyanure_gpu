@@ -20,7 +20,7 @@ class Lasso(Regularizer):
 
     def prox(self, input: torch.Tensor, eta: float) -> torch.Tensor:
         output = input + 0.5 * (torch.abs(input - eta * self.lambda_1) - torch.abs(input + eta * self.lambda_1))
-        
+
         if (self.intercept):
             if len(output.shape) == 1:
                 n = input.size(dim=0)

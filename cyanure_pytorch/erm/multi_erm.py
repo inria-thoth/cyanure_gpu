@@ -141,7 +141,8 @@ class MultiErm(Estimator):
                     logger.info("Solver " + str(ii) + " has terminated after " + str(optim_info_col[0, 0, noptim].cpu().numpy())
                                 + " epochs in " + str(optim_info_col[0, 5, noptim].cpu().numpy()) + " seconds")
                     if (optim_info_col[0, 4, noptim] == 0):
-                        logger.info("   Primal objective: " + str(optim_info_col[0, 1, noptim].cpu().numpy()) + ", relative duality gap: "
+                        logger.info("   Primal objective: " + str(optim_info_col[0, 1, noptim].cpu().numpy()) 
+                                    + ", relative duality gap: "
                                     + str(optim_info_col[0, 3, noptim].cpu().numpy()))
                     else:
                         logger.info("   Primal objective: " + str(optim_info_col[0, 1, noptim].cpu().numpy())

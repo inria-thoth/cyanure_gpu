@@ -125,7 +125,7 @@ class Solver:
         optim[0] = iteration
         optim[1] = primal
         optim[5] = self.elapsed_time
-        if (self.duality):        
+        if (self.duality):
             dual = self.get_dual(weight)
             self.best_dual = torch.max(self.best_dual, dual)
             duality_gap = (self.best_primal - self.best_dual) / torch.abs(self.best_primal)

@@ -99,7 +99,7 @@ class LogisticLoss(LinearLossVec):
         return grad1
 
     def l1project(self, input: torch.Tensor, thrs: float, simplex: bool = False) -> torch.Tensor:
-        
+
         if simplex:
             output = torch.clamp(input, min=0)
         else:
