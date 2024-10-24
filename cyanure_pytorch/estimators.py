@@ -279,13 +279,10 @@ class ERM(BaseEstimator, ABC):
 
         initial_weight_torch = torch.tensor(initial_weight).to(DEVICE)
 
-        if scipy.sparse.issparse(X):
-            training_data_fortran = X.T
-        else:
-            training_data_fortran = np.asfortranarray(X.T, ARRAY_TYPE)
+        training_data_fortran = np.asfortranarray(X.T, ARRAY_TYPE)
         w = initial_weight.copy()
-        weight_torch = torch.tensor(w).to(DEVICE)
 
+        weight_torch = torch.tensor(w).to(DEVICE)
         training_data_fortran, yf = windows_conversion(training_data_fortran, yf)
 
         labels_gpu = torch.tensor(yf).to(DEVICE)
