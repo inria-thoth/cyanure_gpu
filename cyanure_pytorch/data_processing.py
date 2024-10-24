@@ -43,7 +43,7 @@ def preprocess(X, centering=False, normalize=True, columns=True):
 
     """
 
-    training_data_fortran = np.asfortranarray(X.T)
+    training_data_fortran = np.asfortranarray(X)
 
     if columns:
         if centering:
