@@ -60,7 +60,7 @@ class ERM(BaseEstimator, ABC):
             if self.verbose:
                 logger.info("Restarting with current coefficients")
             if self.fit_intercept:
-                initial_weight[-1, ] = self.intercept_
+                initial_weight[-1, ] = np.squeeze(self.intercept_)
                 initial_weight[0:-1, ] = np.squeeze(self.coef_)
             else:
                 initial_weight = np.squeeze(self.coef_)
@@ -161,24 +161,6 @@ class ERM(BaseEstimator, ABC):
             .. math::
                 \\psi(W) = \\sum_{j=1}^k \\psi(w_j).
 
-            In addition, multitask-group Lasso penalties are provided for
-            multivariate problems (w is then a matrix)
-
-            - 'l1l2', which is the multi-task group Lasso regularization
-                .. math::
-                    \\psi(W) = \\lambda \\sum_{j=1}^p \\|W^j\\|_2~~~~
-                    \\text{where}~W^j~\\text{is the j-th row of}~W.
-
-            - 'l1linf'
-                .. math::
-                    \\psi(W) = \\lambda \\sum_{j=1}^p \\|W^j\\|_\\infty.
-
-            - 'l1l2+l1', which is the multi-task group Lasso regularization + l1
-                .. math::
-                    \\psi(W) = \\sum_{j=1}^p \\lambda
-                    \\|W^j\\|_2 + \\lambda_2 \\|W^j\\|_1 ~~~~
-                    \\text{where}~W^j~\\text{is the j-th row of}~W.
-
         fit_intercept (boolean): default='False'
             Learns an unregularized intercept b  (or several intercepts for
             multivariate problems)
@@ -199,13 +181,6 @@ class ERM(BaseEstimator, ABC):
             - 'fista'
             - 'catalyst-ista'
             - 'qning-ista'  (proximal quasi-Newton method)
-            - 'svrg'
-            - 'catalyst-svrg' (accelerated SVRG with Catalyst)
-            - 'qning-svrg'  (quasi-Newton SVRG)
-            - 'acc-svrg'    (SVRG with direct acceleration)
-            - 'miso'
-            - 'catalyst-miso' (accelerated MISO with Catalyst)
-            - 'qning-miso'  (quasi-Newton MISO)
             - 'auto'
 
             see the Latex documentation for more details.
@@ -323,14 +298,8 @@ class ERM(BaseEstimator, ABC):
 
         if loss is None:
             loss = self.loss
-
-        if (loss == "multiclass-logistic" or loss == "logistic") and self.lambda_1 == np.inf:
-            self.lambda_1 = 1 / training_data_fortran.shape[1]
-        elif (loss == "multiclass-logistic" or loss == "logistic")  and self.lambda_1 != 0:
-            self.lambda_1 = self.lambda_1 / training_data_fortran.shape[1]
-        elif (self.lambda_1 == np.inf):
-            self.lambda_1 = 1
-
+        
+        lambda_1_ = self.lambda_1 / training_data_fortran.shape[1]
 
         self.duality_gap_interval = -1 if self.duality_gap_interval <= 0 else min(self.duality_gap_interval, self.max_iter)
 
@@ -338,7 +307,7 @@ class ERM(BaseEstimator, ABC):
                                           500, 1, int(self.n_threads), int(self.limited_memory_qning),
                                           int(self.fista_restart), bool(self.verbose), False, self.solver)
 
-        problem_parameter = ProblemParameters(float(self.lambda_1), float(self.lambda_2), float(self.lambda_3),
+        problem_parameter = ProblemParameters(float(lambda_1_), float(self.lambda_2), float(self.lambda_3),
                                               bool(self.fit_intercept), self.penalty, loss=loss)
 
         optim_info = torch.empty
@@ -1207,7 +1176,7 @@ class LogisticRegression(Classifier):
     _estimator_type = "classifier"
 
     def __init__(self, penalty='l2', loss='logistic', fit_intercept=True,
-                 verbose=False, lambda_1=np.inf, lambda_2=0, lambda_3=0,
+                 verbose=False, lambda_1=1.0, lambda_2=0, lambda_3=0,
                  solver='auto', tol=1e-3, duality_gap_interval=10,
                  max_iter=500, limited_memory_qning=20,
                  fista_restart=50, warm_start=False, n_threads=-1,
