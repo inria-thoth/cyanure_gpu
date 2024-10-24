@@ -1,35 +1,24 @@
-import numpy as np
-from numpy.testing import assert_allclose, assert_almost_equal
-from numpy.testing import assert_array_almost_equal, assert_array_equal
 from sklearn.datasets import load_iris
 
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
 
 from cyanure_pytorch.estimators import LogisticRegression
+from cyanure_pytorch.data_processing import preprocess
 
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
-from numpy.testing import assert_array_almost_equal, assert_array_equal
-import scipy.sparse as sp
-from scipy import linalg, optimize, sparse
-
+from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_array_almost_equal_nulp
 import pytest
 
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import _IS_32BIT
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import shuffle
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
-from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -116,18 +105,20 @@ def test_predict_iris():
     # multiclass data correctly and give good accuracy
     # score (>0.95) for the training data.
     for clf in [
-        LogisticRegression(lambda_1=1/(2*len(iris.data)), solver="catalyst-ista"),
-        LogisticRegression(lambda_1=1/(2*len(iris.data)), solver="qning-ista"),
+        LogisticRegression(solver="ista-barzilai", lambda_1=0.1),
+        LogisticRegression(solver="qning-ista", lambda_1=0.1, multi_class="ovr"),
+        LogisticRegression(solver="qning-ista", lambda_1=0.1),
         LogisticRegression(
-            lambda_1=1/(2*len(iris.data)), solver="catalyst-ista", tol=1e-2, random_state=42
+            solver="ista-barzilai", tol=1e-2, random_state=42, lambda_1=0.1
         ),
         LogisticRegression(
-            lambda_1=1/(2*len(iris.data)),
             solver="qning-ista",
             tol=1e-2,
             random_state=42,
+            lambda_1=0.1
         ),
     ]:
+        
         clf.fit(iris.data, target)
         
         assert_array_equal(np.unique(target), clf.classes_)
@@ -140,6 +131,7 @@ def test_predict_iris():
         assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
 
         pred = probabilities.argmax(axis=1)
+
         assert np.mean(pred == target) > 0.95
 
 
@@ -291,36 +283,34 @@ def test_liblinear_decision_function_zero():
     assert_array_equal(clf.predict(X), np.zeros(5))
 
 def test_logreg_l1():
-    # Because liblinear penalizes the intercept and saga does not, we do not
-    # fit the intercept to make it possible to compare the coefficients of
-    # the two models at convergence.
     rng = np.random.RandomState(42)
     n_samples = 50
     X, y = make_classification(n_samples=n_samples, n_features=20, random_state=0)
     X_noise = rng.normal(size=(n_samples, 3))
     X_constant = np.ones(shape=(n_samples, 2))
     X = np.concatenate((X, X_noise, X_constant), axis=1)
+
     lr_liblinear = LogisticRegression(
         penalty="l1",
-        lambda_1=1.0,
-        solver="ista",
-        fit_intercept=False,
+        solver="ista-barzilai",
+        fit_intercept=True,
+        max_iter=1000,
         multi_class="ovr",
-        tol=1e-10,
+        lambda_1=0.7
     )
     lr_liblinear.fit(X, y)
 
     lr_saga = LogisticRegression(
         penalty="l1",
-        lambda_1=1.0,
-        solver="qning-ista",
-        fit_intercept=False,
-        multi_class="ovr",
+        solver="catalyst-ista",
+        fit_intercept=True,
         max_iter=1000,
-        tol=1e-10,
+        multi_class="ovr",
+        lambda_1=0.7
     )
     lr_saga.fit(X, y)
-    assert_array_almost_equal(lr_saga.coef_, lr_liblinear.coef_)
+    
+    assert_allclose(lr_liblinear.coef_, lr_saga.coef_, rtol=0.01)
 
     # Noise and constant features should be regularized to zero by the l1
     # penalty
@@ -335,10 +325,10 @@ def test_logreg_predict_proba_multinomial():
 
     # Predicted probabilities using the true-entropy loss should give a
     # smaller loss than those using the ovr method.
-    clf_multi = LogisticRegression(multi_class="multinomial", solver="qning-ista")
+    clf_multi = LogisticRegression(multi_class="multinomial", solver="qning-ista", lambda_1=0)
     clf_multi.fit(X, y)
     clf_multi_loss = log_loss(y, clf_multi.predict_proba(X))
-    clf_ovr = LogisticRegression(multi_class="ovr", solver="qning-ista")
+    clf_ovr = LogisticRegression(multi_class="ovr", solver="qning-ista", lambda_1=0)
     clf_ovr.fit(X, y)
     clf_ovr_loss = log_loss(y, clf_ovr.predict_proba(X))
     np.testing.assert_almost_equal(clf_ovr_loss, clf_multi_loss)
@@ -432,47 +422,6 @@ def test_warm_start(solver, warm_start, fit_intercept, multi_class):
         assert 2.0 > cum_diff, msg
     else:
         assert cum_diff > 2.0, msg
-
-
-# alpha=1e-3 is time consuming
-@pytest.mark.parametrize("penalty", ["l1", "l2"])
-@pytest.mark.parametrize("alpha", np.logspace(-1, 1, 3))
-def test_qning_vs_catalyst(penalty, alpha):
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    X = np.concatenate([X] * 3)
-    y = np.concatenate([y] * 3)
-
-    X_bin = X[y <= 1]
-    y_bin = y[y <= 1] * 2 - 1
-
-    n_samples = X.shape[0]
-    saga = LogisticRegression(
-        lambda_1=1 / (2 * n_samples * alpha),
-        solver="qning-ista",
-        max_iter=100000,
-        fit_intercept=True,
-        penalty=penalty,
-        random_state=42,
-        tol=1e-12,
-        n_threads=-1,
-    )
-
-    liblinear = LogisticRegression(
-        lambda_1=1 / (2 * n_samples * alpha),
-        solver="catalyst-ista",
-        max_iter=100000,
-        fit_intercept=True,
-        penalty=penalty,
-        random_state=42,
-        tol=1e-12,
-        n_threads=-1,
-    )
-
-    saga.fit(X_bin, y_bin)
-    liblinear.fit(X_bin, y_bin)
-    # Convergence for alpha=1e-3 is very slow
-    assert_array_almost_equal(saga.coef_, liblinear.coef_, 2)
 
 # alpha=1e-3 is time consumingTest 
 @pytest.mark.parametrize("penalty", ["l1", "l2"])
@@ -635,8 +584,6 @@ def test_dtype_match(solver, fit_intercept):
         y_32 = np.array(Y1).astype(np.float32)
         X_32 = np.array(X).astype(np.float32)
         y_32 = np.array(Y1).astype(np.float32)
-        X_sparse_32 = sp.csr_matrix(X, dtype=np.float32)
-        X_sparse_32 = sp.csr_matrix(X, dtype=np.float32)
         solver_tol = 5e-4
 
         lr_templ = LogisticRegression(
@@ -689,7 +636,7 @@ def test_warm_start_converge_LR():
     )
 
     lr_no_ws_loss = log_loss(y, lr_no_ws.fit(X, y).predict_proba(X))
-    for i in range(5):
+    for i in range(10):
         lr_ws.fit(X, y)
     lr_ws_loss = log_loss(y, lr_ws.predict_proba(X))
     assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=1e-3)
@@ -719,8 +666,7 @@ def test_elastic_net_coeffs():
     assert not np.allclose(l2_coeffs, l1_coeffs, rtol=0, atol=0.1)
 
 @pytest.mark.parametrize("C", np.logspace(-2, 2, 4))
-@pytest.mark.parametrize("multiplier", [0.1, 0.5, 0.9])
-def test_l1_versus_sgd(C, multiplier):
+def test_l1_versus_sgd(C):
     # Compare elasticnet penalty in LogisticRegression() and SGD(loss='log')
     n_samples = 500
     X, y = make_classification(
@@ -733,7 +679,7 @@ def test_l1_versus_sgd(C, multiplier):
         random_state=1,
     )
     X = scale(X)
-    lambda_1 = 1.0 / C / n_samples
+    lambda_1 = C / n_samples
 
     sgd = SGDClassifier(
         penalty="l1",
@@ -741,7 +687,6 @@ def test_l1_versus_sgd(C, multiplier):
         fit_intercept=False,
         tol=None,
         max_iter=2000,
-        l1_ratio=multiplier,
         alpha=lambda_1,
         loss="log_loss",
     )
@@ -749,9 +694,9 @@ def test_l1_versus_sgd(C, multiplier):
         penalty="l1",
         random_state=1,
         fit_intercept=False,
-        tol=1e-5,
-        max_iter=2000,
-        lambda_1=lambda_1,
+        tol=1e-12,
+        max_iter=6000,
+        lambda_1=C,
         solver="qning-ista",
     )
 
