@@ -1,3 +1,4 @@
+import copy
 import torch
 
 from cyanure_pytorch.erm.erm import Estimator
@@ -110,7 +111,8 @@ class MultiErm(Estimator):
             self.optim_info = torch.zeros([n_class, NUMBER_OPTIM_PROCESS_INFO,
                                            int(max(self.model_parameters.max_iter / duality_gap_interval, 1))])
             parameter_tmp = self.problem_parameters
-            parameter_tmp.verbose = False
+            model_parameters_tmp = copy.copy(self.model_parameters)
+            model_parameters_tmp.verbose = False
             if parameter_tmp.loss == 'MULTICLASS-LOGISTIC':
                 parameter_tmp.loss = 'LOGISTIC'
             if (self.model_parameters.verbose):
@@ -127,7 +129,7 @@ class MultiErm(Estimator):
                 if (self.dual_variable is not None and self.dual_variable.size(dim=0) == n_class):
                     dualcol = self.dual_variable[ii]
                 problem_configuration = SimpleErm(initial_weight_col, weight_col, parameter_tmp,
-                                                  self.model_parameters, optim_info_col, dualcol)
+                                                  model_parameters_tmp, optim_info_col, dualcol)
                 optim_info_col, weight_col = problem_configuration.solve_problem(features, labels_col)
                 if (self.dual_variable is not None and self.dual_variable.size(dim=0) == n_class):
                     self.dual_variable[ii] = problem_configuration.dual_variable
@@ -136,14 +138,14 @@ class MultiErm(Estimator):
                 self.optim_info[ii, :, :optim_info_col.size(2)] = optim_info_col
                 if (self.model_parameters.verbose):
                     noptim = optim_info_col.size(dim=2) - 1
-                    logger.info("Solver " + ii + " has terminated after " + optim_info_col(0, 0, noptim)
-                                + " epochs in " + optim_info_col(0, 5, noptim) + " seconds")
+                    logger.info("Solver " + str(ii) + " has terminated after " + str(optim_info_col[0, 0, noptim].cpu().numpy())
+                                + " epochs in " + str(optim_info_col[0, 5, noptim].cpu().numpy()) + " seconds")
                     if (optim_info_col[0, 4, noptim] == 0):
-                        logger.info("   Primal objective: " + optim_info_col(0, 1, noptim) + ", relative duality gap: "
-                                    + optim_info_col(0, 3, noptim))
+                        logger.info("   Primal objective: " + str(optim_info_col[0, 1, noptim].cpu().numpy()) + ", relative duality gap: "
+                                    + str(optim_info_col[0, 3, noptim].cpu().numpy()))
                     else:
-                        logger.info("   Primal objective: " + optim_info_col(0, 1, noptim)
-                                    + ", tol: " + optim_info_col(0, 4, noptim))
+                        logger.info("   Primal objective: " + str(optim_info_col[0, 1, noptim].cpu().numpy())
+                                    + ", tol: " + str(optim_info_col[0, 4, noptim].cpu().numpy()))
 
             final_time = time.time()
             if (self.model_parameters.verbose):
