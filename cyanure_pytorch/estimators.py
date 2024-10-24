@@ -277,16 +277,16 @@ class ERM(BaseEstimator, ABC):
         # with profile(activities=[ProfilerActivity.CUDA], profile_memory=True,
         #               experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
 
-        initial_weight_torch = torch.tensor(initial_weight).to(DEVICE)
+        initial_weight_torch = torch.from_numpy(initial_weight).to(DEVICE)
 
         training_data_fortran = np.asfortranarray(X.T, ARRAY_TYPE)
         w = initial_weight.copy()
 
-        weight_torch = torch.tensor(w).to(DEVICE)
+        weight_torch = torch.from_numpy(w).to(DEVICE)
         training_data_fortran, yf = windows_conversion(training_data_fortran, yf)
 
-        labels_gpu = torch.tensor(yf).to(DEVICE)
-        training_data_gpu = torch.tensor(training_data_fortran).to(DEVICE)
+        labels_gpu = torch.from_numpy(yf).to(DEVICE)
+        training_data_gpu = torch.from_numpy(training_data_fortran).to(DEVICE)
 
         loss = None
         self.le_ = le_parameter
@@ -310,7 +310,7 @@ class ERM(BaseEstimator, ABC):
         optim_info = torch.empty
 
         if self.dual is not None:
-            dual_torch = torch.tensor(self.dual).to(DEVICE)
+            dual_torch = torch.from_numpy(self.dual).to(DEVICE)
         else:
             dual_torch = None
 
