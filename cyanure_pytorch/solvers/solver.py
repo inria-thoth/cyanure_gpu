@@ -70,7 +70,7 @@ class Solver:
                 count += 1
 
         if (count > 0):
-            optim = torch.Tensor(1, self.NUMBER_OPTIM_PROCESS_INFO, count)
+            optim = torch.zeros(1, self.NUMBER_OPTIM_PROCESS_INFO, count)
         for index in range(count):
             for inner_index in range(self.NUMBER_OPTIM_PROCESS_INFO):
                 optim[0, inner_index, index] = self.optim_info[inner_index, index]
@@ -100,7 +100,6 @@ class Solver:
         if (not self.regul.provides_fenchel() or not self.loss.provides_fenchel()):
             logger.error("Error: no duality gap available")
             return -float("Inf")
-
         grad1, grad2 = self.loss.get_dual_variable(weight)
         dual, grad1, grad2 = self.regul.fenchel(grad1, grad2)
         loss_fenchel = self.loss.fenchel(grad1)
@@ -126,14 +125,14 @@ class Solver:
         optim[0] = iteration
         optim[1] = primal
         optim[5] = self.elapsed_time
-        if (self.duality):
+        if (self.duality):        
             dual = self.get_dual(weight)
             self.best_dual = torch.max(self.best_dual, dual)
             duality_gap = (self.best_primal - self.best_dual) / torch.abs(self.best_primal)
             stop = False
             if ((iteration / self.duality_gap_interval) >= 4):
                 if (all(abs(delta) < self.threshold for delta in self.deltas[-5:])):
-                    # stop = True
+                    stop = True
                     # TODO Add test to dtype
                     logger.warning("Your problem is prone to numerical instability. It would be safer to use double.")
             if (self.verbose):
