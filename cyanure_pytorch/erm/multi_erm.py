@@ -91,10 +91,10 @@ class MultiErm(Estimator):
         self.verify_input(features)
         loss_string = self.problem_parameters.loss.upper()
         regul_string = self.problem_parameters.regul.upper()
+
+        if (self.model_parameters.verbose):
+            logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
         if (super().is_regul_for_matrices(regul_string) or super().is_loss_for_matrices(loss_string)):
-            if (self.model_parameters.verbose):
-                logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
-                pass
 
             loss = self.get_loss_matrix(features, labels)
 
@@ -115,9 +115,6 @@ class MultiErm(Estimator):
             model_parameters_tmp.verbose = False
             if parameter_tmp.loss == 'MULTICLASS-LOGISTIC':
                 parameter_tmp.loss = 'LOGISTIC'
-            if (self.model_parameters.verbose):
-                logger.info("Matrix X, n=" + str(features.size(dim=1)) + ", p=" + str(features.size(dim=0)))
-                pass
             initial_time = time.time()
             for ii in range(n_class):
                 optim_info_col = torch.zeros([1, NUMBER_OPTIM_PROCESS_INFO,
@@ -141,7 +138,7 @@ class MultiErm(Estimator):
                     logger.info("Solver " + str(ii) + " has terminated after " + str(optim_info_col[0, 0, noptim].cpu().numpy())
                                 + " epochs in " + str(optim_info_col[0, 5, noptim].cpu().numpy()) + " seconds")
                     if (optim_info_col[0, 4, noptim] == 0):
-                        logger.info("   Primal objective: " + str(optim_info_col[0, 1, noptim].cpu().numpy()) 
+                        logger.info("   Primal objective: " + str(optim_info_col[0, 1, noptim].cpu().numpy())
                                     + ", relative duality gap: "
                                     + str(optim_info_col[0, 3, noptim].cpu().numpy()))
                     else:
