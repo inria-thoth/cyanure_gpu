@@ -52,7 +52,7 @@ class Estimator:
         else:
             linesearch = False
 
-        solver_type = solver_type.replace('_BARZILAI', '')
+        solver_type = solver_type.replace('-BARZILAI', '')
 
         if (solver_type == "AUTO"):
             solver_type = self.auto_mode(loss, regul)
