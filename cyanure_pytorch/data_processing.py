@@ -63,7 +63,6 @@ def preprocess(X, centering=False, normalize=True, columns=True):
 
 def sklearn_catch_warnings(y, check_y_kwargs):
     with warnings.catch_warnings():
-        warnings.simplefilter("error", np.VisibleDeprecationWarning)
         if not issparse(y):
             try:
                 y = check_array(y, dtype=None, **check_y_kwargs)
