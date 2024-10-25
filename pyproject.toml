@@ -2,7 +2,7 @@
 requires = [
     "setuptools==58.0.4",
     "wheel==0.37.0",
-    "numpy==1.26.0=4",
+    "numpy==1.26.4",
     "scikit-learn",
     "torch<2.3.0"
 ]
