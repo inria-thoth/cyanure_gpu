@@ -279,7 +279,10 @@ class ERM(BaseEstimator, ABC):
 
         initial_weight_torch = torch.from_numpy(initial_weight).to(DEVICE)
 
-        training_data_fortran = np.asfortranarray(X.T, ARRAY_TYPE)
+        if scipy.sparse.issparse(X):
+            raise TypeError("Sparse data are not supported")
+        else:
+            training_data_fortran = np.asfortranarray(X.T, ARRAY_TYPE)
         w = initial_weight.copy()
 
         weight_torch = torch.from_numpy(w).to(DEVICE)
