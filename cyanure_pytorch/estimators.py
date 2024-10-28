@@ -121,6 +121,13 @@ class ERM(BaseEstimator, ABC):
                     return "multiclass-logistic"
                 else:
                     return self.loss
+                
+    def _check_max_iter(self):
+        for index in range(self.n_iter_.shape[0]):
+            if self.n_iter_[index] == self.max_iter:
+                warnings.warn(
+                    "The max_iter was reached which means the coef_ did not converge",
+                    ConvergenceWarning)
 
     def __init__(self, loss='square', penalty='l2', fit_intercept=False, dual=None, tol=1e-3,
                  solver="auto", random_state=0, max_iter=2000, fista_restart=60,
@@ -273,21 +280,16 @@ class ERM(BaseEstimator, ABC):
         labels = np.squeeze(labels)
         initial_weight, yf, nclasses = self._initialize_weight(X, labels)
 
-        # TODO Remove when done
-        # with profile(activities=[ProfilerActivity.CUDA], profile_memory=True,
-        #               experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True)) as prof:
-
         initial_weight_torch = torch.from_numpy(initial_weight).to(DEVICE)
 
         if scipy.sparse.issparse(X):
             raise TypeError("Sparse data are not supported")
         else:
             training_data_fortran = np.asfortranarray(X.T, ARRAY_TYPE)
-        w = initial_weight.copy()
 
-        weight_torch = torch.from_numpy(w).to(DEVICE)
+        weight_torch = torch.copy(initial_weight_torch)
+
         training_data_fortran, yf = windows_conversion(training_data_fortran, yf)
-
         labels_gpu = torch.from_numpy(yf).to(DEVICE)
         training_data_gpu = torch.from_numpy(training_data_fortran).to(DEVICE)
 
@@ -330,12 +332,6 @@ class ERM(BaseEstimator, ABC):
                 else:
                     self.optimization_info_, w = erm.solve_problem_matrix(training_data_gpu, labels_gpu)
 
-        # print(prof.key_averages().table(sort_by="cuda_memory_usage", row_limit=10))
-        # prof.export_memory_timeline(f"memory_profiler.html", device="cuda:0")
-        # prof.export_chrome_trace("trace_gpu_multi.json")
-        # prof.export_stacks("profiler_stacks_gpu.txt", "self_cuda_time_total")
-        # prof.export_stacks("profiler_stacks_cpu.txt", "self_cpu_time_total")
-
         if ("cuda" in DEVICE.type):
             w = w.cpu().numpy()
         else:
@@ -350,11 +346,7 @@ class ERM(BaseEstimator, ABC):
         self.n_iter_ = np.array([self.optimization_info_[class_index][0][-1]
                                 for class_index in range(self.optimization_info_.shape[0])])
 
-        for index in range(self.n_iter_.shape[0]):
-            if self.n_iter_[index] == self.max_iter:
-                warnings.warn(
-                    "The max_iter was reached which means the coef_ did not converge",
-                    ConvergenceWarning)
+        self._check_max_iter()
 
         if self.fit_intercept:
             self.intercept_ = w[-1, ]
