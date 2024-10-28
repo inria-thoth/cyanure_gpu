@@ -759,13 +759,13 @@ def test_penalty_none(solver):
     X, y = make_classification(n_samples=1000, random_state=0)
 
     msg = "Setting penalty='none' will ignore the lambda_1"
-    lr = LogisticRegression(penalty="none", solver=solver, lambda_1=4, verbose=True)
+    lr = LogisticRegression(penalty="none", solver=solver, lambda_1=4)
     with pytest.warns(UserWarning, match=msg):
         lr.fit(X, y)
 
-    lr_none = LogisticRegression(penalty="none", solver=solver, random_state=0, verbose=True)
+    lr_none = LogisticRegression(penalty="none", solver=solver, random_state=0, max_iter=1000)
     lr_l2_C_inf = LogisticRegression(
-        penalty="l2", lambda_1=1/np.inf, solver=solver, random_state=0
+        penalty="l2", lambda_1=1/np.inf, solver=solver, random_state=0, max_iter=1000
     )
     pred_none = lr_none.fit(X, y).predict(X)
     pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
