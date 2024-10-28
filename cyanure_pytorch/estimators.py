@@ -121,7 +121,7 @@ class ERM(BaseEstimator, ABC):
                     return "multiclass-logistic"
                 else:
                     return self.loss
-                
+
     def _check_max_iter(self):
         for index in range(self.n_iter_.shape[0]):
             if self.n_iter_[index] == self.max_iter:
