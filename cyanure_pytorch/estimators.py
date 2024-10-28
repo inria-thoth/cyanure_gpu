@@ -287,7 +287,7 @@ class ERM(BaseEstimator, ABC):
         else:
             training_data_fortran = np.asfortranarray(X.T, ARRAY_TYPE)
 
-        weight_torch = torch.copy(initial_weight_torch)
+        weight_torch = torch.clone(initial_weight_torch)
 
         training_data_fortran, yf = windows_conversion(training_data_fortran, yf)
         labels_gpu = torch.from_numpy(yf).to(DEVICE)
