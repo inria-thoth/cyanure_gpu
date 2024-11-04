@@ -1,16 +1,9 @@
-import platform
-import struct
-
-import contextlib
 import os
-import sys
 
 # Override sdist to always produce .zip archive
 from distutils.command.sdist import sdist as _sdist
 
-from setuptools import setup, Extension, find_packages
-from torch.utils import cpp_extension
-import numpy
+from setuptools import setup, find_packages
 
 class sdistzip(_sdist):
     def initialize_options(self):
