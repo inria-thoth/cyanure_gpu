@@ -260,7 +260,7 @@ class ERM(BaseEstimator, ABC):
 
         Parameters
         ----------
-            X (numpy array or scipy sparse CSR matrix):
+            X (numpy array):
                 input n X p numpy matrix; the samples are on the rows
 
             y (numpy array):
@@ -481,38 +481,6 @@ class ERM(BaseEstimator, ABC):
             self.coef_ = self.coef_.toarray()
         return self
 
-    def sparsify(self):
-        """
-        Convert coefficient matrix to sparse format.
-
-        Converts the ``coef_`` member to a scipy.sparse matrix, which for
-        L1-regularized models can be much more memory- and storage-efficient
-        than the usual numpy.ndarray representation.
-        The ``intercept_`` member is not converted.
-
-        Returns
-        -------
-        self (ERM):
-            Fitted estimator converted to parse estimator.
-
-        Notes
-        -----
-        For non-sparse models, i.e. when there are not many zeros in ``coef_``,
-        this may actually *increase* memory usage, so use this method with
-        care. A rule of thumb is that the number of zero elements, which can
-        be computed with ``(coef_ == 0).sum()``, must be more than 50% for this
-        to provide significant benefits.
-        After calling this method, further fitting with the partial_fit
-        method (if any) will not work until you call densify.
-
-        """
-        msg = "Estimator, %(name)s, must be fitted before sparsifying."
-        check_is_fitted(self, msg=msg)
-        self.coef_ = scipy.sparse.csr_matrix(self.coef_)
-        if self.coef_.shape[0] == 1:
-            self.coef_ = self.coef_.T
-        return self
-
 
 class ClassifierAbstraction(ERM):
     """A class to define abstract methods for classifiers."""
@@ -524,7 +492,7 @@ class ClassifierAbstraction(ERM):
 
         Parameters
         ----------
-            X (numpy array or scipy sparse CSR matrix):
+            X (numpy array):
                 Data matrix for which we want probabilities
 
         Returns
@@ -570,38 +538,12 @@ class Regression(ERM):
                 :math:`psi(w) = \frac{\lambda_1}{2} ||w||_2^2`
             - 'l1
                 :math:`psi(w) = \lambda_1 ||w||_1`
-            - 'elasticnet'
-                :math:`psi(w) = \lambda_1 ||w||_1 + \frac{\lambda_2}{2}||w||_2^2`
-            - 'fused-lasso'
-                :math:`psi(w) = \lambda_3 \sum_{i=2}^p |w[i]-w[i-1]|
-                + \lambda_1||w||_1 + \frac{\lambda_2}{2}||w||_2^2`
-            - 'l1-ball'
-                encodes the constraint :math:`||w||_1 <= \lambda`
-            - 'l2-ball'
-                encodes the constraint :math:`||w||_2 <= \lambda`
 
             For multivariate problems, the previous penalties operate on each
             individual (e.g., class) predictor.
 
             .. math::
                 \psi(W) = \sum_{j=1}^k \psi(w_j).
-
-            In addition, multitask-group Lasso penalties are provided for
-            multivariate problems (w is then a matrix)
-
-            - 'l1l2', which is the multi-task group Lasso regularization
-                .. math::
-                    \psi(W) = \lambda \sum_{j=1}^p \|W^j\|_2~~~~
-                    \text{where}~W^j~\text{is the j-th row of}~W.
-
-            - 'l1linf'
-                .. math::
-                    \psi(W) = \lambda \sum_{j=1}^p \|W^j\|_\infty.
-
-            - 'l1l2+l1', which is the multi-task group Lasso regularization + l1
-                .. math::
-                    \psi(W) = \sum_{j=1}^p \lambda \|W^j\|_2 + \lambda_2 \|W^j\|_1 ~~~~
-                    \text{where}~W^j~\text{is the j-th row of}~W.
 
         fit_intercept (boolean): default='False'
             Learns an unregularized intercept b  (or several intercepts for
@@ -700,7 +642,7 @@ class Regression(ERM):
 
         Parameters
         ----------
-            X (numpy array or scipy sparse CSR matrix):
+            X (numpy array):
                 input n X p numpy matrix; the samples are on the rows
 
             y (numpy array):
@@ -730,7 +672,7 @@ class Regression(ERM):
 
         Parameters
         ----------
-            X (numpy array or scipy sparse CSR matrix):
+            X (numpy array):
                 Input matrix for the prediction
 
         Returns
@@ -743,7 +685,7 @@ class Regression(ERM):
         if self.safe:
             X = check_input_inference(X, self)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self._validate_data(X, reset=False)
 
         pred = safe_sparse_dot(X, self.coef_, dense_output=False)
 
@@ -767,7 +709,7 @@ class Regression(ERM):
 
         Parameters
         ----------
-            X (numpy array or scipy sparse CSR matrix):
+            X (numpy array):
                 Test samples.
             y (numpy.array):
                 True labels for X.
@@ -823,11 +765,6 @@ class Classifier(ClassifierAbstraction):
                 :math:`L(y,z) = \frac{1}{2} ( y-z)^2`
             - 'logistic'
                 :math:`L(y,z) = \log(1 + e^{-y z} )`
-            - 'sqhinge' or 'squared_hinge'
-                :math:`L(y,z) = \frac{1}{2} \max( 0, 1- y z)^2`
-            - 'safe-logistic'
-                :math:`L(y,z) = e^{ yz - 1 } - y z
-                ~\text{if}~ yz \leq 1~~\text{and}~~0` otherwise
             - 'multiclass-logistic'
                 which is also called multinomial or softmax logistic:
                 :math:`L(y, W^\top x + b) = \sum_{j=1}^k
@@ -844,38 +781,12 @@ class Classifier(ClassifierAbstraction):
             :math:`psi(w) = \frac{\lambda_1}{2} ||w||_2^2`
         - 'l1'
             :math:`psi(w) = \lambda_1 ||w||_1`
-        - 'elasticnet'
-            :math:`psi(w) = \lambda_1 ||w||_1 + \frac{\lambda_2}{2}||w||_2^2`
-        - 'fused-lasso'
-            :math:`psi(w) = \lambda_3 \sum_{i=2}^p |w[i]-w[i-1]| +
-            \lambda_1||w||_1 + \frac{\lambda_2}{2}||w||_2^2`
-        - 'l1-ball'
-            encodes the constraint :math:`||w||_1 <= \lambda`
-        - 'l2-ball'
-            encodes the constraint :math:`||w||_2 <= \lambda`
 
         For multivariate problems, the previous penalties operate on each
         individual (e.g., class) predictor.
 
         .. math::
             \psi(W) = \sum_{j=1}^k \psi(w_j).
-
-        In addition, multitask-group Lasso penalties are provided for
-        multivariate problems (w is then a matrix)
-
-        - 'l1l2', which is the multi-task group Lasso regularization
-            .. math::
-                \psi(W) = \lambda \sum_{j=1}^p \|W^j\|_2~~~~
-                \text{where}~W^j~\text{is the j-th row of}~W.
-
-        - 'l1linf'
-            .. math::
-                \psi(W) = \lambda \sum_{j=1}^p \|W^j\|_\infty.
-
-        - 'l1l2+l1', which is the multi-task group Lasso regularization + l1
-            .. math::
-                \psi(W) = \sum_{j=1}^p \lambda \|W^j\|_2 + \lambda_2 \|W^j\|_1 ~~~~
-                \text{where}~W^j~\text{is the j-th row of}~W.
 
     fit_intercept (boolean): default='False'
         Learns an unregularized intercept b  (or several intercepts for
@@ -894,16 +805,10 @@ class Classifier(ClassifierAbstraction):
         Optimization solver. Possible choices are
 
         - 'ista'
+        - 'ista-barzilai'
         - 'fista'
         - 'catalyst-ista'
         - 'qning-ista'  (proximal quasi-Newton method)
-        - 'svrg'
-        - 'catalyst-svrg' (accelerated SVRG with Catalyst)
-        - 'qning-svrg'  (quasi-Newton SVRG)
-        - 'acc-svrg'    (SVRG with direct acceleration)
-        - 'miso'
-        - 'catalyst-miso' (accelerated MISO with Catalyst)
-        - 'qning-miso'  (quasi-Newton MISO)
         - 'auto'
 
         see the Latex documentation for more details.
@@ -973,7 +878,7 @@ class Classifier(ClassifierAbstraction):
 
         Parameters
         ----------
-        X (numpy array, or scipy sparse CSR matrix):
+        X (numpy array):
             input n x p numpy matrix; the samples are on the rows
 
         y (numpy.array):
@@ -1043,7 +948,7 @@ class Classifier(ClassifierAbstraction):
 
         Parameters
         ----------
-            X (numpy array or scipy sparse CSR matrix):
+            X (numpy array):
                 Input matrix for the prediction
 
         Returns
@@ -1080,7 +985,7 @@ class Classifier(ClassifierAbstraction):
 
         Parameters
         ----------
-            X (numpy array or scipy sparse CSR matrix):
+            X (numpy array):
                 Test samples.
             y (numpy.array):
                 True labels for X.
@@ -1106,7 +1011,7 @@ class Classifier(ClassifierAbstraction):
 
         Parameters
         ----------
-            X (numpy array or scipy sparse CSR matrix):
+            X (numpy array):
                 The data for which we want scores
 
         Returns
@@ -1141,7 +1046,7 @@ class Classifier(ClassifierAbstraction):
 
         Parameters
         ----------
-            X (numpy array or scipy sparse CSR matrix):
+            X (numpy array):
                 Data matrix for which we want probabilities
 
         Returns
@@ -1194,7 +1099,7 @@ def compute_r(estimator_name, aux, X, labels, active_set, fit_intercept):
         aux (ERM):
             Auxiliary estimator
 
-        X (numpy array or scipy sparse CSR matrix):
+        X (numpy array):
             Features matrix
 
         labels (numpy.array):
@@ -1240,7 +1145,7 @@ def fit_large_feature_number(estimator, aux, X, labels):
         aux (ERM):
             Auxiliary estimator
 
-        X (numpy array or scipy sparse CSR matrix):
+        X (numpy array):
             Features matrix
 
         labels (numpy.array):
@@ -1332,7 +1237,7 @@ class Lasso(Regression):
 
         Parameters
         ----------
-            X (numpy array or scipy sparse CSR matrix):
+            X (numpy array):
                 input n X p numpy matrix; the samples are on the rows
 
             y (numpy array):
@@ -1374,7 +1279,7 @@ class Lasso(Regression):
 
         Parameters
         ----------
-            X (numpy array or scipy sparse CSR matrix):
+            X (numpy array):
                 input n X p numpy matrix; the samples are on the rows
 
             y (numpy array):
@@ -1435,7 +1340,7 @@ class L1Logistic(Classifier):
 
         Parameters
         ----------
-        X (numpy array, or scipy sparse CSR matrix):
+        X (numpy array):
             input n x p numpy matrix; the samples are on the rows
 
         y (numpy.array):
@@ -1479,7 +1384,7 @@ class L1Logistic(Classifier):
 
         Parameters
         ----------
-        X (numpy array, or scipy sparse CSR matrix):
+        X (numpy array):
             input n x p numpy matrix; the samples are on the rows
 
         y (numpy.array):
