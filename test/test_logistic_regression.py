@@ -763,9 +763,9 @@ def test_penalty_none(solver):
     with pytest.warns(UserWarning, match=msg):
         lr.fit(X, y)
 
-    lr_none = LogisticRegression(penalty="none", solver=solver, random_state=0, max_iter=2000, tol=10e-15)
+    lr_none = LogisticRegression(penalty="none", solver=solver, random_state=0, tol=10e-15)
     lr_l2_C_inf = LogisticRegression(
-        penalty="l2", lambda_1=1/np.inf, solver=solver, random_state=0, max_iter=2000, tol=10e-15
+        penalty="l2", lambda_1=1/np.inf, solver=solver, random_state=0, tol=10e-15
     )
     pred_none = lr_none.fit(X, y).predict(X)
     pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
