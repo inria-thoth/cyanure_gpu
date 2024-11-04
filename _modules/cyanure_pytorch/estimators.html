@@ -340,7 +340,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">            X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">            X (numpy array):</span>
 <span class="sd">                input n X p numpy matrix; the samples are on the rows</span>
 
 <span class="sd">            y (numpy array):</span>
@@ -561,38 +561,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">coef_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coef_</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span> <span class="nf">sparsify</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Convert coefficient matrix to sparse format.</span>
-
-<span class="sd">        Converts the ``coef_`` member to a scipy.sparse matrix, which for</span>
-<span class="sd">        L1-regularized models can be much more memory- and storage-efficient</span>
-<span class="sd">        than the usual numpy.ndarray representation.</span>
-<span class="sd">        The ``intercept_`` member is not converted.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        self (ERM):</span>
-<span class="sd">            Fitted estimator converted to parse estimator.</span>
-
-<span class="sd">        Notes</span>
-<span class="sd">        -----</span>
-<span class="sd">        For non-sparse models, i.e. when there are not many zeros in ``coef_``,</span>
-<span class="sd">        this may actually *increase* memory usage, so use this method with</span>
-<span class="sd">        care. A rule of thumb is that the number of zero elements, which can</span>
-<span class="sd">        be computed with ``(coef_ == 0).sum()``, must be more than 50% for this</span>
-<span class="sd">        to provide significant benefits.</span>
-<span class="sd">        After calling this method, further fitting with the partial_fit</span>
-<span class="sd">        method (if any) will not work until you call densify.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Estimator, </span><span class="si">%(name)s</span><span class="s2">, must be fitted before sparsifying.&quot;</span>
-        <span class="n">check_is_fitted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coef_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">coef_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coef_</span><span class="o">.</span><span class="n">T</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
 
 <span class="k">class</span> <span class="nc">ClassifierAbstraction</span><span class="p">(</span><span class="n">ERM</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A class to define abstract methods for classifiers.&quot;&quot;&quot;</span>
@@ -604,7 +572,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">            X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">            X (numpy array):</span>
 <span class="sd">                Data matrix for which we want probabilities</span>
 
 <span class="sd">        Returns</span>
@@ -650,38 +618,12 @@
 <span class="sd">                :math:`psi(w) = \frac{\lambda_1}{2} ||w||_2^2`</span>
 <span class="sd">            - &#39;l1</span>
 <span class="sd">                :math:`psi(w) = \lambda_1 ||w||_1`</span>
-<span class="sd">            - &#39;elasticnet&#39;</span>
-<span class="sd">                :math:`psi(w) = \lambda_1 ||w||_1 + \frac{\lambda_2}{2}||w||_2^2`</span>
-<span class="sd">            - &#39;fused-lasso&#39;</span>
-<span class="sd">                :math:`psi(w) = \lambda_3 \sum_{i=2}^p |w[i]-w[i-1]|</span>
-<span class="sd">                + \lambda_1||w||_1 + \frac{\lambda_2}{2}||w||_2^2`</span>
-<span class="sd">            - &#39;l1-ball&#39;</span>
-<span class="sd">                encodes the constraint :math:`||w||_1 &lt;= \lambda`</span>
-<span class="sd">            - &#39;l2-ball&#39;</span>
-<span class="sd">                encodes the constraint :math:`||w||_2 &lt;= \lambda`</span>
 
 <span class="sd">            For multivariate problems, the previous penalties operate on each</span>
 <span class="sd">            individual (e.g., class) predictor.</span>
 
 <span class="sd">            .. math::</span>
 <span class="sd">                \psi(W) = \sum_{j=1}^k \psi(w_j).</span>
-
-<span class="sd">            In addition, multitask-group Lasso penalties are provided for</span>
-<span class="sd">            multivariate problems (w is then a matrix)</span>
-
-<span class="sd">            - &#39;l1l2&#39;, which is the multi-task group Lasso regularization</span>
-<span class="sd">                .. math::</span>
-<span class="sd">                    \psi(W) = \lambda \sum_{j=1}^p \|W^j\|_2~~~~</span>
-<span class="sd">                    \text{where}~W^j~\text{is the j-th row of}~W.</span>
-
-<span class="sd">            - &#39;l1linf&#39;</span>
-<span class="sd">                .. math::</span>
-<span class="sd">                    \psi(W) = \lambda \sum_{j=1}^p \|W^j\|_\infty.</span>
-
-<span class="sd">            - &#39;l1l2+l1&#39;, which is the multi-task group Lasso regularization + l1</span>
-<span class="sd">                .. math::</span>
-<span class="sd">                    \psi(W) = \sum_{j=1}^p \lambda \|W^j\|_2 + \lambda_2 \|W^j\|_1 ~~~~</span>
-<span class="sd">                    \text{where}~W^j~\text{is the j-th row of}~W.</span>
 
 <span class="sd">        fit_intercept (boolean): default=&#39;False&#39;</span>
 <span class="sd">            Learns an unregularized intercept b  (or several intercepts for</span>
@@ -780,7 +722,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">            X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">            X (numpy array):</span>
 <span class="sd">                input n X p numpy matrix; the samples are on the rows</span>
 
 <span class="sd">            y (numpy array):</span>
@@ -810,7 +752,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">            X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">            X (numpy array):</span>
 <span class="sd">                Input matrix for the prediction</span>
 
 <span class="sd">        Returns</span>
@@ -823,7 +765,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe</span><span class="p">:</span>
             <span class="n">X</span> <span class="o">=</span> <span class="n">check_input_inference</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
-        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_data</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">accept_sparse</span><span class="o">=</span><span class="s2">&quot;csr&quot;</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_data</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="n">pred</span> <span class="o">=</span> <span class="n">safe_sparse_dot</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coef_</span><span class="p">,</span> <span class="n">dense_output</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -847,7 +789,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">            X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">            X (numpy array):</span>
 <span class="sd">                Test samples.</span>
 <span class="sd">            y (numpy.array):</span>
 <span class="sd">                True labels for X.</span>
@@ -903,11 +845,6 @@
 <span class="sd">                :math:`L(y,z) = \frac{1}{2} ( y-z)^2`</span>
 <span class="sd">            - &#39;logistic&#39;</span>
 <span class="sd">                :math:`L(y,z) = \log(1 + e^{-y z} )`</span>
-<span class="sd">            - &#39;sqhinge&#39; or &#39;squared_hinge&#39;</span>
-<span class="sd">                :math:`L(y,z) = \frac{1}{2} \max( 0, 1- y z)^2`</span>
-<span class="sd">            - &#39;safe-logistic&#39;</span>
-<span class="sd">                :math:`L(y,z) = e^{ yz - 1 } - y z</span>
-<span class="sd">                ~\text{if}~ yz \leq 1~~\text{and}~~0` otherwise</span>
 <span class="sd">            - &#39;multiclass-logistic&#39;</span>
 <span class="sd">                which is also called multinomial or softmax logistic:</span>
 <span class="sd">                :math:`L(y, W^\top x + b) = \sum_{j=1}^k</span>
@@ -924,38 +861,12 @@
 <span class="sd">            :math:`psi(w) = \frac{\lambda_1}{2} ||w||_2^2`</span>
 <span class="sd">        - &#39;l1&#39;</span>
 <span class="sd">            :math:`psi(w) = \lambda_1 ||w||_1`</span>
-<span class="sd">        - &#39;elasticnet&#39;</span>
-<span class="sd">            :math:`psi(w) = \lambda_1 ||w||_1 + \frac{\lambda_2}{2}||w||_2^2`</span>
-<span class="sd">        - &#39;fused-lasso&#39;</span>
-<span class="sd">            :math:`psi(w) = \lambda_3 \sum_{i=2}^p |w[i]-w[i-1]| +</span>
-<span class="sd">            \lambda_1||w||_1 + \frac{\lambda_2}{2}||w||_2^2`</span>
-<span class="sd">        - &#39;l1-ball&#39;</span>
-<span class="sd">            encodes the constraint :math:`||w||_1 &lt;= \lambda`</span>
-<span class="sd">        - &#39;l2-ball&#39;</span>
-<span class="sd">            encodes the constraint :math:`||w||_2 &lt;= \lambda`</span>
 
 <span class="sd">        For multivariate problems, the previous penalties operate on each</span>
 <span class="sd">        individual (e.g., class) predictor.</span>
 
 <span class="sd">        .. math::</span>
 <span class="sd">            \psi(W) = \sum_{j=1}^k \psi(w_j).</span>
-
-<span class="sd">        In addition, multitask-group Lasso penalties are provided for</span>
-<span class="sd">        multivariate problems (w is then a matrix)</span>
-
-<span class="sd">        - &#39;l1l2&#39;, which is the multi-task group Lasso regularization</span>
-<span class="sd">            .. math::</span>
-<span class="sd">                \psi(W) = \lambda \sum_{j=1}^p \|W^j\|_2~~~~</span>
-<span class="sd">                \text{where}~W^j~\text{is the j-th row of}~W.</span>
-
-<span class="sd">        - &#39;l1linf&#39;</span>
-<span class="sd">            .. math::</span>
-<span class="sd">                \psi(W) = \lambda \sum_{j=1}^p \|W^j\|_\infty.</span>
-
-<span class="sd">        - &#39;l1l2+l1&#39;, which is the multi-task group Lasso regularization + l1</span>
-<span class="sd">            .. math::</span>
-<span class="sd">                \psi(W) = \sum_{j=1}^p \lambda \|W^j\|_2 + \lambda_2 \|W^j\|_1 ~~~~</span>
-<span class="sd">                \text{where}~W^j~\text{is the j-th row of}~W.</span>
 
 <span class="sd">    fit_intercept (boolean): default=&#39;False&#39;</span>
 <span class="sd">        Learns an unregularized intercept b  (or several intercepts for</span>
@@ -974,16 +885,10 @@
 <span class="sd">        Optimization solver. Possible choices are</span>
 
 <span class="sd">        - &#39;ista&#39;</span>
+<span class="sd">        - &#39;ista-barzilai&#39;</span>
 <span class="sd">        - &#39;fista&#39;</span>
 <span class="sd">        - &#39;catalyst-ista&#39;</span>
 <span class="sd">        - &#39;qning-ista&#39;  (proximal quasi-Newton method)</span>
-<span class="sd">        - &#39;svrg&#39;</span>
-<span class="sd">        - &#39;catalyst-svrg&#39; (accelerated SVRG with Catalyst)</span>
-<span class="sd">        - &#39;qning-svrg&#39;  (quasi-Newton SVRG)</span>
-<span class="sd">        - &#39;acc-svrg&#39;    (SVRG with direct acceleration)</span>
-<span class="sd">        - &#39;miso&#39;</span>
-<span class="sd">        - &#39;catalyst-miso&#39; (accelerated MISO with Catalyst)</span>
-<span class="sd">        - &#39;qning-miso&#39;  (quasi-Newton MISO)</span>
 <span class="sd">        - &#39;auto&#39;</span>
 
 <span class="sd">        see the Latex documentation for more details.</span>
@@ -1053,7 +958,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        X (numpy array, or scipy sparse CSR matrix):</span>
+<span class="sd">        X (numpy array):</span>
 <span class="sd">            input n x p numpy matrix; the samples are on the rows</span>
 
 <span class="sd">        y (numpy.array):</span>
@@ -1123,7 +1028,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">            X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">            X (numpy array):</span>
 <span class="sd">                Input matrix for the prediction</span>
 
 <span class="sd">        Returns</span>
@@ -1160,7 +1065,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">            X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">            X (numpy array):</span>
 <span class="sd">                Test samples.</span>
 <span class="sd">            y (numpy.array):</span>
 <span class="sd">                True labels for X.</span>
@@ -1186,7 +1091,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">            X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">            X (numpy array):</span>
 <span class="sd">                The data for which we want scores</span>
 
 <span class="sd">        Returns</span>
@@ -1221,7 +1126,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">            X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">            X (numpy array):</span>
 <span class="sd">                Data matrix for which we want probabilities</span>
 
 <span class="sd">        Returns</span>
@@ -1274,7 +1179,7 @@
 <span class="sd">        aux (ERM):</span>
 <span class="sd">            Auxiliary estimator</span>
 
-<span class="sd">        X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">        X (numpy array):</span>
 <span class="sd">            Features matrix</span>
 
 <span class="sd">        labels (numpy.array):</span>
@@ -1320,7 +1225,7 @@
 <span class="sd">        aux (ERM):</span>
 <span class="sd">            Auxiliary estimator</span>
 
-<span class="sd">        X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">        X (numpy array):</span>
 <span class="sd">            Features matrix</span>
 
 <span class="sd">        labels (numpy.array):</span>
@@ -1412,7 +1317,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">            X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">            X (numpy array):</span>
 <span class="sd">                input n X p numpy matrix; the samples are on the rows</span>
 
 <span class="sd">            y (numpy array):</span>
@@ -1454,7 +1359,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">            X (numpy array or scipy sparse CSR matrix):</span>
+<span class="sd">            X (numpy array):</span>
 <span class="sd">                input n X p numpy matrix; the samples are on the rows</span>
 
 <span class="sd">            y (numpy array):</span>
@@ -1515,7 +1420,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        X (numpy array, or scipy sparse CSR matrix):</span>
+<span class="sd">        X (numpy array):</span>
 <span class="sd">            input n x p numpy matrix; the samples are on the rows</span>
 
 <span class="sd">        y (numpy.array):</span>
@@ -1559,7 +1464,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        X (numpy array, or scipy sparse CSR matrix):</span>
+<span class="sd">        X (numpy array):</span>
 <span class="sd">            input n x p numpy matrix; the samples are on the rows</span>
 
 <span class="sd">        y (numpy.array):</span>

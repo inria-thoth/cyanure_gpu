@@ -150,56 +150,11 @@ k-dimensional vectors y,z:</p>
 </dd>
 </dl>
 </li>
-<li><dl class="simple">
-<dt>‘elasticnet’</dt><dd><p><span class="math notranslate nohighlight">\(psi(w) = \lambda_1 ||w||_1 + \frac{\lambda_2}{2}||w||_2^2\)</span></p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>‘fused-lasso’</dt><dd><p><span class="math notranslate nohighlight">\(psi(w) = \lambda_3 \sum_{i=2}^p |w[i]-w[i-1]|
-+ \lambda_1||w||_1 + \frac{\lambda_2}{2}||w||_2^2\)</span></p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>‘l1-ball’</dt><dd><p>encodes the constraint <span class="math notranslate nohighlight">\(||w||_1 &lt;= \lambda\)</span></p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>‘l2-ball’</dt><dd><p>encodes the constraint <span class="math notranslate nohighlight">\(||w||_2 &lt;= \lambda\)</span></p>
-</dd>
-</dl>
-</li>
 </ul>
 <p>For multivariate problems, the previous penalties operate on each
 individual (e.g., class) predictor.</p>
 <div class="math notranslate nohighlight">
 \[\psi(W) = \sum_{j=1}^k \psi(w_j).\]</div>
-<p>In addition, multitask-group Lasso penalties are provided for
-multivariate problems (w is then a matrix)</p>
-<ul>
-<li><dl>
-<dt>‘l1l2’, which is the multi-task group Lasso regularization</dt><dd><div class="math notranslate nohighlight">
-\[\psi(W) = \lambda \sum_{j=1}^p \|W^j\|_2~~~~
-\text{where}~W^j~\text{is the j-th row of}~W.\]</div>
-</dd>
-</dl>
-</li>
-<li><dl>
-<dt>‘l1linf’</dt><dd><div class="math notranslate nohighlight">
-\[\psi(W) = \lambda \sum_{j=1}^p \|W^j\|_\infty.\]</div>
-</dd>
-</dl>
-</li>
-<li><dl>
-<dt>‘l1l2+l1’, which is the multi-task group Lasso regularization + l1</dt><dd><div class="math notranslate nohighlight">
-\[\psi(W) = \sum_{j=1}^p \lambda \|W^j\|_2 + \lambda_2 \|W^j\|_1 ~~~~
-\text{where}~W^j~\text{is the j-th row of}~W.\]</div>
-</dd>
-</dl>
-</li>
-</ul>
 </dd>
 <dt><strong>fit_intercept (boolean): default=’False’</strong></dt><dd><p>Learns an unregularized intercept b  (or several intercepts for
 multivariate problems)</p>
@@ -294,9 +249,6 @@ Note that more cores is not always better.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#cyanure_pytorch.estimators.Regression.set_score_request" title="cyanure_pytorch.estimators.Regression.set_score_request"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_score_request</span></code></a>(*[, sample_weight])</p></td>
 <td><p>Request metadata passed to the <code class="docutils literal notranslate"><span class="pre">score</span></code> method.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#cyanure_pytorch.estimators.Regression.sparsify" title="cyanure_pytorch.estimators.Regression.sparsify"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sparsify</span></code></a>()</p></td>
-<td><p>Convert coefficient matrix to sparse format.</p></td>
-</tr>
 </tbody>
 </table>
 <dl class="py method">
@@ -306,7 +258,7 @@ Note that more cores is not always better.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>X (numpy array or scipy sparse CSR matrix):</strong></dt><dd><p>input n X p numpy matrix; the samples are on the rows</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>input n X p numpy matrix; the samples are on the rows</p>
 </dd>
 <dt><strong>y (numpy array):</strong></dt><dd><ul class="simple">
 <li><p>vector of size n with real values for regression</p></li>
@@ -331,7 +283,7 @@ Note that more cores is not always better.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>X (numpy array or scipy sparse CSR matrix):</strong></dt><dd><p>Input matrix for the prediction</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>Input matrix for the prediction</p>
 </dd>
 </dl>
 </dd>
@@ -359,7 +311,7 @@ a <span class="math notranslate nohighlight">\(R^2\)</span> score of 0.0.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>X (numpy array or scipy sparse CSR matrix):</strong></dt><dd><p>Test samples.</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>Test samples.</p>
 </dd>
 <dt><strong>y (numpy.array):</strong></dt><dd><p>True labels for X.</p>
 </dd>
@@ -557,32 +509,6 @@ sub-estimator of a meta-estimator, e.g. used inside a
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="cyanure_pytorch.estimators.Regression.sparsify">
-<span class="sig-name descname"><span class="pre">sparsify</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cyanure_pytorch.estimators.Regression.sparsify" title="Permalink to this definition"></a></dt>
-<dd><p>Convert coefficient matrix to sparse format.</p>
-<p>Converts the <code class="docutils literal notranslate"><span class="pre">coef_</span></code> member to a scipy.sparse matrix, which for
-L1-regularized models can be much more memory- and storage-efficient
-than the usual numpy.ndarray representation.
-The <code class="docutils literal notranslate"><span class="pre">intercept_</span></code> member is not converted.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><dl class="simple">
-<dt>self (ERM):</dt><dd><p>Fitted estimator converted to parse estimator.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>For non-sparse models, i.e. when there are not many zeros in <code class="docutils literal notranslate"><span class="pre">coef_</span></code>,
-this may actually <em>increase</em> memory usage, so use this method with
-care. A rule of thumb is that the number of zero elements, which can
-be computed with <code class="docutils literal notranslate"><span class="pre">(coef_</span> <span class="pre">==</span> <span class="pre">0).sum()</span></code>, must be more than 50% for this
-to provide significant benefits.
-After calling this method, further fitting with the partial_fit
-method (if any) will not work until you call densify.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -628,17 +554,6 @@ a one-vs-all strategy will be used.</p>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>‘sqhinge’ or ‘squared_hinge’</dt><dd><p><span class="math notranslate nohighlight">\(L(y,z) = \frac{1}{2} \max( 0, 1- y z)^2\)</span></p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>‘safe-logistic’</dt><dd><p><span class="math notranslate nohighlight">\(L(y,z) = e^{ yz - 1 } - y z
-~\text{if}~ yz \leq 1~~\text{and}~~0\)</span> otherwise</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
 <dt>‘multiclass-logistic’</dt><dd><p>which is also called multinomial or softmax logistic:
 <span class="math notranslate nohighlight">\(L(y, W^\top x + b) = \sum_{j=1}^k
 \log\left(e^{w_j^\top + b_j} - e^{w_y^\top + b_y} \right)\)</span></p>
@@ -666,56 +581,11 @@ a one-vs-all strategy will be used.</p>
 </dd>
 </dl>
 </li>
-<li><dl class="simple">
-<dt>‘elasticnet’</dt><dd><p><span class="math notranslate nohighlight">\(psi(w) = \lambda_1 ||w||_1 + \frac{\lambda_2}{2}||w||_2^2\)</span></p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>‘fused-lasso’</dt><dd><p><span class="math notranslate nohighlight">\(psi(w) = \lambda_3 \sum_{i=2}^p |w[i]-w[i-1]| +
-\lambda_1||w||_1 + \frac{\lambda_2}{2}||w||_2^2\)</span></p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>‘l1-ball’</dt><dd><p>encodes the constraint <span class="math notranslate nohighlight">\(||w||_1 &lt;= \lambda\)</span></p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>‘l2-ball’</dt><dd><p>encodes the constraint <span class="math notranslate nohighlight">\(||w||_2 &lt;= \lambda\)</span></p>
-</dd>
-</dl>
-</li>
 </ul>
 <p>For multivariate problems, the previous penalties operate on each
 individual (e.g., class) predictor.</p>
 <div class="math notranslate nohighlight">
 \[\psi(W) = \sum_{j=1}^k \psi(w_j).\]</div>
-<p>In addition, multitask-group Lasso penalties are provided for
-multivariate problems (w is then a matrix)</p>
-<ul>
-<li><dl>
-<dt>‘l1l2’, which is the multi-task group Lasso regularization</dt><dd><div class="math notranslate nohighlight">
-\[\psi(W) = \lambda \sum_{j=1}^p \|W^j\|_2~~~~
-\text{where}~W^j~\text{is the j-th row of}~W.\]</div>
-</dd>
-</dl>
-</li>
-<li><dl>
-<dt>‘l1linf’</dt><dd><div class="math notranslate nohighlight">
-\[\psi(W) = \lambda \sum_{j=1}^p \|W^j\|_\infty.\]</div>
-</dd>
-</dl>
-</li>
-<li><dl>
-<dt>‘l1l2+l1’, which is the multi-task group Lasso regularization + l1</dt><dd><div class="math notranslate nohighlight">
-\[\psi(W) = \sum_{j=1}^p \lambda \|W^j\|_2 + \lambda_2 \|W^j\|_1 ~~~~
-\text{where}~W^j~\text{is the j-th row of}~W.\]</div>
-</dd>
-</dl>
-</li>
-</ul>
 </dd>
 <dt><strong>fit_intercept (boolean): default=’False’</strong></dt><dd><p>Learns an unregularized intercept b  (or several intercepts for
 multivariate problems)</p>
@@ -729,16 +599,10 @@ multivariate problems)</p>
 <dt><strong>solver (string): default=’auto’</strong></dt><dd><p>Optimization solver. Possible choices are</p>
 <ul class="simple">
 <li><p>‘ista’</p></li>
+<li><p>‘ista-barzilai’</p></li>
 <li><p>‘fista’</p></li>
 <li><p>‘catalyst-ista’</p></li>
 <li><p>‘qning-ista’  (proximal quasi-Newton method)</p></li>
-<li><p>‘svrg’</p></li>
-<li><p>‘catalyst-svrg’ (accelerated SVRG with Catalyst)</p></li>
-<li><p>‘qning-svrg’  (quasi-Newton SVRG)</p></li>
-<li><p>‘acc-svrg’    (SVRG with direct acceleration)</p></li>
-<li><p>‘miso’</p></li>
-<li><p>‘catalyst-miso’ (accelerated MISO with Catalyst)</p></li>
-<li><p>‘qning-miso’  (quasi-Newton MISO)</p></li>
 <li><p>‘auto’</p></li>
 </ul>
 <p>see the Latex documentation for more details.
@@ -815,9 +679,6 @@ Note that more cores is not always better.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#cyanure_pytorch.estimators.Classifier.set_params" title="cyanure_pytorch.estimators.Classifier.set_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_params</span></code></a>(**params)</p></td>
 <td><p>Allow to change the value of parameters.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#cyanure_pytorch.estimators.Classifier.sparsify" title="cyanure_pytorch.estimators.Classifier.sparsify"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sparsify</span></code></a>()</p></td>
-<td><p>Convert coefficient matrix to sparse format.</p></td>
-</tr>
 </tbody>
 </table>
 <dl class="py method">
@@ -827,7 +688,7 @@ Note that more cores is not always better.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>X (numpy array, or scipy sparse CSR matrix):</strong></dt><dd><p>input n x p numpy matrix; the samples are on the rows</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>input n x p numpy matrix; the samples are on the rows</p>
 </dd>
 <dt><strong>y (numpy.array):</strong></dt><dd><p>Input labels.</p>
 <ul class="simple">
@@ -848,7 +709,7 @@ provided and {0,1,…, n} for multiclass classification.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>X (numpy array or scipy sparse CSR matrix):</strong></dt><dd><p>Input matrix for the prediction</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>Input matrix for the prediction</p>
 </dd>
 </dl>
 </dd>
@@ -868,7 +729,7 @@ provided and {0,1,…, n} for multiclass classification.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>X (numpy array or scipy sparse CSR matrix):</strong></dt><dd><p>Test samples.</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>Test samples.</p>
 </dd>
 <dt><strong>y (numpy.array):</strong></dt><dd><p>True labels for X.</p>
 </dd>
@@ -892,7 +753,7 @@ provided and {0,1,…, n} for multiclass classification.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>X (numpy array or scipy sparse CSR matrix):</strong></dt><dd><p>The data for which we want scores</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>The data for which we want scores</p>
 </dd>
 </dl>
 </dd>
@@ -914,7 +775,7 @@ his class would be predicted.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>X (numpy array or scipy sparse CSR matrix):</strong></dt><dd><p>Data matrix for which we want probabilities</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>Data matrix for which we want probabilities</p>
 </dd>
 </dl>
 </dd>
@@ -1065,32 +926,6 @@ sub-estimator of a meta-estimator, e.g. used inside a
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="cyanure_pytorch.estimators.Classifier.sparsify">
-<span class="sig-name descname"><span class="pre">sparsify</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cyanure_pytorch.estimators.Classifier.sparsify" title="Permalink to this definition"></a></dt>
-<dd><p>Convert coefficient matrix to sparse format.</p>
-<p>Converts the <code class="docutils literal notranslate"><span class="pre">coef_</span></code> member to a scipy.sparse matrix, which for
-L1-regularized models can be much more memory- and storage-efficient
-than the usual numpy.ndarray representation.
-The <code class="docutils literal notranslate"><span class="pre">intercept_</span></code> member is not converted.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><dl class="simple">
-<dt>self (ERM):</dt><dd><p>Fitted estimator converted to parse estimator.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>For non-sparse models, i.e. when there are not many zeros in <code class="docutils literal notranslate"><span class="pre">coef_</span></code>,
-this may actually <em>increase</em> memory usage, so use this method with
-care. A rule of thumb is that the number of zero elements, which can
-be computed with <code class="docutils literal notranslate"><span class="pre">(coef_</span> <span class="pre">==</span> <span class="pre">0).sum()</span></code>, must be more than 50% for this
-to provide significant benefits.
-After calling this method, further fitting with the partial_fit
-method (if any) will not work until you call densify.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -1140,9 +975,6 @@ method (if any) will not work until you call densify.</p>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_params</span></code>(**params)</p></td>
 <td><p>Allow to change the value of parameters.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sparsify</span></code>()</p></td>
-<td><p>Convert coefficient matrix to sparse format.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1237,9 +1069,6 @@ sub-estimator of a meta-estimator, e.g. used inside a
 <tr class="row-odd"><td><p><a class="reference internal" href="#cyanure_pytorch.estimators.Lasso.set_score_request" title="cyanure_pytorch.estimators.Lasso.set_score_request"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_score_request</span></code></a>(*[, sample_weight])</p></td>
 <td><p>Request metadata passed to the <code class="docutils literal notranslate"><span class="pre">score</span></code> method.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sparsify</span></code>()</p></td>
-<td><p>Convert coefficient matrix to sparse format.</p></td>
-</tr>
 </tbody>
 </table>
 <dl class="py method">
@@ -1249,7 +1078,7 @@ sub-estimator of a meta-estimator, e.g. used inside a
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>X (numpy array or scipy sparse CSR matrix):</strong></dt><dd><p>input n X p numpy matrix; the samples are on the rows</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>input n X p numpy matrix; the samples are on the rows</p>
 </dd>
 <dt><strong>y (numpy array):</strong></dt><dd><ul class="simple">
 <li><p>vector of size n with real values for regression</p></li>
@@ -1274,7 +1103,7 @@ sub-estimator of a meta-estimator, e.g. used inside a
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>X (numpy array or scipy sparse CSR matrix):</strong></dt><dd><p>input n X p numpy matrix; the samples are on the rows</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>input n X p numpy matrix; the samples are on the rows</p>
 </dd>
 <dt><strong>y (numpy array):</strong></dt><dd><ul class="simple">
 <li><p>vector of size n with real values for regression</p></li>
@@ -1386,9 +1215,6 @@ sub-estimator of a meta-estimator, e.g. used inside a
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_params</span></code>(**params)</p></td>
 <td><p>Allow to change the value of parameters.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sparsify</span></code>()</p></td>
-<td><p>Convert coefficient matrix to sparse format.</p></td>
-</tr>
 </tbody>
 </table>
 <dl class="py method">
@@ -1398,7 +1224,7 @@ sub-estimator of a meta-estimator, e.g. used inside a
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>X (numpy array, or scipy sparse CSR matrix):</strong></dt><dd><p>input n x p numpy matrix; the samples are on the rows</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>input n x p numpy matrix; the samples are on the rows</p>
 </dd>
 <dt><strong>y (numpy.array):</strong></dt><dd><p>Input labels.</p>
 <ul class="simple">
@@ -1419,7 +1245,7 @@ provided and {0,1,…, n} for multiclass classification.</p></li>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl>
-<dt><strong>X (numpy array, or scipy sparse CSR matrix):</strong></dt><dd><p>input n x p numpy matrix; the samples are on the rows</p>
+<dt><strong>X (numpy array):</strong></dt><dd><p>input n x p numpy matrix; the samples are on the rows</p>
 </dd>
 <dt><strong>y (numpy.array):</strong></dt><dd><p>Input labels.</p>
 <ul class="simple">
