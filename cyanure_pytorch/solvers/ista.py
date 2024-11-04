@@ -101,7 +101,7 @@ class FISTA_Solver(ISTA_Solver):
     def solver_aux(self, weight: torch.Tensor, it: int = -1) -> torch.Tensor:
         # Step 1: Clone the weight tensor to avoid mutating it unintentionally.
         diff = torch.clone(weight)
- 
+
         # Step 2: Call the parent class's solver_aux method and update `weight`.
         weight, _ = super().solver_aux(self.y, it)
         self.y = weight  # Update y to the new weight from super() call.
@@ -114,7 +114,7 @@ class FISTA_Solver(ISTA_Solver):
         # Step 4: Update `self.t` with a stable expression.
         old_t = self.t
         self.t = (1.0 + torch.sqrt(torch.tensor(1.0 + 4.0 * old_t * old_t, dtype=self.t.dtype))) / 2.0
-   
+
         # Step 5: Perform a numerically stable update to `self.y`
         update_factor = (1.0 - old_t) / self.t
         self.y = self.y + diff * update_factor
