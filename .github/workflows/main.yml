@@ -179,7 +179,7 @@ jobs:
         run: pip install scipy && pip install 'numpy==1.26.4' && pip install scikit-learn && python -m pip install 'torch<2.3.0' && python -m pip install --no-index --find-links dist cyanure_gpu &&  python -c "import cyanure_pytorch;"
 
   upload_pypi:
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     needs: [build_wheels, build_sdist, test_imports, run_tests]
     runs-on: ubuntu-latest
     steps:
