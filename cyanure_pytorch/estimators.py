@@ -185,6 +185,7 @@ class ERM(BaseEstimator, ABC):
             Optimization solver. Possible choices are
 
             - 'ista'
+            - 'ista-barzilai'
             - 'fista'
             - 'catalyst-ista'
             - 'qning-ista'  (proximal quasi-Newton method)
@@ -562,16 +563,10 @@ class Regression(ERM):
             Optimization solver. Possible choices are
 
             - 'ista'
+            - 'ista-barzilai'
             - 'fista'
             - 'catalyst-ista'
             - 'qning-ista'  (proximal quasi-Newton method)
-            - 'svrg'
-            - 'catalyst-svrg' (accelerated SVRG with Catalyst)
-            - 'qning-svrg'  (quasi-Newton SVRG)
-            - 'acc-svrg'    (SVRG with direct acceleration)
-            - 'miso'
-            - 'catalyst-miso' (accelerated MISO with Catalyst)
-            - 'qning-miso'  (quasi-Newton MISO)
             - 'auto'
 
             see the Latex documentation for more details.
