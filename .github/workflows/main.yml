@@ -142,8 +142,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/cyanure-${{ env.PACKAGE_VERSION }}.zip
-          asset_name: cyanure-${{ env.PACKAGE_VERSION }}.zip
+          asset_path: dist/cyanure_gpu-${{ env.PACKAGE_VERSION }}.zip
+          asset_name: cyanure_gpu-${{ env.PACKAGE_VERSION }}.zip
           asset_content_type: application/gzip
       - name: upload targz archive
         uses: actions/upload-release-asset@v1
@@ -151,8 +151,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/cyanure-${{ env.PACKAGE_VERSION }}.tar.gz
-          asset_name: cyanure-${{ env.PACKAGE_VERSION }}.tar.gz
+          asset_path: dist/cyanure_gpu-${{ env.PACKAGE_VERSION }}.tar.gz
+          asset_name: cyanure_gpu-${{ env.PACKAGE_VERSION }}.tar.gz
           asset_content_type: application/gzip
 
   test_imports:
