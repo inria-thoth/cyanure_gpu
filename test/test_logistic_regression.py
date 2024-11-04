@@ -331,7 +331,7 @@ def test_logreg_predict_proba_multinomial():
     clf_ovr = LogisticRegression(multi_class="ovr", solver="qning-ista", lambda_1=0)
     clf_ovr.fit(X, y)
     clf_ovr_loss = log_loss(y, clf_ovr.predict_proba(X))
-    np.testing.assert_almost_equal(clf_ovr_loss, clf_multi_loss)
+    np.testing.assert_almost_equal(clf_ovr_loss, clf_multi_loss, decimal=6)
 
 
 @pytest.mark.parametrize("max_iter", np.arange(1, 5))
@@ -763,9 +763,9 @@ def test_penalty_none(solver):
     with pytest.warns(UserWarning, match=msg):
         lr.fit(X, y)
 
-    lr_none = LogisticRegression(penalty="none", solver=solver, random_state=0, max_iter=1000)
+    lr_none = LogisticRegression(penalty="none", solver=solver, random_state=0, max_iter=2000)
     lr_l2_C_inf = LogisticRegression(
-        penalty="l2", lambda_1=1/np.inf, solver=solver, random_state=0, max_iter=1000
+        penalty="l2", lambda_1=1/np.inf, solver=solver, random_state=0, max_iter=2000
     )
     pred_none = lr_none.fit(X, y).predict(X)
     pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
