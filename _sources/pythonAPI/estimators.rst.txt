@@ -11,7 +11,6 @@ The Regression Class
 .. autoclass:: Regression
    :members:
    :show-inheritance:
-   :autosummary-inherited-members:
    :member-order: bysource
 
 The Classifier Class
@@ -21,7 +20,6 @@ The Classifier Class
 .. autoclass:: Classifier
    :members:
    :show-inheritance:
-   :autosummary-inherited-members:
    :member-order: bysource
 
 
