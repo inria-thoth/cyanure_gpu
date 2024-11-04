@@ -1,0 +1,194 @@
+name: Build and upload to PyPI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  lint_code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Lint with flake8
+        run: |
+          rm -rf 0/
+          flake8 cyanure_pytorch --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 cyanure_pytorch --count --max-complexity=10 --max-line-length=130 --statistics
+
+  build_wheels:
+    needs: [lint_code]
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.11']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+          
+      - name: Install dependencies
+        run: |
+          python -m ensurepip --upgrade
+          python -m pip install --upgrade setuptools
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade virtualenv
+          python -m pip install setuptools wheel
+
+      - name: Build the package
+        run: python -m pip wheel -w wheelhouse .
+        env:
+          TORCH_CUDA_ARCH_LIST: Turing
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: ./wheelhouse/*cyanure*.whl
+
+  run_tests: 
+    needs: [build_wheels]
+    name: Run the tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: artifact
+        path: dist
+    
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+      
+    - name: Install cyanure
+      run: pip install scipy && pip install 'numpy==1.26.4' && pip install scikit-learn && python -m pip install 'torch<2.3.0' && python -m pip install --no-index --find-links dist cyanure_pytorch
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+          
+    - name: Switch to Current Branch
+      run: git checkout ${{ env.BRANCH }}
+
+    - name: Run tests without the lib
+      uses: knicknic/os-specific-run@v1.0.3
+      with:
+        macos: rm -rf cyanure && rm -rf cyanure_lib && python -m pip install pytest && python -m pip install pandas  && python -m pip install libsvmdata && pip list && python -m pytest test/
+        linux: rm -rf cyanure && rm -rf cyanure_lib && python -m pip install pytest && python -m pip install pandas  && python -m pip install libsvmdata && pip list && python -m pytest test/ 
+        windows: Remove-Item -Force -Recurse cyanure && Remove-Item -Force -Recurse cyanure_lib && python -m pip install pytest && python -m pip install libsvmdata && python -m pip install pandas && python -m pytest test/
+
+
+  build_sdist:
+    needs: [lint_code]
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set version
+        run: echo "PACKAGE_VERSION=$(cat VERSION)" >> $GITHUB_ENV
+
+      - uses: actions/setup-python@v3
+        name: Install Python
+        with:
+          python-version: '3.8'
+          
+      - name: Install numpy 
+        run: pip install numpy
+
+      - name: Build sdist
+        run: python setup.py sdist
+
+      - uses: actions/upload-artifact@v3
+        with:
+          path: dist/*.tar.gz
+          
+      - name: version
+        run: echo "::set-output name=version::${{ env.PACKAGE_VERSION }}"
+        id: version
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ steps.version.outputs.version }}
+          tag_name: ${{ steps.version.outputs.version }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: upload zip archive
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/cyanure-${{ env.PACKAGE_VERSION }}.zip
+          asset_name: cyanure-${{ env.PACKAGE_VERSION }}.zip
+          asset_content_type: application/gzip
+      - name: upload targz archive
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/cyanure-${{ env.PACKAGE_VERSION }}.tar.gz
+          asset_name: cyanure-${{ env.PACKAGE_VERSION }}.tar.gz
+          asset_content_type: application/gzip
+
+  test_imports:
+      needs: [build_wheels]
+      name: Smoke test on raw ${{ matrix.os }}
+      runs-on: ${{ matrix.os }}
+      strategy:
+        matrix:
+          os: [ubuntu-latest, macos-latest, windows-latest]
+          python-version: ['3.9', '3.10', '3.11', '3.12']
+
+      steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: artifact
+          path: dist
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Try to import cyanure
+        run: pip install scipy && pip install 'numpy==1.26.4' && pip install scikit-learn && python -m pip install 'torch<2.3.0' && python -m pip install --no-index --find-links dist cyanure_pytorch &&  python -c "import cyanure_pytorch;"
+
+  upload_pypi:
+    if: github.ref == 'refs/heads/master'
+    needs: [build_wheels, build_sdist, test_imports, run_tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@v1.4.2
+        with:
+          user: __token__
+          password: ${{secrets.PYPI}}
