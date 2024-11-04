@@ -14,6 +14,7 @@ The Regression Class
    :show-inheritance:
    :autosummary-inherited-members:
    :member-order: bysource
+   :exclude-members: get_metadata_routing, set_fit_request, set_score_request
 
 The Classifier Class
 ^^^^^^^^^^^^^^^^^^^^
