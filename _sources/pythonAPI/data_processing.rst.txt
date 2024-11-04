@@ -1,4 +1,4 @@
-.. automodule:: cyanure.data_processing
+.. automodule:: cyanure_pytorch.data_processing
 
 Preprocessing functions
 -----------------------
@@ -13,7 +13,7 @@ Preprocess data
 Input verification functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**These functions are not be necessary for any normal use of the library**
+**These functions are not necessary for any normal use of the library**
 
 .. autofunction:: check_labels
     
