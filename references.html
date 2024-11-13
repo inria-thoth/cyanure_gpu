@@ -53,7 +53,6 @@
 <li class="toctree-l1"><a class="reference internal" href="benchmarks.html">Benchmarks</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">References</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#accelerators">Accelerators</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#variance-reduced-stochastic-optimization-algorithms">Variance-reduced stochastic optimization algorithms</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#batch-algorithms">Batch algorithms</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#other-frameworks">Other frameworks</a></li>
 </ul>
@@ -102,49 +101,6 @@
 <dt class="label" id="catalyst"><span class="brackets">CATALYST</span></dt>
 <dd><ol class="upperalpha simple" start="8">
 <li><p>Lin, J. Mairal and Z. Harchaoui. <a class="reference external" href="https://arxiv.org/abs/1712.05654">Catalyst Acceleration for First-order Convex Optimization: from Theory to Practice</a>. Journal of Machine Learning Research (JMLR). 18(212), pages 1–54, 2018.</p></li>
-</ol>
-</dd>
-</dl>
-</div>
-<div class="section" id="variance-reduced-stochastic-optimization-algorithms">
-<h2>Variance-reduced stochastic optimization algorithms<a class="headerlink" href="#variance-reduced-stochastic-optimization-algorithms" title="Permalink to this heading"></a></h2>
-<p>The miso algorithm was introduced in</p>
-<dl class="citation">
-<dt class="label" id="miso"><span class="brackets">MISO</span></dt>
-<dd><ol class="upperalpha simple" start="10">
-<li><p>Mairal. <a class="reference external" href="http://thoth.inrialpes.fr/people/mairal/resources/pdf/95763.pdf">Incremental Majorization-Minimization Optimization with Application to Large-Scale Machine Learning</a>. SIAM Journal on Optimization. volume 25, number 2, pages 829–855, 2015.</p></li>
-</ol>
-</dd>
-</dl>
-<p>It may be seen as a primal variant of the stochastic dual coordinate ascent method <a class="reference internal" href="#sdca" id="id1"><span>[SDCA]</span></a></p>
-<dl class="citation">
-<dt class="label" id="sdca"><span class="brackets"><a class="fn-backref" href="#id1">SDCA</a></span></dt>
-<dd><ol class="upperalpha simple" start="19">
-<li><p>Shalev-Shwartz, and T. Zhang . Stochastic dual coordinate ascent methods for regularized loss minimization. Journal of Machine Learning Research (JMLR), 14, 567-599. 2013.</p></li>
-</ol>
-</dd>
-</dl>
-<p>The svrg algorithm was introduced in</p>
-<dl class="citation">
-<dt class="label" id="svrg"><span class="brackets">SVRG</span></dt>
-<dd><ol class="upperalpha simple" start="18">
-<li><p>Johnson and T. Zhang. Accelerating stochastic gradient descent using predictive variance reduction. In Advances in Neural Information Processing Systems (NIPS). 2013.</p></li>
-</ol>
-</dd>
-</dl>
-<p>but the variant Cyanure uses (and its accelerated variant acc-svrg) were introduced in</p>
-<dl class="citation">
-<dt class="label" id="acc-svrg"><span class="brackets">ACC_SVRG</span></dt>
-<dd><ol class="upperalpha simple">
-<li><p>Kulunchakov and J. Mairal. <a class="reference external" href="https://arxiv.org/pdf/1901.08788.pdf">Estimate Sequences for Stochastic Composite Optimization: Variance Reduction, Acceleration, and Robustness to Noise</a>. preprint arXiv:1901.08788. 2019</p></li>
-</ol>
-</dd>
-</dl>
-<p>Sadly, Cyanure does not implement yet saga, which should nevertheless be mentioned here</p>
-<dl class="citation">
-<dt class="label" id="saga"><span class="brackets">SAGA</span></dt>
-<dd><ol class="upperalpha simple">
-<li><p>Defazio, F. Bach and S. Lacoste-Julien. SAGA: A fast incremental gradient method with support for non-strongly convex composite objectives. In Advances in Neural Information Processing Systems (NIPS). 2014.</p></li>
 </ol>
 </dd>
 </dl>

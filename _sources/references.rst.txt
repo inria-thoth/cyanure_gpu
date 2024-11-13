@@ -13,28 +13,6 @@ Catalyst uses Nesterov's acceleration, and was introduced in
 
 .. [CATALYST] H. Lin, J. Mairal and Z. Harchaoui. `Catalyst Acceleration for First-order Convex Optimization: from Theory to Practice <https://arxiv.org/abs/1712.05654>`_. Journal of Machine Learning Research (JMLR). 18(212), pages 1–54, 2018.
 
-Variance-reduced stochastic optimization algorithms
----------------------------------------------------
-The miso algorithm was introduced in
-
-.. [MISO] J. Mairal. `Incremental Majorization-Minimization Optimization with Application to Large-Scale Machine Learning <http://thoth.inrialpes.fr/people/mairal/resources/pdf/95763.pdf>`_. SIAM Journal on Optimization. volume 25, number 2, pages 829–855, 2015.
-
-It may be seen as a primal variant of the stochastic dual coordinate ascent method [SDCA]_
-
-.. [SDCA] S. Shalev-Shwartz, and T. Zhang . Stochastic dual coordinate ascent methods for regularized loss minimization. Journal of Machine Learning Research (JMLR), 14, 567-599. 2013.
-
-The svrg algorithm was introduced in
-
-.. [SVRG] R. Johnson and T. Zhang. Accelerating stochastic gradient descent using predictive variance reduction. In Advances in Neural Information Processing Systems (NIPS). 2013. 
-
-but the variant Cyanure uses (and its accelerated variant acc-svrg) were introduced in
-
-.. [ACC_SVRG] A. Kulunchakov and J. Mairal. `Estimate Sequences for Stochastic Composite Optimization: Variance Reduction, Acceleration, and Robustness to Noise <https://arxiv.org/pdf/1901.08788.pdf>`_. preprint arXiv:1901.08788. 2019 
-
-Sadly, Cyanure does not implement yet saga, which should nevertheless be mentioned here
-
-.. [SAGA] A. Defazio, F. Bach and S. Lacoste-Julien. SAGA: A fast incremental gradient method with support for non-strongly convex composite objectives. In Advances in Neural Information Processing Systems (NIPS). 2014.
-
 Batch algorithms
 ----------------
 Cyanure also implements ISTA and FISTA with line-search, as described in 
