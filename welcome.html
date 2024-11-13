@@ -86,7 +86,7 @@
   <div class="section" id="welcome-to-cyanure-gpu-s-documentation">
 <h1>Welcome to Cyanure GPU’s documentation!<a class="headerlink" href="#welcome-to-cyanure-gpu-s-documentation" title="Permalink to this heading"></a></h1>
 <p>Cyanure is an open-source python software package.
-It is a GPU reimplementation of <span id="id1">[ISTA]</span> solver from the original <a class="reference external" href="https://github.com/inria-thoth/cyanure">Cyanure</a> library with
+It is a GPU reimplementation of <strong>ISTA</strong> solver from the original <a class="reference external" href="https://github.com/inria-thoth/cyanure">Cyanure</a> library with
 acceleration mechanisms and Quasi-Newton principles.
 Cyanure can handle different loss functions (logistic, square,
 multinomial logistic) and regularization functions (<span class="math notranslate nohighlight">\(\ell_2\)</span>,
@@ -99,16 +99,15 @@ a documentation is provided in pdf in the following arXiv document</p>
 </ul>
 <div class="section" id="main-features">
 <h2>Main features<a class="headerlink" href="#main-features" title="Permalink to this heading"></a></h2>
-<dl>
+<dl class="simple">
 <dt>Cyanure is build upon several goals and principles:</dt><dd><ul class="simple">
-<li><p><strong>Cyanure is memory efficient</strong>. Compared to the C++ version, the library only works with dense matrix. The library works by default with float32 to be able to be able to feat as much data as possible on a GPU. (There should not have a significant drop in performances using float32 instead of float64). There can be intermediate matrix during calculation</p></li>
+<li><p><strong>Cyanure is memory efficient</strong>. Compared to the C++ version, the library only works with dense matrix. The library works by default with float32 to be able to be able to feat as much data as possible on a GPU. (There should not have a significant drop in performances using float32 instead of float64). There can be intermediate matrix during calculation but it is for the sake of computation speed. When fitting an intercept, there is no need to add a column of 1’s and there is no matrix copy as well.</p></li>
+<li><p><strong>Cyanure implements fast algorithms.</strong> Cyanure GPU relies on one algorithmic principle: Nesterov of Quasi-Newton acceleration. We observe large gains when combining these approaches with Quasi-Newton.</p></li>
+<li><p><strong>Cyanure only depends on Pytorch.</strong> Cyanure depends on usual machine learning libraries numpy, scipy, Pytorch and scikit-learn for Python.</p></li>
+<li><p><strong>Cyanure can handle many combinations of loss and regularization functions.</strong> Cyanure can handle a vast combination of loss functions (logistic, square, multiclass logistic) with regularization functions (<span class="math notranslate nohighlight">\(\ell_2\)</span>, <span class="math notranslate nohighlight">\(\ell_1\)</span>).</p></li>
+<li><p><strong>Cyanure provides optimization guarantees.</strong> We believe that reproducibility is important in research. For this reason, knowing if you have solved your problem when the algorithm stops is important. Cyanure provides such a guarantee with a mechanism called duality gap.</p></li>
+<li><p><strong>Cyanure is easy to use.</strong> All the classes of the library are compatible with the <a class="reference internal" href="references.html#sklearn" id="id1"><span>[SKLEARN]</span></a>’s API, in order to use Cyanure with minimum effort.</p></li>
 </ul>
-<p>but it is for the sake of computation speed. When fitting an intercept, there is no need to add a column of 1’s and there is no matrix copy as well.
-* <strong>Cyanure implements fast algorithms.</strong> Cyanure GPU relies on one algorithmic principle: Nesterov of Quasi-Newton acceleration. We observe large gains when combining these approaches with Quasi-Newton.
-* <strong>Cyanure only depends on Pytorch.</strong> Cyanure depends on usual machine learning libraries numpy, scipy, Pytorch and scikit-learn for Python.
-* <strong>Cyanure can handle many combinations of loss and regularization functions.</strong> Cyanure can handle a vast combination of loss functions (logistic, square, multiclass logistic) with regularization functions (<span class="math notranslate nohighlight">\(\ell_2\)</span>, <span class="math notranslate nohighlight">\(\ell_1\)</span>).
-* <strong>Cyanure provides optimization guarantees.</strong> We believe that reproducibility is important in research. For this reason, knowing if you have solved your problem when the algorithm stops is important. Cyanure provides such a guarantee with a mechanism called duality gap.
-* <strong>Cyanure is easy to use.</strong> All the classes of the library are compatible with the <a class="reference internal" href="references.html#sklearn" id="id2"><span>[SKLEARN]</span></a>’s API, in order to use Cyanure with minimum effort.</p>
 </dd>
 </dl>
 <p>Besides all these nice features, Cyanure has also probably some drawbacks, which we will let you discover by yourself.</p>
@@ -117,7 +116,7 @@ a documentation is provided in pdf in the following arXiv document</p>
 <div class="section" id="license">
 <h1>License<a class="headerlink" href="#license" title="Permalink to this heading"></a></h1>
 <p>Cyanure GPU is distributed under BSD-3-Clause license. Even though this is non-legally binding, the author kindly ask users to cite the previous arXiv document in their publications, as well as the publication related to the algorithm they have chosen (see References section).
-Note that if you have chosen the solver ‘auto’, you are likely to use <a class="reference internal" href="references.html#qning" id="id3"><span>[QNING]</span></a> or <a class="reference internal" href="references.html#catalyst" id="id4"><span>[CATALYST]</span></a> combined with <span id="id5">[ISTA]</span>.</p>
+Note that if you have chosen the solver ‘auto’, you are likely to use <a class="reference internal" href="references.html#qning" id="id2"><span>[QNING]</span></a> or <a class="reference internal" href="references.html#catalyst" id="id3"><span>[CATALYST]</span></a> combined with <strong>ISTA</strong>.</p>
 </div>
 <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h1>
