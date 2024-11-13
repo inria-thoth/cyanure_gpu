@@ -3,7 +3,7 @@
 Estimators
 ----------
 
-The link between the regularization parameter C of scikit-learn and :math:`\lambda`  is :math:`C=\frac{1}{n \lambda}`
+The link between the regularization parameter C of scikit-learn and :math:`\lambda`  is :math:`C=\frac{1}{n \lambda}`.
 The :math:`\frac{1}{n}` factor is handled inside the library. There is no need to scale the C factor.
 
 The Regression Class

@@ -81,11 +81,8 @@ Conclusions
 
 .. image:: figs/epsilon_logistic_l2.png
 
-.. image:: figs/webspam_logistic_l2.png
-
 .. image:: figs/ckn_mnist_logistic_l2.png
 
-.. image:: figs/svhn_logistic_l2.png
 
 optimal :math:`\lambda`: alpha, rcv1, real-sim, ocr, kddb, criteo -- the easy ones 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -102,13 +99,11 @@ The results below are consistent with theory and we can draw the following concl
 
 .. image:: figs/alpha_logistic_l2.png
 
-.. image:: figs/real-sim_logistic_l2.png
-
 .. image:: figs/ocr_logistic_l2.png
 
-.. image:: figs/rcv1_logistic_l2.png
+.. image:: figs/imnet_logistic_l2.png
 
-.. image:: figs/kddb_logistic_l2.png
+.. image:: figs/inat_logistic_l2.png
 
-.. image:: figs/criteo_logistic_l2.png
+.. image:: figs/places_logistic_l2.png
 
