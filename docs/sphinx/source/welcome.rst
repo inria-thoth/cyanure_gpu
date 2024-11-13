@@ -1,10 +1,8 @@
 Welcome to Cyanure GPU's documentation!
 =======================================
 
-Cyanure is an open-source python software package with a Python 3 interface.
-It is a GPU reimplementation of certain solvers from the original `Cyanure <https://github.com/inria-thoth/cyanure>`_ library, It is 
-The goal of Cyanure is to provide state-of-the-art solvers for learning linear models,
-based on stochastic variance-reduced stochastic optimization with
+Cyanure is an open-source python software package.
+It is a GPU reimplementation of [ISTA]_ solver from the original `Cyanure <https://github.com/inria-thoth/cyanure>`_ library with
 acceleration mechanisms and Quasi-Newton principles.
 Cyanure can handle different loss functions (logistic, square,
 multinomial logistic) and regularization functions (:math:`\ell_2`,
@@ -23,7 +21,7 @@ Cyanure is build upon several goals and principles:
    to be able to feat as much data as possible on a GPU. (There should not have a significant drop in performances using float32 instead of float64). There can be intermediate matrix during calculation 
    but it is for the sake of computation speed. When fitting an
    intercept, there is no need to add a column of 1's and there is no matrix copy as well. 
-   * **Cyanure implements fast algorithms.** Cyanure builds upon two algorithmic principles: (i) variance-reduced stochastic optimization; (ii) Nesterov of Quasi-Newton acceleration. Variance-reduced stochastic optimization algorithms are now popular, but tend to perform poorly when the objective function is badly conditioned. We observe large gains when combining these approaches with Quasi-Newton. 
+   * **Cyanure implements fast algorithms.** Cyanure builds upon one algorithmic principle: Nesterov of Quasi-Newton acceleration. We observe large gains when combining these approaches with Quasi-Newton. 
    * **Cyanure only depends on Pytorch.** Cyanure depends on usual machine learning libraries numpy, scipy, Pytorch and scikit-learn for Python.
    * **Cyanure can handle many combinations of loss and regularization functions.** Cyanure can handle a vast combination of loss functions (logistic, square, multiclass logistic) with regularization functions (:math:`\ell_2`, :math:`\ell_1`).
    * **Cyanure provides optimization guarantees.** We believe that reproducibility is important in research. For this reason, knowing if you have solved your problem when the algorithm stops is important. Cyanure provides such a guarantee with a mechanism called duality gap.
