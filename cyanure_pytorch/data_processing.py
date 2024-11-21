@@ -45,6 +45,9 @@ def preprocess(X, centering=False, normalize=True, columns=True):
 
     training_data_fortran = np.asfortranarray(X)
 
+    if scipy.sparse.issparse(X):
+        raise TypeError("The library does not supports sparse data.")
+
     if columns:
         if centering:
             column_means = np.mean(training_data_fortran, axis=0, keepdims=True)
