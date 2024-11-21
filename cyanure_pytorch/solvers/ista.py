@@ -30,6 +30,8 @@ class ISTA_Solver(Solver):
             self.xbb = None
 
     def solver_init(self, initial_weight: torch.Tensor) -> None:
+        if (self.verbose):
+            self.print()
         if (self.L == 0):
             self.Li = self.loss.lipschitz_li(self.Li)
             self.L = torch.max(self.Li) / 100.0

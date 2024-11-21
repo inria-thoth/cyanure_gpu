@@ -34,6 +34,8 @@ class Catalyst(Solver):
         self.dual_var = torch.clone(initial_dual)
 
     def solver_init(self, initial_weight: torch.Tensor) -> None:
+        if (self.verbose):
+            self.print()
         self.kappa = self.solver.init_kappa_acceleration(initial_weight)
         self.mu = self.regul.strong_convexity()
         self.count = 0
@@ -171,7 +173,6 @@ class QNing(Catalyst):
 
     def print(self) -> None:
         logger.info("QNing Accelerator")
-        self.solver.print()
 
     def get_lbfgs_direction(self) -> torch.Tensor:
         g = torch.clone(self.gk)
