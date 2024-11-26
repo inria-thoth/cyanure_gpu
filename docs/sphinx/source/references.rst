@@ -31,3 +31,4 @@ Other solvers in our comparisons include also
 
 .. [LIBLINEAR]  Fan, R. E., Chang, K. W., Hsieh, C. J., Wang, X. R., & Lin, C. J. (2008). LIBLINEAR: A library for large linear classification. Journal of machine learning research, 9(Aug), 1871-1874.
 .. [LBFGS] Nocedal, J. (1980). "Updating Quasi-Newton Matrices with Limited Storage". Mathematics of Computation. 35 (151): 773–782
+.. [OWL-QN] Andrew, G., & Gao, J. (2007). Scalable training of L1-regularized log-linear models. International Conference on Machine Learning.
