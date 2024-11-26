@@ -34,7 +34,8 @@ class Solver:
         self.elapsed_time = 0
         self.duality = self.loss.provides_fenchel() and self.regul.provides_fenchel()
         self.deltas = list()
-        self.threshold = 1e-3
+        self.threshold = 1e-8
+        self.old_duality_gap = 10
 
     def solve(self, initial_weight: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
 
@@ -131,10 +132,10 @@ class Solver:
             duality_gap = (self.best_primal - self.best_dual) / torch.abs(self.best_primal)
             stop = False
             if ((iteration / self.duality_gap_interval) >= 4):
-                if (all(abs(delta) < self.threshold for delta in self.deltas[-5:])):
+                if (all(abs(delta) < self.threshold for delta in self.deltas[-1:])):
                     stop = True
                     # TODO Add test to dtype
-                    logger.warning("Your problem is prone to numerical instability. It would be safer to use double.")
+                    logger.warning("The solution does not improve anymore, solving has been stopped.")
             if (self.verbose):
                 logger.info("Best relative duality gap: " + str(duality_gap))
             optim[2] = self.best_dual
@@ -145,7 +146,8 @@ class Solver:
                 logger.warning("Your problem is prone to numerical instability. It would be safer to use double.")
                 stop = True
             self.optim_info[:, ii] = optim
-            self.deltas.append(duality_gap)
+            self.deltas.append(duality_gap - self.old_duality_gap)
+            self.old_duality_gap = duality_gap
             return stop
         else:
             self.previous_weight -= weight

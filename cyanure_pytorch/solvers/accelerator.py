@@ -82,7 +82,6 @@ class Catalyst(Solver):
 
     def print(self) -> None:
         logger.info("Catalyst Accelerator")
-        self.solver.print()
 
 
 class QNing(Catalyst):
