@@ -3,70 +3,95 @@ Tutorials
 
 .. note:: Many of the datasets I used are available `here <http://pascal.inrialpes.fr/data2/mairal/data/>`_.
 
+For each dataset, we first give the result with the CPU version library and then the GPU one.
+
 Examples for binary classification
 ----------------------------------
-The following code performs binary classification with :math:`\ell_2`-regularized logistic regression, with no intercept, on the criteo dataset (21Gb, huge sparse matrix)::
+The following code performs binary classification with :math:`\ell_2`-regularized logistic regression, with no intercept, on the ocr dataset (23.1Gb)::
 
-    from cyanure.estimators import Classifier
-    from cyanure.data_processing import preprocess
-    import scipy.sparse
+    from cyanure_pytorch.estimators import Classifier
+    from cyanure_pytorch.data_processing import preprocess
     import numpy as np
 
-    y_path = "dataset/criteo_y.npz"
-    x_path = "dataset/criteo_X.npz"
-
-
-    #load criteo dataset 21Gb, n=45840617, p=999999
-    dataY=np.load(y_path, allow_pickle=True)
-    y=dataY['arr_0']
-    X = scipy.sparse.load_npz(x_path)
+    #load rcv1 dataset about 1Gb, n=781265, p=47152
+    data = np.load(datapath + 'ocr.npz')
+    y=np.squeeze(data['arr_1'])
+    X=data['arr_0']
 
     #normalize the rows of X in-place, without performing any copy
-    preprocess(X,normalize=True,columns=False) 
+    preprocess(X,normalize=True,columns=False)
     #declare a binary classifier for l2-logistic regression  uses the auto solver by default, performs at most 500 epochs
-    classifier=Classifier(loss='logistic',penalty='l2',lambda_1=0.1/X.shape[0],max_iter=500,tol=1e-3,duality_gap_interval=5, verbose=True, fit_intercept=False)
+    classifier=Classifier(loss='logistic',penalty='l2',lambda_1=0.001953125,max_iter=500,tol=1e-3,duality_gap_interval=10, verbose=True, fit_intercept=False)
     classifier.fit(X,y)
 
 Before we comment the previous choices, let us 
-run the above code on one thread on a Intel(R) Xeon(R) Silver 4112 CPU @ 2.60GHz CPUs with 32Gb of memory. ::
+run the above code on one Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU (48 Go of memory).  ::
 
-    Info : Matrix X, n=45840617, p=999999
-    Info : *********************************
+    Info : Matrix X, n=2500000, p=1155
     Info : Catalyst Accelerator
-    Info : MISO Solver
-    Info : Incremental Solver 
-    Info : with uniform sampling
-    Info : Lipschitz constant: 0.250004
+    Info : ISTA Solver
     Info : Logistic Loss is used
     Info : L2 regularization
-    Info : Epoch: 5, primal objective: 0.456014, time: 159.994
-    Info : Best relative duality gap: 14383.9
-    Info : Epoch: 10, primal objective: 0.450885, time: 370.813
-    Info : Best relative duality gap: 1004.69
-    Info : Epoch: 15, primal objective: 0.450728, time: 578.932
-    Info : Best relative duality gap: 6.50049
-    Info : Epoch: 20, primal objective: 0.450724, time: 787.282
-    Info : Best relative duality gap: 0.068658
-    Info : Epoch: 25, primal objective: 0.450724, time: 997.926
-    Info : Best relative duality gap: 0.00173208
-    Info : Epoch: 30, primal objective: 0.450724, time: 1215.44
-    Info : Best relative duality gap: 0.00173207
-    Info : Epoch: 35, primal objective: 0.450724, time: 1436.1
-    Info : Best relative duality gap: 9.36947e-05
-    Info : Time elapsed : 1448.06
+    Info : Epoch: 10, primal objective: 0.68547309280959156652, time: 32.47520999999999702368
+    Info : Best relative duality gap: 0.03308400807599472249
+    Info : Epoch: 20, primal objective: 0.67945171539393311999, time: 62.51010200000000338605
+    Info : Best relative duality gap: 0.02137987285656091016
+    Info : Epoch: 30, primal objective: 0.67547586698653583337, time: 92.48795599999999694774
+    Info : Best relative duality gap: 0.01415023353528127754
+    Info : Epoch: 40, primal objective: 0.67284701111919842376, time: 122.08335099999999329157
+    Info : Best relative duality gap: 0.00939130161126555500
+    Info : Epoch: 50, primal objective: 0.67110736628657929881, time: 150.75117199999999684223
+    Info : Best relative duality gap: 0.00623283340952181155
+    Info : Epoch: 60, primal objective: 0.66995531732809265879, time: 180.08448400000000333421
+    Info : Best relative duality gap: 0.00413627674201270425
+    Info : Epoch: 70, primal objective: 0.66919185798389579922, time: 208.72120499999999765350
+    Info : Best relative duality gap: 0.00274527966941450624
+    Info : Epoch: 80, primal objective: 0.66868557141165807511, time: 238.07016100000001301851
+    Info : Best relative duality gap: 0.00182258662660126974
+    Info : Epoch: 90, primal objective: 0.66834960668510767778, time: 267.40909900000002608067
+    Info : Best relative duality gap: 0.00121049088143456362
+    Info : Epoch: 100, primal objective: 0.66812652198281208271, time: 296.27869800000001987428
+    Info : Best relative duality gap: 0.00080433396431857948
+    Info : Time elapsed : 297.86861499999997704435
 
-The solver used was *catalyst-miso*; the problem was solved up to
-accuracy tol=0.001 in about 20mn after 35 epochs (without taking into account
+
+    2024-11-26 15:39:07,288 - INFO - simple_erm - Matrix X, n=2500000, p=1155
+    2024-11-26 15:39:07,314 - INFO - accelerator - Catalyst Accelerator
+    2024-11-26 15:39:07,314 - INFO - ista - ISTA Solver
+    2024-11-26 15:39:07,400 - INFO - solver - *********************************
+    2024-11-26 15:39:07,401 - INFO - logistic - Logistic Loss is used
+    2024-11-26 15:39:07,401 - INFO - ridge - L2 regularization
+    2024-11-26 15:39:08,458 - INFO - solver - Epoch: 10, primal objective: tensor([0.68547308444976806641], device='cuda:0'), time: 0.92639
+    2024-11-26 15:39:08,491 - INFO - solver - Best relative duality gap: tensor([0.03308409452438354492], device='cuda:0')
+    2024-11-26 15:39:09,142 - INFO - solver - Epoch: 20, primal objective: tensor([0.67945176362991333008], device='cuda:0'), time: 1.81144
+    2024-11-26 15:39:09,174 - INFO - solver - Best relative duality gap: tensor([0.02137989178299903870], device='cuda:0')
+    2024-11-26 15:39:09,826 - INFO - solver - Epoch: 30, primal objective: tensor([0.67547589540481567383], device='cuda:0'), time: 2.49520
+    2024-11-26 15:39:09,858 - INFO - solver - Best relative duality gap: tensor([0.01415032148361206055], device='cuda:0')
+    2024-11-26 15:39:10,695 - INFO - solver - Epoch: 40, primal objective: tensor([0.67284703254699707031], device='cuda:0'), time: 3.36445
+    2024-11-26 15:39:10,727 - INFO - solver - Best relative duality gap: tensor([0.00939132738858461380], device='cuda:0')
+    2024-11-26 15:39:11,378 - INFO - solver - Epoch: 50, primal objective: tensor([0.67110735177993774414], device='cuda:0'), time: 4.04747
+    2024-11-26 15:39:11,411 - INFO - solver - Best relative duality gap: tensor([0.00623279577121138573], device='cuda:0')
+    2024-11-26 15:39:12,062 - INFO - solver - Epoch: 60, primal objective: tensor([0.66995537281036376953], device='cuda:0'), time: 4.73148
+    2024-11-26 15:39:12,096 - INFO - solver - Best relative duality gap: tensor([0.00413630390539765358], device='cuda:0')
+    2024-11-26 15:39:12,747 - INFO - solver - Epoch: 70, primal objective: tensor([0.66919183731079101562], device='cuda:0'), time: 5.41596
+    2024-11-26 15:39:12,779 - INFO - solver - Best relative duality gap: tensor([0.00274521391838788986], device='cuda:0')
+    2024-11-26 15:39:13,563 - INFO - solver - Epoch: 80, primal objective: tensor([0.66868561506271362305], device='cuda:0'), time: 6.23248
+    2024-11-26 15:39:13,595 - INFO - solver - Best relative duality gap: tensor([0.00182258465792983770], device='cuda:0')
+    2024-11-26 15:39:14,247 - INFO - solver - Epoch: 90, primal objective: tensor([0.66834962368011474609], device='cuda:0'), time: 6.91590
+    2024-11-26 15:39:14,279 - INFO - solver - Best relative duality gap: tensor([0.00121046497952193022], device='cuda:0')
+    2024-11-26 15:39:14,930 - INFO - solver - Epoch: 100, primal objective: tensor([0.66812652349472045898], device='cuda:0'), time: 7.59990
+    2024-11-26 15:39:14,963 - INFO - solver - Best relative duality gap: tensor([0.00080433191033080220], device='cuda:0')
+    2024-11-26 15:39:14,963 - INFO - solver - This is the elapsed time: 7.599904775619507
+
+
+The solver used was *catalyst-ista*; the problem was solved up to
+accuracy tol=0.001 in about 8.5 sec after 100 epochs (without taking into account
 the time to load the dataset from the hard drive). The regularization
-parameter was chosen to be :math:`\lambda=\frac{1}{10n}`, which is close to the
-optimal one given by cross-validation.  Even though performing a grid search with
-cross-validation would be more costly, it nevertheless shows that processing such 
-a large dataset does not necessarily require to massively invest in Amazon EC2 credits,
-GPUs, or distributed computing architectures.
+parameter is the one given by cross-validation. We can see that the GPU version is about 40 times faster.
 
-In the next example, we use the squared hinge loss with
-:math:`\ell_1`-regularization, choosing the regularization parameter such that the
-obtained solution has about 10\% non-zero coefficients. It runs on 16 threads.
+In the next example, we use the logistic loss with
+:math:`\ell_1`-regularization, the regularization parameter is such that the
+obtained solution has 0.1\% non-zero coefficients. 
 We also fit an intercept.::
 
     from cyanure_pytorch.estimators import Classifier
@@ -112,8 +137,8 @@ which yields::
 Multiclass classification
 -------------------------
 Let us now do something a bit more involved and perform multinomial logistic regression on the
-*ckn_mnist* dataset (10 classes, n=60000, p=2304, dense matrix), with multi-task group lasso regularization,
-using 2 Intel(R) Xeon(R) Silver 4112 CPU @ 2.60GHz CPUs with 32Gb of memory., and choosing a regularization parameter that yields a solution with 5\% non zero coefficients.::
+*ckn_mnist* dataset (10 classes, n=60000, p=2304, dense matrix), with lasso regularization,
+still using an Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU, and choosing a regularization parameter that yields a solution with 5\% non zero coefficients.::
 
     from cyanure_pytorch.estimators import Classifier
     from cyanure_pytorch.data_processing import preprocess
@@ -197,7 +222,8 @@ which produces::
 
 
 Learning the multiclass classifier took about 5mn and 26s. To conclude, we provide a last more classical example
-of learning l2-logistic regression classifiers on the same dataset, in a one-vs-all fashion.::
+of learning l2-logistic regression classifiers on the same dataset, in a one-vs-all fashion. 
+We notice that the CPU version greatly benifits from the number of cores which allows to parralelize all the solvers. ::
 
     from cyanure_pytorch.estimators import Classifier
     from cyanure_pytorch.data_processing import preprocess
