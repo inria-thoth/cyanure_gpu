@@ -53,7 +53,9 @@ class ERM(BaseEstimator, ABC):
     """
 
     def __sklearn_tags__(self):
-        return {"requires_y": True}
+        tags = super().__sklearn_tags__()
+        tags["requires_y"] = True
+        return tags
 
     def _warm_start(self, X, initial_weight, nclasses):
         if self.warm_start and hasattr(self, "coef_"):
@@ -606,7 +608,10 @@ class Regression(ERM):
     _estimator_type = "regressor"
 
     def __sklearn_tags__(self):
-        return {"multioutput": True, "requires_y": True}
+        tags = super().__sklearn_tags__()
+        tags["requires_y"] = True
+        tags["multioutput"] = True
+        return tags
 
     def __init__(self, loss='square', penalty='l2', fit_intercept=True, random_state=0,
                  lambda_1=0, lambda_2=0, lambda_3=0, solver='auto', tol=1e-3,
@@ -1301,11 +1306,14 @@ class L1Logistic(Classifier):
     _estimator_type = "classifier"
 
     def __sklearn_tags__(self):
-        return {"requires_y": True,  "_xfail_checks": {
+        tags = super().__sklearn_tags__()
+        tags["requires_y"] = True
+        tags["_xfail_checks"] = {
                 "check_non_transformer_estimators_n_iter": (
                     "We have a different implementation of _n_iter in the multinomial case."
                 ),
-                }}
+                }
+        return tags
 
     def __init__(self, lambda_1=0, solver='auto', tol=1e-3,
                  duality_gap_interval=10, max_iter=500, limited_memory_qning=20,
