@@ -696,7 +696,7 @@ def test_l1_versus_sgd(C):
         fit_intercept=False,
         tol=1e-12,
         max_iter=6000,
-        lambda_1=C,
+        lambda_1=1 / (C * n_samples),
         solver="qning-ista",
     )
 
