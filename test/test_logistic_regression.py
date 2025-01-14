@@ -403,6 +403,7 @@ def test_warm_start(solver, warm_start, fit_intercept, multi_class):
         random_state=42,
         fit_intercept=fit_intercept,
         penalty="l2",
+        lambda_1=1/X.shape[0],
         max_iter=500
     )
     with ignore_warnings(category=ConvergenceWarning):
