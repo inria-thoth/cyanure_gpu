@@ -105,17 +105,17 @@ def test_predict_iris():
     # multiclass data correctly and give good accuracy
     # score (>0.95) for the training data.
     for clf in [
-        LogisticRegression(solver="ista-barzilai", lambda_1=0.1),
-        LogisticRegression(solver="qning-ista", lambda_1=0.1, multi_class="ovr"),
-        LogisticRegression(solver="qning-ista", lambda_1=0.1),
+        LogisticRegression(solver="ista-barzilai", lambda_1=0.1/n_samples),
+        LogisticRegression(solver="qning-ista", lambda_1=0.1/n_samples, multi_class="ovr"),
+        LogisticRegression(solver="qning-ista", lambda_1=0.1/n_samples),
         LogisticRegression(
-            solver="ista-barzilai", tol=1e-2, random_state=42, lambda_1=0.1
+            solver="ista-barzilai", tol=1e-2, random_state=42, lambda_1=0.1/n_samples
         ),
         LogisticRegression(
             solver="qning-ista",
             tol=1e-2,
             random_state=42,
-            lambda_1=0.1
+            lambda_1=0.1/n_samples
         ),
     ]:
         
