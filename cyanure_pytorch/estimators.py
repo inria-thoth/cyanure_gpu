@@ -52,7 +52,7 @@ class ERM(BaseEstimator, ABC):
 
     """
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         return {"requires_y": True}
 
     def _warm_start(self, X, initial_weight, nclasses):
@@ -605,7 +605,7 @@ class Regression(ERM):
 
     _estimator_type = "regressor"
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         return {"multioutput": True, "requires_y": True}
 
     def __init__(self, loss='square', penalty='l2', fit_intercept=True, random_state=0,
@@ -1300,7 +1300,7 @@ class L1Logistic(Classifier):
 
     _estimator_type = "classifier"
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         return {"requires_y": True,  "_xfail_checks": {
                 "check_non_transformer_estimators_n_iter": (
                     "We have a different implementation of _n_iter in the multinomial case."
