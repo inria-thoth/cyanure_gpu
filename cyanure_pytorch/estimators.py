@@ -302,15 +302,13 @@ class ERM(BaseEstimator, ABC):
         if loss is None:
             loss = self.loss
 
-        lambda_1_ = self.lambda_1 / training_data_fortran.shape[1]
-
         self.duality_gap_interval = -1 if self.duality_gap_interval <= 0 else min(self.duality_gap_interval, self.max_iter)
 
         model_parameter = ModelParameters(int(self.max_iter), float(self.tol), int(self.duality_gap_interval),
                                           500, 1, int(self.n_threads), int(self.limited_memory_qning),
                                           int(self.fista_restart), bool(self.verbose), False, self.solver)
 
-        problem_parameter = ProblemParameters(float(lambda_1_), float(self.lambda_2), float(self.lambda_3),
+        problem_parameter = ProblemParameters(float(self.lambda_1), float(self.lambda_2), float(self.lambda_3),
                                               bool(self.fit_intercept), self.penalty, loss=loss)
 
         optim_info = torch.empty

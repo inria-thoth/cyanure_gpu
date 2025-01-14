@@ -32,6 +32,7 @@ class Solver:
         self.loss = loss
         self.regul = regul
         self.elapsed_time = 0
+        self.initial_time = 0
         self.duality = self.loss.provides_fenchel() and self.regul.provides_fenchel()
         self.deltas = list()
         self.threshold = 1e-8
@@ -39,7 +40,7 @@ class Solver:
 
     def solve(self, initial_weight: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
 
-        initial_time = time.time()
+        self.initial_time = time.time()
         weight = torch.clone(initial_weight)
 
         if (not self.duality and self.max_iter > 1):
@@ -56,7 +57,6 @@ class Solver:
                 if (self.test_stopping_criterion(weight, it)):
                     break
             weight, fprox = self.solver_aux(weight, it)
-            self.elapsed_time = time.time() - initial_time
         if (self.verbose):
             logger.info("This is the elapsed time: " + str(self.elapsed_time))
         if (self.best_primal != torch.tensor(float("inf"))):
@@ -114,6 +114,7 @@ class Solver:
         self.best_primal = torch.min(self.best_primal, primal)
         ii = max(int(iteration / self.duality_gap_interval) - 1, 0)
         optim = self.optim_info[:, ii]
+        self.elapsed_time = time.time() - self.initial_time
         if (self.best_primal == primal):
             self.best_weight = torch.clone(weight)
         if (self.verbose):

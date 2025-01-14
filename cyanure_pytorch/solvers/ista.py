@@ -114,8 +114,8 @@ class FISTA_Solver(ISTA_Solver):
         diff = torch.where(torch.abs(diff) < eps, torch.tensor(0.0, dtype=diff.dtype), diff)
 
         # Step 4: Update `self.t` with a stable expression.
-        old_t = self.t
-        self.t = (1.0 + torch.sqrt(torch.tensor(1.0 + 4.0 * torch.pow(old_t, 2), dtype=self.t.dtype))) / 2.0
+        old_t = self.t.clone().detach()
+        self.t = (1.0 + torch.sqrt(1.0 + 4.0 * torch.pow(old_t, 2))) / 2.0
 
         # Step 5: Perform a numerically stable update to `self.y`
         update_factor = (1.0 - old_t) / self.t
