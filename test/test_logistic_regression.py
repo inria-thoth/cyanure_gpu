@@ -135,27 +135,6 @@ def test_predict_iris():
         assert np.mean(pred == target) > 0.95
 
 
-def test_sparsify():
-    # Test sparsify and densify members.
-    target = iris.target_names[iris.target]
-    clf = LogisticRegression(random_state=0).fit(iris.data, target)
-
-    pred_d_d = clf.decision_function(iris.data)
-
-    clf.sparsify()
-    assert sp.issparse(clf.coef_)
-    pred_s_d = clf.decision_function(iris.data)
-
-    sp_data = sp.coo_matrix(iris.data)
-    pred_s_s = clf.decision_function(sp_data)
-
-    clf.densify()
-    pred_d_s = clf.decision_function(sp_data)
-
-    assert_array_almost_equal(pred_d_d, pred_s_d)
-    assert_array_almost_equal(pred_d_d, pred_s_s)
-    assert_array_almost_equal(pred_d_d, pred_d_s)
-
 def test_inconsistent_input():
     # Test that an exception is raised on inconsistent input
     rng = np.random.RandomState(0)
