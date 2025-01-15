@@ -606,7 +606,7 @@ class Regression(ERM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.multi_output = True
+        tags.target_tags.multi_output = True
         tags.estimator_type = "regressor"
         return tags
 
