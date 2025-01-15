@@ -54,7 +54,8 @@ class ERM(BaseEstimator, ABC):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags["requires_y"] = True
+        print(tags)
+        tags.requires_y = True
         return tags
 
     def _warm_start(self, X, initial_weight, nclasses):
@@ -605,12 +606,11 @@ class Regression(ERM):
 
     """
 
-    _estimator_type = "regressor"
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags["requires_y"] = True
+        tags.requires_y = True
         tags["multioutput"] = True
+        tags.estimator_type = "regressor"
         return tags
 
     def __init__(self, loss='square', penalty='l2', fit_intercept=True, random_state=0,
@@ -848,7 +848,10 @@ class Classifier(ClassifierAbstraction):
 
     """
 
-    _estimator_type = "classifier"
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "classifier"
+        return tags
 
     def __init__(self, loss='square', penalty='l2', fit_intercept=True, tol=1e-3, solver="auto",
                  random_state=0, max_iter=500, fista_restart=50, verbose=True,
@@ -1062,7 +1065,10 @@ class Classifier(ClassifierAbstraction):
 class LogisticRegression(Classifier):
     """A pre-configured class for logistic regression loss."""
 
-    _estimator_type = "classifier"
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "classifier"
+        return tags
 
     def __init__(self, penalty='l2', loss='logistic', fit_intercept=True,
                  verbose=False, lambda_1=1.0, lambda_2=0, lambda_3=0,
@@ -1303,11 +1309,10 @@ class L1Logistic(Classifier):
     Using active set when the number of features is superior to 1000
     """
 
-    _estimator_type = "classifier"
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags["requires_y"] = True
+        tags.requires_y = True
+        tags.estimator_type = "classifier"
         tags["_xfail_checks"] = {
                 "check_non_transformer_estimators_n_iter": (
                     "We have a different implementation of _n_iter in the multinomial case."
