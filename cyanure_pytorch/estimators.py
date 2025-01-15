@@ -54,8 +54,6 @@ class ERM(BaseEstimator, ABC):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        print(tags)
-        tags.requires_y = True
         return tags
 
     def _warm_start(self, X, initial_weight, nclasses):
@@ -608,8 +606,7 @@ class Regression(ERM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.requires_y = True
-        tags["multioutput"] = True
+        tags.multi_output = True
         tags.estimator_type = "regressor"
         return tags
 
@@ -1311,7 +1308,6 @@ class L1Logistic(Classifier):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.requires_y = True
         tags.estimator_type = "classifier"
         tags["_xfail_checks"] = {
                 "check_non_transformer_estimators_n_iter": (
