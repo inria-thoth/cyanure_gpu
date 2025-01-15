@@ -335,7 +335,7 @@ def check_labels(labels, estimator):
     """
     label_encoder = None
 
-    if estimator.__sklearn_tags__.estimator_type == "classifier":
+    if estimator.__sklearn_tags__().estimator_type == "classifier":
 
         if np.issubdtype(type(labels[0]), np.str_):
             label_encoder = LabelEncoder()
@@ -356,7 +356,7 @@ def check_labels(labels, estimator):
 
     _assert_all_finite(labels)
 
-    if estimator.__sklearn_tags__.estimator_type == "classifier" and len(np.unique(labels)) == 1:
+    if estimator.__sklearn_tags__().estimator_type == "classifier" and len(np.unique(labels)) == 1:
         raise ValueError("Classifier can't train when only one class is present.")
 
     return labels, label_encoder
