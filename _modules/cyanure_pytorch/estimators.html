@@ -134,8 +134,6 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__sklearn_tags__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">tags</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__sklearn_tags__</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
-        <span class="n">tags</span><span class="o">.</span><span class="n">requires_y</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="n">tags</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">initial_weight</span><span class="p">,</span> <span class="n">nclasses</span><span class="p">):</span>
@@ -688,8 +686,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__sklearn_tags__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">tags</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__sklearn_tags__</span><span class="p">()</span>
-        <span class="n">tags</span><span class="o">.</span><span class="n">requires_y</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">tags</span><span class="p">[</span><span class="s2">&quot;multioutput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">tags</span><span class="o">.</span><span class="n">multi_output</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">tags</span><span class="o">.</span><span class="n">estimator_type</span> <span class="o">=</span> <span class="s2">&quot;regressor&quot;</span>
         <span class="k">return</span> <span class="n">tags</span>
 
@@ -1391,7 +1388,6 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__sklearn_tags__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">tags</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__sklearn_tags__</span><span class="p">()</span>
-        <span class="n">tags</span><span class="o">.</span><span class="n">requires_y</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">tags</span><span class="o">.</span><span class="n">estimator_type</span> <span class="o">=</span> <span class="s2">&quot;classifier&quot;</span>
         <span class="n">tags</span><span class="p">[</span><span class="s2">&quot;_xfail_checks&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;check_non_transformer_estimators_n_iter&quot;</span><span class="p">:</span> <span class="p">(</span>
