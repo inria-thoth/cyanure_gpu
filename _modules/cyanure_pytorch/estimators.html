@@ -134,7 +134,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__sklearn_tags__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">tags</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__sklearn_tags__</span><span class="p">()</span>
-        <span class="n">tags</span><span class="p">[</span><span class="s2">&quot;requires_y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
+        <span class="n">tags</span><span class="o">.</span><span class="n">requires_y</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="n">tags</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">initial_weight</span><span class="p">,</span> <span class="n">nclasses</span><span class="p">):</span>
@@ -685,12 +686,11 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_estimator_type</span> <span class="o">=</span> <span class="s2">&quot;regressor&quot;</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">__sklearn_tags__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">tags</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__sklearn_tags__</span><span class="p">()</span>
-        <span class="n">tags</span><span class="p">[</span><span class="s2">&quot;requires_y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">tags</span><span class="o">.</span><span class="n">requires_y</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">tags</span><span class="p">[</span><span class="s2">&quot;multioutput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">tags</span><span class="o">.</span><span class="n">estimator_type</span> <span class="o">=</span> <span class="s2">&quot;regressor&quot;</span>
         <span class="k">return</span> <span class="n">tags</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;square&#39;</span><span class="p">,</span> <span class="n">penalty</span><span class="o">=</span><span class="s1">&#39;l2&#39;</span><span class="p">,</span> <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
@@ -928,7 +928,10 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_estimator_type</span> <span class="o">=</span> <span class="s2">&quot;classifier&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__sklearn_tags__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__sklearn_tags__</span><span class="p">()</span>
+        <span class="n">tags</span><span class="o">.</span><span class="n">estimator_type</span> <span class="o">=</span> <span class="s2">&quot;classifier&quot;</span>
+        <span class="k">return</span> <span class="n">tags</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;square&#39;</span><span class="p">,</span> <span class="n">penalty</span><span class="o">=</span><span class="s1">&#39;l2&#39;</span><span class="p">,</span> <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
                  <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">fista_restart</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -1142,7 +1145,10 @@
 <div class="viewcode-block" id="LogisticRegression"><a class="viewcode-back" href="../../pythonAPI/estimators.html#cyanure_pytorch.estimators.LogisticRegression">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">LogisticRegression</span><span class="p">(</span><span class="n">Classifier</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A pre-configured class for logistic regression loss.&quot;&quot;&quot;</span>
 
-    <span class="n">_estimator_type</span> <span class="o">=</span> <span class="s2">&quot;classifier&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__sklearn_tags__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__sklearn_tags__</span><span class="p">()</span>
+        <span class="n">tags</span><span class="o">.</span><span class="n">estimator_type</span> <span class="o">=</span> <span class="s2">&quot;classifier&quot;</span>
+        <span class="k">return</span> <span class="n">tags</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">penalty</span><span class="o">=</span><span class="s1">&#39;l2&#39;</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;logistic&#39;</span><span class="p">,</span> <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                  <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">lambda_1</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">lambda_2</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lambda_3</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
@@ -1383,11 +1389,10 @@
 <span class="sd">    Using active set when the number of features is superior to 1000</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_estimator_type</span> <span class="o">=</span> <span class="s2">&quot;classifier&quot;</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">__sklearn_tags__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">tags</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__sklearn_tags__</span><span class="p">()</span>
-        <span class="n">tags</span><span class="p">[</span><span class="s2">&quot;requires_y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">tags</span><span class="o">.</span><span class="n">requires_y</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">tags</span><span class="o">.</span><span class="n">estimator_type</span> <span class="o">=</span> <span class="s2">&quot;classifier&quot;</span>
         <span class="n">tags</span><span class="p">[</span><span class="s2">&quot;_xfail_checks&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;check_non_transformer_estimators_n_iter&quot;</span><span class="p">:</span> <span class="p">(</span>
                     <span class="s2">&quot;We have a different implementation of _n_iter in the multinomial case.&quot;</span>
