@@ -652,6 +652,8 @@ def check_input_inference(X, estimator):
     if X.ndim == 1:
         raise ValueError("Reshape your data")
 
+    print(X.shape)
+    print(estimator.n_features_in_)
     if X.shape[1] != estimator.n_features_in_:
         raise ValueError(f"X has {X.shape[1]} features per sample; \
                            expecting {estimator.n_features_in_}")
