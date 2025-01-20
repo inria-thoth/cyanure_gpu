@@ -625,7 +625,6 @@ class Regression(ERM):
                          limited_memory_qning=limited_memory_qning,
                          fista_restart=fista_restart, verbose=verbose,
                          warm_start=warm_start, n_threads=n_threads, dual=dual, safe=safe)
-        
 
     def fit(self, X, y, le_parameter=None):
         """
@@ -1338,7 +1337,6 @@ class L1Logistic(Classifier):
                          fista_restart=fista_restart, verbose=verbose,
                          warm_start=warm_start, n_threads=n_threads, random_state=random_state,
                          fit_intercept=fit_intercept, multi_class=multi_class, dual=dual, safe=safe)
-
 
     def fit(self, X, y):
         """
