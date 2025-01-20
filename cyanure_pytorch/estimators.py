@@ -19,6 +19,8 @@ import concurrent.futures
 import numpy as np
 import scipy.sparse
 
+from sklearn.utils import ClassifierTags, RegressorTags
+
 import torch
 
 from cyanure_pytorch.data_processing import check_input_fit, check_input_inference, windows_conversion
@@ -608,6 +610,7 @@ class Regression(ERM):
         tags = super().__sklearn_tags__()
         tags.target_tags.multi_output = True
         tags.estimator_type = "regressor"
+        tags.regressor_tags = RegressorTags()
         return tags
 
     def __init__(self, loss='square', penalty='l2', fit_intercept=True, random_state=0,
@@ -615,8 +618,6 @@ class Regression(ERM):
                  duality_gap_interval=10, max_iter=500,
                  limited_memory_qning=20, fista_restart=50, verbose=True,
                  warm_start=False, n_threads=-1, dual=None, safe=True):
-        if loss != 'square':
-            raise ValueError("square loss should be used")
         super().__init__(loss=loss, penalty=penalty,
                          fit_intercept=fit_intercept, random_state=random_state, lambda_1=lambda_1,
                          lambda_2=lambda_2, lambda_3=lambda_3, solver=solver, tol=tol,
@@ -624,6 +625,7 @@ class Regression(ERM):
                          limited_memory_qning=limited_memory_qning,
                          fista_restart=fista_restart, verbose=verbose,
                          warm_start=warm_start, n_threads=n_threads, dual=dual, safe=safe)
+        
 
     def fit(self, X, y, le_parameter=None):
         """
@@ -643,6 +645,9 @@ class Regression(ERM):
             self (ERM):
                 Returns the instance of the class
         """
+        if self.loss != 'square':
+            raise ValueError("square loss should be used")
+
         if self.safe:
             X, labels, _ = check_input_fit(X, y, self)
         else:
@@ -848,6 +853,7 @@ class Classifier(ClassifierAbstraction):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.estimator_type = "classifier"
+        tags.classifier_tags = ClassifierTags()
         return tags
 
     def __init__(self, loss='square', penalty='l2', fit_intercept=True, tol=1e-3, solver="auto",
@@ -1065,10 +1071,11 @@ class LogisticRegression(Classifier):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.estimator_type = "classifier"
+        tags.classifier_tags = ClassifierTags()
         return tags
 
     def __init__(self, penalty='l2', loss='logistic', fit_intercept=True,
-                 verbose=False, lambda_1=1.0, lambda_2=0, lambda_3=0,
+                 verbose=False, lambda_1=0, lambda_2=0, lambda_3=0,
                  solver='auto', tol=1e-3, duality_gap_interval=10,
                  max_iter=500, limited_memory_qning=20,
                  fista_restart=50, warm_start=False, n_threads=-1,
@@ -1309,12 +1316,17 @@ class L1Logistic(Classifier):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.estimator_type = "classifier"
-        tags["_xfail_checks"] = {
+        tags.classifier_tags = ClassifierTags()
+        return tags
+
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {
                 "check_non_transformer_estimators_n_iter": (
                     "We have a different implementation of _n_iter in the multinomial case."
                 ),
-                }
-        return tags
+            }
+        }
 
     def __init__(self, lambda_1=0, solver='auto', tol=1e-3,
                  duality_gap_interval=10, max_iter=500, limited_memory_qning=20,
@@ -1327,8 +1339,6 @@ class L1Logistic(Classifier):
                          warm_start=warm_start, n_threads=n_threads, random_state=random_state,
                          fit_intercept=fit_intercept, multi_class=multi_class, dual=dual, safe=safe)
 
-        if multi_class == "multinomial":
-            self.loss = "multiclass-logistic"
 
     def fit(self, X, y):
         """
@@ -1347,6 +1357,8 @@ class L1Logistic(Classifier):
               provided and {0,1,..., n} for multiclass classification.
         """
 
+        if self.multi_class == "multinomial":
+            self.loss = "multiclass-logistic"
         if self.safe:
             X, labels, le = check_input_fit(X, y, self)
         else:

@@ -264,18 +264,18 @@ def test_liblinear_decision_function_zero():
 def test_logreg_l1():
     rng = np.random.RandomState(42)
     n_samples = 50
-    X, y = make_classification(n_samples=n_samples, n_features=20, random_state=0)
+    X, y = make_classification(n_samples=n_samples, n_features=25, random_state=0)
     X_noise = rng.normal(size=(n_samples, 3))
     X_constant = np.ones(shape=(n_samples, 2))
     X = np.concatenate((X, X_noise, X_constant), axis=1)
 
     lr_liblinear = LogisticRegression(
         penalty="l1",
-        solver="ista-barzilai",
+        solver="qning-ista",
         fit_intercept=True,
-        max_iter=1000,
+        max_iter=500,
         multi_class="ovr",
-        lambda_1=0.7
+        lambda_1=1/(2*n_samples)
     )
     lr_liblinear.fit(X, y)
 
@@ -283,9 +283,9 @@ def test_logreg_l1():
         penalty="l1",
         solver="catalyst-ista",
         fit_intercept=True,
-        max_iter=1000,
+        max_iter=500,
         multi_class="ovr",
-        lambda_1=0.7
+        lambda_1=1/(2*n_samples)
     )
     lr_saga.fit(X, y)
     
@@ -357,7 +357,7 @@ def test_n_iter(solver):
     # OvR case
     n_classes = np.unique(y).shape[0]
     clf = LogisticRegression(
-        tol=1e-2, solver=solver, lambda_1=1.0, random_state=42
+        tol=1e-2, solver=solver, lambda_1=1.0, random_state=42, multi_class="ovr",
     )
     clf.fit(X, y)
     assert clf.n_iter_.shape == (n_classes,)
@@ -659,7 +659,6 @@ def test_l1_versus_sgd(C):
         random_state=1,
     )
     X = scale(X)
-    lambda_1 = C / n_samples
 
     sgd = SGDClassifier(
         penalty="l1",
@@ -667,7 +666,7 @@ def test_l1_versus_sgd(C):
         fit_intercept=False,
         tol=None,
         max_iter=2000,
-        alpha=lambda_1,
+        alpha=1 / (C * n_samples),
         loss="log_loss",
     )
     log = LogisticRegression(
