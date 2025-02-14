@@ -56,9 +56,9 @@ jobs:
           TORCH_CUDA_ARCH_LIST: Turing
 
       - uses: actions/upload-artifact@v4
-        name: wheels
         with:
           path: ./wheelhouse/*cyanure*.whl
+          overwrite: true
 
   run_tests: 
     needs: [build_wheels]
@@ -120,9 +120,9 @@ jobs:
         run: python setup.py sdist
 
       - uses: actions/upload-artifact@v4
-        name: archive
         with:
           path: dist/*.tar.gz
+          overwrite: true
           
       - name: version
         run: echo "::set-output name=version::${{ env.PACKAGE_VERSION }}"
