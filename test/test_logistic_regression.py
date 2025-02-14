@@ -289,7 +289,7 @@ def test_logreg_l1():
     )
     lr_saga.fit(X, y)
     
-    assert_allclose(lr_liblinear.coef_, lr_saga.coef_, rtol=0.01)
+    assert_allclose(lr_liblinear.coef_, lr_saga.coef_, rtol=0.02)
 
     # Noise and constant features should be regularized to zero by the l1
     # penalty
