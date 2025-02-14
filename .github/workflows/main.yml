@@ -58,7 +58,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*cyanure*.whl
-          overwrite: true
+          name: wheel
 
   run_tests: 
     needs: [build_wheels]
@@ -122,7 +122,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
-          overwrite: true
+          name: archive
           
       - name: version
         run: echo "::set-output name=version::${{ env.PACKAGE_VERSION }}"
@@ -187,6 +187,11 @@ jobs:
     permissions:
       id-token: write
     steps:
+      - name: Merge Artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: artifact 
+
       - uses: actions/download-artifact@v4
         with:
           name: artifact
