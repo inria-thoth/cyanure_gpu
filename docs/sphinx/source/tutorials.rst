@@ -85,7 +85,7 @@ run the above code on one Intel(R) Xeon(R) Gold 6430 having access to 126 Go of 
 
 
 The solver used was *catalyst-ista*; the problem was solved up to
-accuracy tol=0.001 in about 8.5 sec after 100 epochs (without taking into account
+accuracy tol=0.001 in about 7.6 sec after 100 epochs (without taking into account
 the time to load the dataset from the hard drive). The regularization
 parameter is the one given by cross-validation. We can see that the GPU version is about 40 times faster.
 
@@ -137,8 +137,8 @@ which yields::
 Multiclass classification
 -------------------------
 Let us now do something a bit more involved and perform multinomial logistic regression on the
-*ckn_mnist* dataset (10 classes, n=60000, p=2304, dense matrix), with lasso regularization,
-still using an Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU, and choosing a regularization parameter that yields a solution with 5\% non zero coefficients.::
+*ckn_mnist* dataset (10 classes, n=60000, p=2304, dense matrix), with :math:`\ell_2` regularization,
+still using an Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU.::
 
     from cyanure_pytorch.estimators import Classifier
     from cyanure_pytorch.data_processing import preprocess
@@ -221,9 +221,10 @@ which produces::
 
 
 
-Learning the multiclass classifier took about 5mn and 26s. To conclude, we provide a last more classical example
+Learning the multiclass classifier took about 2.2s. To conclude, we provide a last more classical example
 of learning l2-logistic regression classifiers on the same dataset, in a one-vs-all fashion. 
-We notice that the CPU version greatly benifits from the number of cores which allows to parralelize all the solvers. ::
+We notice that the CPU version greatly benifits from the number of cores which allows to parralelize all the solvers. 
+That's why the GPU version is more than twice solver.::
 
     from cyanure_pytorch.estimators import Classifier
     from cyanure_pytorch.data_processing import preprocess
