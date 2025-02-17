@@ -38,12 +38,11 @@ All datasets samples are normalized with :math:`\ell_2`-norm and centered for de
 
 Setup
 -----
-To select a reasonable regularization parameter :math:`\lambda` for each dataset, we first split each dataset into 80% training and 20% validation, and select the optimal parameter from a logarithmic grid :math:`2^{-i}/n` with :math:`i=1,\ldots,16` when evaluating trained model on the validation set. Then, we keep the optimal parameter :math:`\lambda`, merge training and validation sets and report the objective function values in terms of execution time for various solvers. The experiments are run on one Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU (48 Go of memory). 
+To select a reasonable regularization parameter :math:`\lambda` for each dataset, we first split each dataset into 80% training and 20% validation, and select the optimal parameter from a logarithmic grid :math:`2^{-i}/n` with :math:`i=1,\ldots,16` when evaluating trained model on the validation set. 
+Then, we keep the optimal parameter :math:`\lambda`, merge training and validation sets and report the objective function values in terms of execution time for various solvers. The experiments are run on one Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU (48 Go of memory). 
 Experiments were conducted on Linux using the Mamba Python 3.11 distribution.
 
-In the evaluation, we include solvers that can be called from scikit-learn, such as [LIBLINEAR]_, [LBFGS]_, newton-cg, or the [SAGA]_ implementation of scikit-learn. We run each solver with different tolerance parameter tol=0.1,0.01,0.001,0.0001 in order to obtain several points illustrating their accuracy-speed trade-off. Each method is run for at most 500 epochs. 
-
-In the evaluation, we include solvers that can be called from CuML, such as [LBFGS]_ or [OWL-QN]_. We run each solver with different tolerance parameter tol=0.1,0.01,0.001,0.0001 in order to obtain several points illustrating their accuracy-speed trade-off. Each method is run for at most 500 epochs. 
+In the evaluation, we include solvers that can be called from CuML, such as [LBFGS]_ or [OWL-QN]_. We run each solver with different tolerance parameter tol=1e-5, 1e-6, 1e-7, 1e-9, 1e-11, 1e-13, 1e-15 in order to obtain several points illustrating their accuracy-speed trade-off. Each method is run for at most 500 epochs. 
 
 Results
 -------
@@ -54,14 +53,11 @@ which lead to more difficult optimization problems since there is less strong
 convexity.
 
 .. note::
-   I am well aware of the limitations of this study (single runs, lack of error bars) and I will try to
-   improve it when time permits. Yet, the conclusions seem robust enough given the number of methods and 
+   I am well aware of the limitations of this study (single runs, lack of error bars)
+   Yet, the conclusions seem robust enough given the number of methods and 
    datasets we used in this study. 
-   In this case, the curves are the results of 20 runs for Cyanure GPU and 3 runs for CuML and Cyanure CPU.
+   In this case, the curves are the results of 20 runs for Cyanure GPU and 3 runs for CuML and Cyanure CPU (Except for imnet and places dataset).
 
-.. warning::
-   Experiments conducted with Liblinear are obtained by using the variant shipped with scikit-learn 1.4.0,
-   using the tolerance parameter tol=0.1.
 
 optimal :math:`\lambda`: covtype, epsilon, ckn_mnist -- the hard ones
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

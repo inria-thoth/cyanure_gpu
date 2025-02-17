@@ -170,7 +170,7 @@ run the above code on one Intel(R) Xeon(R) Gold 6430 having access to 126 Go of 
 </pre></div>
 </div>
 <p>The solver used was <em>catalyst-ista</em>; the problem was solved up to
-accuracy tol=0.001 in about 8.5 sec after 100 epochs (without taking into account
+accuracy tol=0.001 in about 7.6 sec after 100 epochs (without taking into account
 the time to load the dataset from the hard drive). The regularization
 parameter is the one given by cross-validation. We can see that the GPU version is about 40 times faster.</p>
 <p>In the next example, we use the logistic loss with
@@ -220,8 +220,8 @@ We also fit an intercept.:</p>
 <div class="section" id="multiclass-classification">
 <h2>Multiclass classification<a class="headerlink" href="#multiclass-classification" title="Permalink to this heading"></a></h2>
 <p>Let us now do something a bit more involved and perform multinomial logistic regression on the
-<em>ckn_mnist</em> dataset (10 classes, n=60000, p=2304, dense matrix), with lasso regularization,
-still using an Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU, and choosing a regularization parameter that yields a solution with 5% non zero coefficients.:</p>
+<em>ckn_mnist</em> dataset (10 classes, n=60000, p=2304, dense matrix), with <span class="math notranslate nohighlight">\(\ell_2\)</span> regularization,
+still using an Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU.:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Classifier</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.data_processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -300,9 +300,10 @@ still using an Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a N
 <span class="mi">2024</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">21</span> <span class="mi">17</span><span class="p">:</span><span class="mi">27</span><span class="p">:</span><span class="mi">18</span><span class="p">,</span><span class="mi">360</span> <span class="o">-</span> <span class="n">INFO</span> <span class="o">-</span> <span class="n">accelerator</span> <span class="o">-</span> <span class="n">Total</span> <span class="n">skipping</span> <span class="n">l</span><span class="o">-</span><span class="n">bfgs</span> <span class="n">steps</span><span class="p">:</span> <span class="mi">2</span>
 </pre></div>
 </div>
-<p>Learning the multiclass classifier took about 5mn and 26s. To conclude, we provide a last more classical example
+<p>Learning the multiclass classifier took about 2.2s. To conclude, we provide a last more classical example
 of learning l2-logistic regression classifiers on the same dataset, in a one-vs-all fashion.
-We notice that the CPU version greatly benifits from the number of cores which allows to parralelize all the solvers.</p>
+We notice that the CPU version greatly benifits from the number of cores which allows to parralelize all the solvers.
+That’s why the GPU version is more than twice solver.:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Classifier</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.data_processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>

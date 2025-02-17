@@ -186,10 +186,10 @@ All datasets samples are normalized with <span class="math notranslate nohighlig
 </div>
 <div class="section" id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading"></a></h2>
-<p>To select a reasonable regularization parameter <span class="math notranslate nohighlight">\(\lambda\)</span> for each dataset, we first split each dataset into 80% training and 20% validation, and select the optimal parameter from a logarithmic grid <span class="math notranslate nohighlight">\(2^{-i}/n\)</span> with <span class="math notranslate nohighlight">\(i=1,\ldots,16\)</span> when evaluating trained model on the validation set. Then, we keep the optimal parameter <span class="math notranslate nohighlight">\(\lambda\)</span>, merge training and validation sets and report the objective function values in terms of execution time for various solvers. The experiments are run on one Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU (48 Go of memory).
+<p>To select a reasonable regularization parameter <span class="math notranslate nohighlight">\(\lambda\)</span> for each dataset, we first split each dataset into 80% training and 20% validation, and select the optimal parameter from a logarithmic grid <span class="math notranslate nohighlight">\(2^{-i}/n\)</span> with <span class="math notranslate nohighlight">\(i=1,\ldots,16\)</span> when evaluating trained model on the validation set.
+Then, we keep the optimal parameter <span class="math notranslate nohighlight">\(\lambda\)</span>, merge training and validation sets and report the objective function values in terms of execution time for various solvers. The experiments are run on one Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU (48 Go of memory).
 Experiments were conducted on Linux using the Mamba Python 3.11 distribution.</p>
-<p>In the evaluation, we include solvers that can be called from scikit-learn, such as <a class="reference internal" href="references.html#liblinear" id="id1"><span>[LIBLINEAR]</span></a>, <a class="reference internal" href="references.html#lbfgs" id="id2"><span>[LBFGS]</span></a>, newton-cg, or the <span id="id3">[SAGA]</span> implementation of scikit-learn. We run each solver with different tolerance parameter tol=0.1,0.01,0.001,0.0001 in order to obtain several points illustrating their accuracy-speed trade-off. Each method is run for at most 500 epochs.</p>
-<p>In the evaluation, we include solvers that can be called from CuML, such as <a class="reference internal" href="references.html#lbfgs" id="id4"><span>[LBFGS]</span></a> or <a class="reference internal" href="references.html#owl-qn" id="id5"><span>[OWL-QN]</span></a>. We run each solver with different tolerance parameter tol=0.1,0.01,0.001,0.0001 in order to obtain several points illustrating their accuracy-speed trade-off. Each method is run for at most 500 epochs.</p>
+<p>In the evaluation, we include solvers that can be called from CuML, such as <a class="reference internal" href="references.html#lbfgs" id="id1"><span>[LBFGS]</span></a> or <a class="reference internal" href="references.html#owl-qn" id="id2"><span>[OWL-QN]</span></a>. We run each solver with different tolerance parameter tol=1e-5, 1e-6, 1e-7, 1e-9, 1e-11, 1e-13, 1e-15 in order to obtain several points illustrating their accuracy-speed trade-off. Each method is run for at most 500 epochs.</p>
 </div>
 <div class="section" id="results">
 <h2>Results<a class="headerlink" href="#results" title="Permalink to this heading"></a></h2>
@@ -200,15 +200,10 @@ which lead to more difficult optimization problems since there is less strong
 convexity.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>I am well aware of the limitations of this study (single runs, lack of error bars) and I will try to
-improve it when time permits. Yet, the conclusions seem robust enough given the number of methods and
+<p>I am well aware of the limitations of this study (single runs, lack of error bars)
+Yet, the conclusions seem robust enough given the number of methods and
 datasets we used in this study.
-In this case, the curves are the results of 20 runs for Cyanure GPU and 3 runs for CuML and Cyanure CPU.</p>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Experiments conducted with Liblinear are obtained by using the variant shipped with scikit-learn 1.4.0,
-using the tolerance parameter tol=0.1.</p>
+In this case, the curves are the results of 20 runs for Cyanure GPU and 3 runs for CuML and Cyanure CPU (Except for imnet and places dataset).</p>
 </div>
 <div class="section" id="optimal-lambda-covtype-epsilon-ckn-mnist-the-hard-ones">
 <h3>optimal <span class="math notranslate nohighlight">\(\lambda\)</span>: covtype, epsilon, ckn_mnist – the hard ones<a class="headerlink" href="#optimal-lambda-covtype-epsilon-ckn-mnist-the-hard-ones" title="Permalink to this heading"></a></h3>
