@@ -214,10 +214,10 @@ the dimension p for covtype is so small that regularization is useless.
 This leads to an interesting setting with clear conclusions.</p>
 <dl class="simple">
 <dt>Conclusions</dt><dd><ul class="simple">
-<li><p><strong>qning and catalyst accelerations are very useful</strong>. Note that catalyst works well in practice.</p></li>
+<li><p><strong>Qning and Catalyst accelerations are very useful</strong>. Note that catalyst works well in practice.</p></li>
 <li><p><strong>The GPU version is at least 10 times faster than the CPU one</strong>. When we compare the two versions the GPU version is much faster, and we will see in the following part that bigger the dataset is bigger is the speed gap. (It is possible to almost reach a 100 times speedup)</p></li>
-<li><p><strong>We can observe a significative difference for the solution depending on features datatype.</strong></p></li>
-<li><p><strong>Cyanure does better than sklearn-saga, lbfgs, and liblinear</strong>, sometimes with several orders of magnitudes. Note that sklearn-saga does as bad as our regular srvg solver for these dataset, which confirms that the key to obtain faster results is acceleration.</p></li>
+<li><p><strong>We can observe a significative difference for the solution depending on datatype.</strong> When float32 is used and for some datasets, the converge is not as good as float64 solvers.</p></li>
+<li><p><strong>CyanureGPU have similar results to CuML</strong>, CuML and CyanureGPU have similar results for these datasets.</p></li>
 </ul>
 </dd>
 </dl>
@@ -233,6 +233,7 @@ The results below are consistent with theory and we can draw the following concl
 <ul class="simple">
 <li><p><strong>accelerations is useless here, as predicted by theory</strong>, which is why the ‘auto’ solver only uses acceleration when needed.</p></li>
 <li><p><strong>qning-miso and catalyst-miso are still among the best solvers</strong> here, but the difference with svrg is smaller. sklearn-saga is sometimes competitive, sometimes not.</p></li>
+<li><p><strong>CyanureGPU have similar results to CuML</strong>, CuML and CyanureGPU have similar results except for larger datasets where CuML is 2-3 times faster.</p></li>
 </ul>
 <img alt="_images/alpha_logistic_l2.png" src="_images/alpha_logistic_l2.png" />
 <img alt="_images/ocr_logistic_l2.png" src="_images/ocr_logistic_l2.png" />
