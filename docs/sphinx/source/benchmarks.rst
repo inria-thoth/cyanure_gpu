@@ -68,10 +68,10 @@ the dimension p for covtype is so small that regularization is useless.
 This leads to an interesting setting with clear conclusions.
 
 Conclusions
- - **qning and catalyst accelerations are very useful**. Note that catalyst works well in practice.
+ - **Qning and Catalyst accelerations are very useful**. Note that catalyst works well in practice.
  - **The GPU version is at least 10 times faster than the CPU one**. When we compare the two versions the GPU version is much faster, and we will see in the following part that bigger the dataset is bigger is the speed gap. (It is possible to almost reach a 100 times speedup)
- - **We can observe a significative difference for the solution depending on features datatype.** 
- - **Cyanure does better than sklearn-saga, lbfgs, and liblinear**, sometimes with several orders of magnitudes. Note that sklearn-saga does as bad as our regular srvg solver for these dataset, which confirms that the key to obtain faster results is acceleration.
+ - **We can observe a significative difference for the solution depending on datatype.** When float32 is used and for some datasets, the converge is not as good as float64 solvers.
+ - **CyanureGPU have similar results to CuML**, CuML and CyanureGPU have similar results for these datasets.
 
 .. image:: figs/covtype_logistic_l2.png
 
@@ -90,6 +90,7 @@ The results below are consistent with theory and we can draw the following concl
 
 - **qning-miso and catalyst-miso are still among the best solvers** here, but the difference with svrg is smaller. sklearn-saga is sometimes competitive, sometimes not.
 
+- **CyanureGPU have similar results to CuML**, CuML and CyanureGPU have similar results except for larger datasets where CuML is 2-3 times faster.
 
 .. image:: figs/alpha_logistic_l2.png
 
