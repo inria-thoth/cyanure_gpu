@@ -1,8 +1,8 @@
 import torch
 
-from cyanure_pytorch.losses.loss import LinearLossVec
+from cyanureGPU.losses.loss import LinearLossVec
 
-from cyanure_pytorch.logger import setup_custom_logger
+from cyanureGPU.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 

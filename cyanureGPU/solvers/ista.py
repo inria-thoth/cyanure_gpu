@@ -1,14 +1,14 @@
 import torch
 
-from cyanure_pytorch.losses.loss import Loss
-from cyanure_pytorch.regularizers.regularizer import Regularizer
-from cyanure_pytorch.erm.param.model_param import ModelParameters
+from cyanureGPU.losses.loss import Loss
+from cyanureGPU.regularizers.regularizer import Regularizer
+from cyanureGPU.erm.param.model_param import ModelParameters
 
-from cyanure_pytorch.solvers.solver import Solver
+from cyanureGPU.solvers.solver import Solver
 
-from cyanure_pytorch.constants import EPSILON, DEVICE
+from cyanureGPU.constants import EPSILON, DEVICE
 
-from cyanure_pytorch.logger import setup_custom_logger
+from cyanureGPU.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 

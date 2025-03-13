@@ -1,24 +1,24 @@
 import copy
 import torch
 
-from cyanure_pytorch.erm.erm import Estimator
-from cyanure_pytorch.erm.simple_erm import SimpleErm
-from cyanure_pytorch.erm.param.problem_param import ProblemParameters
-from cyanure_pytorch.erm.param.model_param import ModelParameters
-from cyanure_pytorch.logger import setup_custom_logger
-from cyanure_pytorch.losses.logistic import LogisticLoss
-from cyanure_pytorch.losses.loss import Loss
-from cyanure_pytorch.losses.square_multiclass import SquareLossMat
-from cyanure_pytorch.regularizers.regularizer import Regularizer
-from cyanure_pytorch.regularizers.ridge import Ridge
-from cyanure_pytorch.regularizers.lasso import Lasso
-from cyanure_pytorch.regularizers.none import NoRegul
-from cyanure_pytorch.solvers.ista import ISTA_Solver
-from cyanure_pytorch.losses.multi_class_logistic import MultiClassLogisticLoss
-from cyanure_pytorch.losses.loss_matrix import LossMat
-from cyanure_pytorch.regularizers.regularizer_matrix import RegMat, RegVecToMat
+from cyanureGPU.erm.erm import Estimator
+from cyanureGPU.erm.simple_erm import SimpleErm
+from cyanureGPU.erm.param.problem_param import ProblemParameters
+from cyanureGPU.erm.param.model_param import ModelParameters
+from cyanureGPU.logger import setup_custom_logger
+from cyanureGPU.losses.logistic import LogisticLoss
+from cyanureGPU.losses.loss import Loss
+from cyanureGPU.losses.square_multiclass import SquareLossMat
+from cyanureGPU.regularizers.regularizer import Regularizer
+from cyanureGPU.regularizers.ridge import Ridge
+from cyanureGPU.regularizers.lasso import Lasso
+from cyanureGPU.regularizers.none import NoRegul
+from cyanureGPU.solvers.ista import ISTA_Solver
+from cyanureGPU.losses.multi_class_logistic import MultiClassLogisticLoss
+from cyanureGPU.losses.loss_matrix import LossMat
+from cyanureGPU.regularizers.regularizer_matrix import RegMat, RegVecToMat
 
-from cyanure_pytorch.constants import EPSILON, NUMBER_OPTIM_PROCESS_INFO, DEVICE
+from cyanureGPU.constants import EPSILON, NUMBER_OPTIM_PROCESS_INFO, DEVICE
 
 from typing import Tuple
 import numpy as np

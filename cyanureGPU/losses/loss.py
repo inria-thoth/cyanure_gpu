@@ -5,9 +5,9 @@ import random
 
 from typing import Tuple
 
-from cyanure_pytorch.constants import EPSILON, DEVICE, TENSOR_TYPE
+from cyanureGPU.constants import EPSILON, DEVICE, TENSOR_TYPE
 
-from cyanure_pytorch.logger import setup_custom_logger
+from cyanureGPU.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 

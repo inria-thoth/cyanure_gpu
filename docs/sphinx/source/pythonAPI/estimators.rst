@@ -1,4 +1,4 @@
-.. automodule:: cyanure_pytorch.estimators
+.. automodule:: cyanureGPU.estimators
 
 Estimators
 ----------

@@ -1,10 +1,10 @@
-from cyanure_pytorch.logger import setup_custom_logger
+from cyanureGPU.logger import setup_custom_logger
 import torch
 from typing import Tuple
 import abc
 
-from cyanure_pytorch.losses.loss import Loss
-from cyanure_pytorch.constants import DEVICE
+from cyanureGPU.losses.loss import Loss
+from cyanureGPU.constants import DEVICE
 
 logger = setup_custom_logger("INFO")
 

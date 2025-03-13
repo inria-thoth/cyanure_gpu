@@ -1,18 +1,18 @@
 import torch
 import torch.nn
 
-from cyanure_pytorch.erm.erm import Estimator
-from cyanure_pytorch.erm.param.model_param import ModelParameters
-from cyanure_pytorch.erm.param.problem_param import ProblemParameters
-from cyanure_pytorch.logger import setup_custom_logger
-from cyanure_pytorch.losses.logistic import LogisticLoss
-from cyanure_pytorch.losses.square import SquareLoss
-from cyanure_pytorch.regularizers.regularizer import Regularizer
-from cyanure_pytorch.regularizers.ridge import Ridge
-from cyanure_pytorch.regularizers.lasso import Lasso
-from cyanure_pytorch.regularizers.none import NoRegul
-from cyanure_pytorch.solvers.ista import ISTA_Solver
-from cyanure_pytorch.constants import EPSILON
+from cyanureGPU.erm.erm import Estimator
+from cyanureGPU.erm.param.model_param import ModelParameters
+from cyanureGPU.erm.param.problem_param import ProblemParameters
+from cyanureGPU.logger import setup_custom_logger
+from cyanureGPU.losses.logistic import LogisticLoss
+from cyanureGPU.losses.square import SquareLoss
+from cyanureGPU.regularizers.regularizer import Regularizer
+from cyanureGPU.regularizers.ridge import Ridge
+from cyanureGPU.regularizers.lasso import Lasso
+from cyanureGPU.regularizers.none import NoRegul
+from cyanureGPU.solvers.ista import ISTA_Solver
+from cyanureGPU.constants import EPSILON
 
 from typing import Tuple
 

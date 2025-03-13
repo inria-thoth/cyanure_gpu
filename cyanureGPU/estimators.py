@@ -23,17 +23,17 @@ from sklearn.utils import ClassifierTags, RegressorTags
 
 import torch
 
-from cyanure_pytorch.data_processing import check_input_fit, check_input_inference, windows_conversion
+from cyanureGPU.data_processing import check_input_fit, check_input_inference, windows_conversion
 
-from cyanure_pytorch.logger import setup_custom_logger
+from cyanureGPU.logger import setup_custom_logger
 
-from cyanure_pytorch.erm.param.model_param import ModelParameters
-from cyanure_pytorch.erm.param.problem_param import ProblemParameters
+from cyanureGPU.erm.param.model_param import ModelParameters
+from cyanureGPU.erm.param.problem_param import ProblemParameters
 
-from cyanure_pytorch.erm.simple_erm import SimpleErm
-from cyanure_pytorch.erm.multi_erm import MultiErm
+from cyanureGPU.erm.simple_erm import SimpleErm
+from cyanureGPU.erm.multi_erm import MultiErm
 
-from cyanure_pytorch.constants import DEVICE, TENSOR_TYPE, ARRAY_TYPE
+from cyanureGPU.constants import DEVICE, TENSOR_TYPE, ARRAY_TYPE
 
 torch.backends.cudnn.benchmark = False
 np.random.seed(0)

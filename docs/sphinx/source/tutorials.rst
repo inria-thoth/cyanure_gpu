@@ -9,8 +9,8 @@ Examples for binary classification
 ----------------------------------
 The following code performs binary classification with :math:`\ell_2`-regularized logistic regression, with no intercept, on the ocr dataset (23.1Gb)::
 
-    from cyanure_pytorch.estimators import Classifier
-    from cyanure_pytorch.data_processing import preprocess
+    from cyanureGPU.estimators import Classifier
+    from cyanureGPU.data_processing import preprocess
     import numpy as np
 
     #load rcv1 dataset about 1Gb, n=781265, p=47152
@@ -94,8 +94,8 @@ In the next example, we use the logistic loss with
 obtained solution has 0.1\% non-zero coefficients. 
 We also fit an intercept.::
 
-    from cyanure_pytorch.estimators import Classifier
-    from cyanure_pytorch.data_processing import preprocess
+    from cyanureGPU.estimators import Classifier
+    from cyanureGPU.data_processing import preprocess
     import numpy as np
 
     #load rcv1 dataset about 1Gb, n=781265, p=47152
@@ -140,8 +140,8 @@ Let us now do something a bit more involved and perform multinomial logistic reg
 *ckn_mnist* dataset (10 classes, n=60000, p=2304, dense matrix), with :math:`\ell_2` regularization,
 still using an Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU.::
 
-    from cyanure_pytorch.estimators import Classifier
-    from cyanure_pytorch.data_processing import preprocess
+    from cyanureGPU.estimators import Classifier
+    from cyanureGPU.data_processing import preprocess
     import numpy as np
 
     #load ckn_mnist dataset 10 classes, n=60000, p=2304
@@ -226,8 +226,8 @@ of learning l2-logistic regression classifiers on the same dataset, in a one-vs-
 We notice that the CPU version greatly benifits from the number of cores which allows to parralelize all the solvers. 
 That's why the GPU version is more than twice solver.::
 
-    from cyanure_pytorch.estimators import Classifier
-    from cyanure_pytorch.data_processing import preprocess
+    from cyanureGPU.estimators import Classifier
+    from cyanureGPU.data_processing import preprocess
     import numpy as np
 
     #load ckn_mnist dataset 10 classes, n=60000, p=2304
