@@ -22,8 +22,8 @@ jobs:
       - name: Lint with flake8
         run: |
           rm -rf 0/
-          flake8 cyanure_pytorch --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 cyanure_pytorch --count --max-complexity=10 --max-line-length=130 --statistics
+          flake8 cyanureGPU --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 cyanureGPU --count --max-complexity=10 --max-line-length=130 --statistics
 
   build_wheels:
     needs: [lint_code]
