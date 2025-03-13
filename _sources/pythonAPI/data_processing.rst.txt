@@ -1,4 +1,4 @@
-.. automodule:: cyanure_pytorch.data_processing
+.. automodule:: cyanureGPU.data_processing
 
 Preprocessing functions
 -----------------------

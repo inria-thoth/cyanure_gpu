@@ -94,8 +94,8 @@
 <div class="section" id="examples-for-binary-classification">
 <h2>Examples for binary classification<a class="headerlink" href="#examples-for-binary-classification" title="Permalink to this heading"></a></h2>
 <p>The following code performs binary classification with <span class="math notranslate nohighlight">\(\ell_2\)</span>-regularized logistic regression, with no intercept, on the ocr dataset (23.1Gb):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Classifier</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.data_processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocess</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cyanureGPU.estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Classifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cyanureGPU.data_processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="c1">#load rcv1 dataset about 1Gb, n=781265, p=47152</span>
@@ -177,8 +177,8 @@ parameter is the one given by cross-validation. We can see that the GPU version 
 <span class="math notranslate nohighlight">\(\ell_1\)</span>-regularization, the regularization parameter is such that the
 obtained solution has 0.1% non-zero coefficients.
 We also fit an intercept.:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Classifier</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.data_processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocess</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cyanureGPU.estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Classifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cyanureGPU.data_processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="c1">#load rcv1 dataset about 1Gb, n=781265, p=47152</span>
@@ -222,8 +222,8 @@ We also fit an intercept.:</p>
 <p>Let us now do something a bit more involved and perform multinomial logistic regression on the
 <em>ckn_mnist</em> dataset (10 classes, n=60000, p=2304, dense matrix), with <span class="math notranslate nohighlight">\(\ell_2\)</span> regularization,
 still using an Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a NVIDIA 6000 ADA GPU.:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Classifier</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.data_processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocess</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cyanureGPU.estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Classifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cyanureGPU.data_processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="c1">#load ckn_mnist dataset 10 classes, n=60000, p=2304</span>
@@ -304,8 +304,8 @@ still using an Intel(R) Xeon(R) Gold 6430 having access to 126 Go of RAM and a N
 of learning l2-logistic regression classifiers on the same dataset, in a one-vs-all fashion.
 We notice that the CPU version greatly benifits from the number of cores which allows to parralelize all the solvers.
 That’s why the GPU version is more than twice solver.:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Classifier</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_pytorch.data_processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocess</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cyanureGPU.estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Classifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cyanureGPU.data_processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="c1">#load ckn_mnist dataset 10 classes, n=60000, p=2304</span>
