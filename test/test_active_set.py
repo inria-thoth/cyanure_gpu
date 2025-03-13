@@ -1,6 +1,6 @@
 import numpy as np
 
-from cyanure_pytorch.estimators import Regression, fit_large_feature_number
+from cyanureGPU.estimators import Regression, fit_large_feature_number
 
 def test_fit_large_feature_number():
     # Test case with large number of features and dense matrix

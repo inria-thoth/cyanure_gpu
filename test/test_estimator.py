@@ -2,7 +2,7 @@ import pytest
 
 from sklearn.utils.estimator_checks import check_estimator
 
-from cyanure_pytorch.estimators import LogisticRegression, Regression, Classifier, L1Logistic, Lasso
+from cyanureGPU.estimators import LogisticRegression, Regression, Classifier, L1Logistic, Lasso
 
 
 @pytest.mark.parametrize(
