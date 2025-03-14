@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>cyanureGPU.data_processing &mdash; Cyanure 1.0.0 documentation</title>
+  <title>cyanure_gpu.data_processing &mdash; Cyanure 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
       <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
@@ -68,7 +68,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">cyanureGPU.data_processing</li>
+      <li class="breadcrumb-item active">cyanure_gpu.data_processing</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -77,7 +77,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for cyanureGPU.data_processing</h1><div class="highlight"><pre>
+  <h1>Source code for cyanure_gpu.data_processing</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Contain the functions concerning the processing of data.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
@@ -98,12 +98,12 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">cyanureGPU.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_custom_logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cyanure_gpu.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_custom_logger</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">setup_custom_logger</span><span class="p">(</span><span class="s2">&quot;INFO&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="preprocess"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanureGPU.data_processing.preprocess">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">preprocess</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">centering</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="preprocess"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanure_gpu.data_processing.preprocess">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">preprocess</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">centering</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Preprocess features training data.</span>
 
@@ -380,7 +380,7 @@
     <span class="k">return</span> <span class="n">y</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;f&quot;</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">==</span> <span class="n">y</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="check_labels"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanureGPU.data_processing.check_labels">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_labels</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">estimator</span><span class="p">):</span>
+<div class="viewcode-block" id="check_labels"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanure_gpu.data_processing.check_labels">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_labels</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">estimator</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Verify the format of labels depending on the type of the estimator.</span>
 
@@ -468,7 +468,7 @@
     <span class="k">return</span> <span class="n">element</span>
 
 
-<div class="viewcode-block" id="check_input_type"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanureGPU.data_processing.check_input_type">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_input_type</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">estimator</span><span class="p">):</span>
+<div class="viewcode-block" id="check_input_type"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanure_gpu.data_processing.check_input_type">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_input_type</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">estimator</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Verify the format of labels and features depending on the type of the estimator.</span>
 
@@ -548,7 +548,7 @@
     <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">labels</span>
 
 
-<div class="viewcode-block" id="check_positive_parameter"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanureGPU.data_processing.check_positive_parameter">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_positive_parameter</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+<div class="viewcode-block" id="check_positive_parameter"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanure_gpu.data_processing.check_positive_parameter">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_positive_parameter</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check that a parameter if a number and positive.</span>
 
@@ -575,7 +575,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="check_parameters"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanureGPU.data_processing.check_parameters">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_parameters</span><span class="p">(</span><span class="n">estimator</span><span class="p">):</span>
+<div class="viewcode-block" id="check_parameters"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanure_gpu.data_processing.check_parameters">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_parameters</span><span class="p">(</span><span class="n">estimator</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Verify that the different parameters of an estimator respect the constraints.</span>
 
@@ -609,7 +609,7 @@
     <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">labels</span>
 
 
-<div class="viewcode-block" id="check_input_fit"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanureGPU.data_processing.check_input_fit">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_input_fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">estimator</span><span class="p">):</span>
+<div class="viewcode-block" id="check_input_fit"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanure_gpu.data_processing.check_input_fit">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_input_fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">estimator</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check the different input arrays required for training according to the estimator type.</span>
 
@@ -691,7 +691,7 @@
     <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">label_encoder</span></div>
 
 
-<div class="viewcode-block" id="check_input_inference"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanureGPU.data_processing.check_input_inference">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_input_inference</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">estimator</span><span class="p">):</span>
+<div class="viewcode-block" id="check_input_inference"><a class="viewcode-back" href="../../pythonAPI/data_processing.html#cyanure_gpu.data_processing.check_input_inference">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">check_input_inference</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">estimator</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check the format of the array which will be used for inference. Input array can be converted.</span>
 

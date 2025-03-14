@@ -42,13 +42,13 @@ For conda the package is available on conda forge.
 
 You can either install with:
 
- `conda install -c conda-forge cyanureGPU`
+ `conda install -c conda-forge cyanure_gpu`
 
  or 
 
- `pip install cyanureGPU`
+ `pip install cyanure_gpu`
 
-You can also install cyanureGPU from the sources. 
+You can also install cyanure_gpu from the sources. 
 
 .. image:: logo-inria-scientifique-couleur.jpg 
    :width: 35%

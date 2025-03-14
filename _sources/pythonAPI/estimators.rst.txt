@@ -1,4 +1,4 @@
-.. automodule:: cyanureGPU.estimators
+.. automodule:: cyanure_gpu.estimators
 
 Estimators
 ----------
