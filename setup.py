@@ -13,7 +13,7 @@ class sdistzip(_sdist):
 with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'VERSION')) as version_file:
     version = version_file.read().strip()
 
-setup(name='cyanureGPU',
+setup(name='cyanure_gpu',
       version=version,
       author="Julien Mairal",
       author_email="julien.mairal@inria.fr",

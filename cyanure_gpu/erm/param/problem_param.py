@@ -1,6 +1,6 @@
 import torch
 
-from cyanureGPU.constants import DEVICE
+from cyanure_gpu.constants import DEVICE
 
 
 class ProblemParameters:

@@ -1,15 +1,15 @@
 import torch
 
-from cyanureGPU.losses.loss import ProximalPointLoss
-from cyanureGPU.erm.param.model_param import ModelParameters
+from cyanure_gpu.losses.loss import ProximalPointLoss
+from cyanure_gpu.erm.param.model_param import ModelParameters
 
-from cyanureGPU.solvers.solver import Solver
+from cyanure_gpu.solvers.solver import Solver
 
-from cyanureGPU.constants import DEVICE
+from cyanure_gpu.constants import DEVICE
 
-from cyanureGPU.erm.algebra import solve_binomial
+from cyanure_gpu.erm.algebra import solve_binomial
 
-from cyanureGPU.logger import setup_custom_logger
+from cyanure_gpu.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 

@@ -1,4 +1,4 @@
-.. automodule:: cyanureGPU.data_processing
+.. automodule:: cyanure_gpu.data_processing
 
 Preprocessing functions
 -----------------------

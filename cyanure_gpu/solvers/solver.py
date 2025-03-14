@@ -3,10 +3,10 @@ import abc
 import torch
 import time
 
-from cyanureGPU.erm.param.model_param import ModelParameters
-from cyanureGPU.constants import EPSILON
+from cyanure_gpu.erm.param.model_param import ModelParameters
+from cyanure_gpu.constants import EPSILON
 
-from cyanureGPU.logger import setup_custom_logger
+from cyanure_gpu.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 

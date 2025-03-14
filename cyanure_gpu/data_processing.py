@@ -18,7 +18,7 @@ from sklearn.preprocessing import normalize as skNormalize
 
 from collections.abc import Sequence
 
-from cyanureGPU.logger import setup_custom_logger
+from cyanure_gpu.logger import setup_custom_logger
 
 logger = setup_custom_logger("INFO")
 

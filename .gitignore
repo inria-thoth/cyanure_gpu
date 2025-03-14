@@ -1,6 +1,6 @@
 *.pyc
 .vscode/settings.json
-cyanure_pytorch.egg-info/*
+cyanure_gpu.egg-info/*
 *.npz
 .vscode/*
 *.npy

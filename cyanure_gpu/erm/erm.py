@@ -1,13 +1,13 @@
 import torch
-from cyanureGPU.erm.param.model_param import ModelParameters
-from cyanureGPU.erm.param.problem_param import ProblemParameters
+from cyanure_gpu.erm.param.model_param import ModelParameters
+from cyanure_gpu.erm.param.problem_param import ProblemParameters
 
-from cyanureGPU.solvers.accelerator import Catalyst, QNing
-from cyanureGPU.solvers.ista import ISTA_Solver, FISTA_Solver
-from cyanureGPU.solvers.solver import Solver
+from cyanure_gpu.solvers.accelerator import Catalyst, QNing
+from cyanure_gpu.solvers.ista import ISTA_Solver, FISTA_Solver
+from cyanure_gpu.solvers.solver import Solver
 
-from cyanureGPU.losses.loss import Loss
-from cyanureGPU.regularizers.regularizer import Regularizer
+from cyanure_gpu.losses.loss import Loss
+from cyanure_gpu.regularizers.regularizer import Regularizer
 
 
 class Estimator:

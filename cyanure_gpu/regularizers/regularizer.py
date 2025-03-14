@@ -1,7 +1,7 @@
 import abc
 import torch
 
-from cyanureGPU.erm.param.problem_param import ProblemParameters
+from cyanure_gpu.erm.param.problem_param import ProblemParameters
 
 
 class Regularizer:
