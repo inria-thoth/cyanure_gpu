@@ -1,1 +1,1 @@
-Change Pytorch dependency for conda-forge
+Change Numpy dependency for conda-forge
