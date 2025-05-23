@@ -1,1 +1,1 @@
-First Release
+Change Pytorch dependency for conda-forge
