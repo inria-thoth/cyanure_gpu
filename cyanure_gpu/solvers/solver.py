@@ -13,7 +13,6 @@ logger = setup_custom_logger("INFO")
 
 class Solver:
 
-    global EPSILON
     NUMBER_OPTIM_PROCESS_INFO = 6
 
     def __init__(self, loss, regul, param: ModelParameters):

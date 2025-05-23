@@ -21,8 +21,6 @@ logger = setup_custom_logger("INFO")
 
 class SimpleErm(Estimator):
 
-    global EPSILON
-
     def __init__(self, initial_weight: torch.Tensor, weight: torch.Tensor, problem_parameters: ProblemParameters,
                  model_parameters: ModelParameters, optim_info: torch.Tensor, dual_variable: torch.Tensor):
         super().__init__(problem_parameters, model_parameters, optim_info)

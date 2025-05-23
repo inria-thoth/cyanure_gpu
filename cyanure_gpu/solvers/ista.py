@@ -15,8 +15,6 @@ logger = setup_custom_logger("INFO")
 
 class ISTA_Solver(Solver):
 
-    global EPSILON
-
     def __init__(self, loss: Loss, regul: Regularizer, param: ModelParameters, linesearch: bool, Li: torch.Tensor = None):
         super().__init__(loss, regul, param)
         self.L = 0
