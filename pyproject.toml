@@ -4,7 +4,7 @@ requires = [
     "wheel",
     "numpy",
     "scikit-learn",
-    "torch<2.3.0"
+    "torch<=2.5.1"
 ]
 build-backend = "setuptools.build_meta"
 

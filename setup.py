@@ -20,7 +20,7 @@ setup(name='cyanure_gpu',
       license='bsd-3-clause',
       url="https://inria-thoth.github.io/cyanure_gpu/welcome.html",
       description='optimization toolbox for machine learning',
-      install_requires=['scikit-learn', 'torch<2.3.0', 'numpy==1.26.4'],
+      install_requires=['scikit-learn', 'torch<=2.5.1', 'numpy==1.26.4'],
       packages=find_packages(),
       cmdclass={'sdist': sdistzip},
       long_description="Cyanure is an open-source Python software package. This is a partial re implementation of Cyanure package. It provides a simple Python API, which should be fully compatible with scikit-learn.")
