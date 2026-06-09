@@ -43,10 +43,10 @@ def preprocess(X, centering=False, normalize=True, columns=True):
 
     """
 
-    training_data_fortran = np.asfortranarray(X)
-
     if scipy.sparse.issparse(X):
         raise TypeError("The library does not supports sparse data.")
+
+    training_data_fortran = np.asfortranarray(X)
 
     if columns:
         if centering:
@@ -285,7 +285,7 @@ def is_multilabel(y):
         return (
             len(y.data) == 0
             or (labels.size == 1 or (labels.size == 2) and (0 in labels))
-            and (np.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
+            and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
         labels = np.unique(y)
@@ -363,7 +363,7 @@ def check_labels(labels, estimator):
 
 
 def check_is_finite(array_to_test):
-    if not np.any(np.isfinite(array_to_test)):
+    if not np.all(np.isfinite(array_to_test)):
         raise ValueError(
             "Input contains NaN, infinity or a value too large for dtype('float64').")
 
@@ -653,6 +653,6 @@ def check_input_inference(X, estimator):
         raise ValueError("Reshape your data")
 
     if X.shape[1] != estimator.n_features_in_:
-        raise ValueError(f"X has 1 features, but estimator is expecting {estimator.n_features_in_} features as input")
+        raise ValueError(f"X has {X.shape[1]} features, but estimator is expecting {estimator.n_features_in_} features as input")
 
     return X
