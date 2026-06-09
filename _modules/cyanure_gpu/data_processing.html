@@ -680,8 +680,8 @@
     <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;There should have more than 1 sample&quot;</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">estimator</span><span class="o">.</span><span class="n">_get_tags</span><span class="p">()[</span><span class="s2">&quot;multioutput&quot;</span><span class="p">]</span> <span class="ow">and</span> \
-       <span class="ow">not</span> <span class="n">estimator</span><span class="o">.</span><span class="n">_get_tags</span><span class="p">()[</span><span class="s2">&quot;multioutput_only&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">labels</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">estimator</span><span class="o">.</span><span class="n">__sklearn_tags__</span><span class="p">()[</span><span class="s2">&quot;multioutput&quot;</span><span class="p">]</span> <span class="ow">and</span> \
+       <span class="ow">not</span> <span class="n">estimator</span><span class="o">.</span><span class="n">__sklearn_tags__</span><span class="p">()[</span><span class="s2">&quot;multioutput_only&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">labels</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">&quot;A column-vector y was passed when a 1d array was expected&quot;</span><span class="p">,</span> <span class="n">DataConversionWarning</span><span class="p">)</span>
 
