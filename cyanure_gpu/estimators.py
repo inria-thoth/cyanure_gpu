@@ -8,7 +8,7 @@ import warnings
 import platform
 
 from sklearn.base import BaseEstimator
-from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import check_is_fitted, validate_data
 from sklearn.utils.extmath import safe_sparse_dot, softmax
 from sklearn.exceptions import ConvergenceWarning
 
@@ -678,7 +678,7 @@ class Regression(ERM):
         if self.safe:
             X = check_input_inference(X, self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         pred = safe_sparse_dot(X, self.coef_, dense_output=False)
 
