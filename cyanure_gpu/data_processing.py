@@ -69,7 +69,7 @@ def sklearn_catch_warnings(y, check_y_kwargs):
         if not issparse(y):
             try:
                 y = check_array(y, dtype=None, **check_y_kwargs)
-            except (np.VisibleDeprecationWarning, ValueError) as e:
+            except (np.exceptions.VisibleDeprecationWarning, ValueError) as e:
                 if str(e).startswith("Complex data not supported"):
                     raise
 
@@ -201,7 +201,7 @@ def type_of_target(y, input_name=""):
     check_y_kwargs = dict(
         accept_sparse=True,
         allow_nd=True,
-        force_all_finite=False,
+        ensure_all_finite=False,
         ensure_2d=False,
         ensure_min_samples=0,
         ensure_min_features=0,
@@ -268,7 +268,7 @@ def is_multilabel(y):
         check_y_kwargs = dict(
             accept_sparse=True,
             allow_nd=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             ensure_2d=False,
             ensure_min_samples=0,
             ensure_min_features=0,
@@ -600,8 +600,8 @@ def check_input_fit(X, labels, estimator):
     if X.shape[0] == 1:
         raise ValueError("There should have more than 1 sample")
 
-    if not estimator.__sklearn_tags__()["multioutput"] and \
-       not estimator.__sklearn_tags__()["multioutput_only"] and labels.ndim > 1:
+    target_tags = estimator.__sklearn_tags__().target_tags
+    if not target_tags.multi_output and target_tags.single_output and labels.ndim > 1:
         warnings.warn(
             "A column-vector y was passed when a 1d array was expected", DataConversionWarning)
 

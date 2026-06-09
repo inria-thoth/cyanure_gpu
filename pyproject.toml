@@ -3,8 +3,8 @@ requires = [
     "setuptools",
     "wheel",
     "numpy",
-    "scikit-learn",
-    "torch<=2.5.1"
+    "scikit-learn>=1.6",
+    "torch"
 ]
 build-backend = "setuptools.build_meta"
 
