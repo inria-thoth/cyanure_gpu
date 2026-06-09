@@ -123,10 +123,10 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">training_data_fortran</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asfortranarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-
     <span class="k">if</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The library does not supports sparse data.&quot;</span><span class="p">)</span>
+
+    <span class="n">training_data_fortran</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asfortranarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">columns</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">centering</span><span class="p">:</span>
@@ -365,7 +365,7 @@
         <span class="k">return</span> <span class="p">(</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
             <span class="ow">or</span> <span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="mi">0</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">))</span>
-            <span class="ow">and</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="s2">&quot;biu&quot;</span> <span class="ow">or</span> <span class="n">_is_integral_float</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>  <span class="c1"># bool, int, uint</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="s2">&quot;biu&quot;</span> <span class="ow">or</span> <span class="n">_is_integral_float</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>  <span class="c1"># bool, int, uint</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
@@ -443,7 +443,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">check_is_finite</span><span class="p">(</span><span class="n">array_to_test</span><span class="p">):</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">array_to_test</span><span class="p">)):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">array_to_test</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">&quot;Input contains NaN, infinity or a value too large for dtype(&#39;float64&#39;).&quot;</span><span class="p">)</span>
 
@@ -733,7 +733,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Reshape your data&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">n_features_in_</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;X has 1 features, but estimator is expecting </span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">n_features_in_</span><span class="si">}</span><span class="s2"> features as input&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;X has </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> features, but estimator is expecting </span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">n_features_in_</span><span class="si">}</span><span class="s2"> features as input&quot;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">X</span></div>
 </pre></div>
